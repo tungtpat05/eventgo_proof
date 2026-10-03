@@ -73,7 +73,7 @@ export function LoginForm() {
             <div className="grid grid-cols-3 gap-1.5 text-xs">
               <button
                 type="button"
-                onClick={() => fillDemoAccount('pm@eventgo.vn')}
+                onClick={() => fillDemoAccount('pm1@eventgo.vn')}
                 className="flex items-center justify-center gap-1 rounded bg-white px-2 py-1.5 font-medium text-slate-700 shadow-sm border border-slate-200 hover:bg-blue-50 hover:text-blue-700 transition-colors"
               >
                 <ShieldCheck className="h-3.5 w-3.5 text-blue-600" />
@@ -81,7 +81,7 @@ export function LoginForm() {
               </button>
               <button
                 type="button"
-                onClick={() => fillDemoAccount('supervisor@eventgo.vn')}
+                onClick={() => fillDemoAccount('supervisor1@eventgo.vn')}
                 className="flex items-center justify-center gap-1 rounded bg-white px-2 py-1.5 font-medium text-slate-700 shadow-sm border border-slate-200 hover:bg-emerald-50 hover:text-emerald-700 transition-colors"
               >
                 <CheckCircle2 className="h-3.5 w-3.5 text-emerald-600" />
@@ -89,7 +89,7 @@ export function LoginForm() {
               </button>
               <button
                 type="button"
-                onClick={() => fillDemoAccount('approver@eventgo.vn')}
+                onClick={() => fillDemoAccount('approver1@eventgo.vn')}
                 className="flex items-center justify-center gap-1 rounded bg-white px-2 py-1.5 font-medium text-slate-700 shadow-sm border border-slate-200 hover:bg-purple-50 hover:text-purple-700 transition-colors"
               >
                 <UserCheck className="h-3.5 w-3.5 text-purple-600" />

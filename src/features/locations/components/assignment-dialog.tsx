@@ -69,8 +69,7 @@ export function AssignmentPanel({
           onChange={(e) => setSupervisorId(e.target.value)}
           className="flex h-10 w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm ring-offset-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600 focus-visible:ring-offset-2"
         >
-          <option value="demo-supervisor-uuid">Nguyễn Văn Giám Sát (supervisor@eventgo.vn)</option>
-          <option value="demo-supervisor-2">Trần Thị Kiểm Tra (inspector@eventgo.vn)</option>
+          <option value="5ec73217-0087-49ec-8e34-5d3ee9402aea">Nguyễn Thanh Tùng (supervisor1@eventgo.vn)</option>
         </select>
       </div>
 
@@ -83,8 +82,8 @@ export function AssignmentPanel({
           onChange={(e) => setApproverId(e.target.value)}
           className="flex h-10 w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm ring-offset-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600 focus-visible:ring-offset-2"
         >
-          <option value="demo-approver-uuid">Lê Văn Duyệt (approver@eventgo.vn)</option>
-          <option value="demo-pm-uuid">Nguyễn Văn Quản Lý (PM)</option>
+          <option value="912cabb3-731e-496a-be52-6d603d8824c9">Lê Bá Nhật Nam (approver1@eventgo.vn)</option>
+          <option value="e31ecfe6-6008-4ae5-aa9c-2cc65d2c191a">Nguyễn Thị Bảo Ngọc (pm1@eventgo.vn)</option>
         </select>
       </div>
 

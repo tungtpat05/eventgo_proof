@@ -10,8 +10,31 @@ export async function updateSession(request: NextRequest) {
   const url = env.NEXT_PUBLIC_SUPABASE_URL;
   const anonKey = env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
-  // If Supabase credentials are not configured yet, bypass middleware check to allow local development
+  const isAuthPage = request.nextUrl.pathname.startsWith('/login');
+  const isDashboardPage =
+    request.nextUrl.pathname.startsWith('/dashboard') ||
+    request.nextUrl.pathname.startsWith('/campaigns') ||
+    request.nextUrl.pathname.startsWith('/locations') ||
+    request.nextUrl.pathname.startsWith('/approvals') ||
+    request.nextUrl.pathname.startsWith('/reports') ||
+    request.nextUrl.pathname.startsWith('/account');
+
+  // Fallback demo session when Supabase keys are not yet configured in .env.local
   if (!url || !anonKey) {
+    const demoUser = request.cookies.get('eventgo_demo_user')?.value;
+
+    if (!demoUser && isDashboardPage) {
+      const redirectUrl = request.nextUrl.clone();
+      redirectUrl.pathname = '/login';
+      return NextResponse.redirect(redirectUrl);
+    }
+
+    if (demoUser && isAuthPage) {
+      const redirectUrl = request.nextUrl.clone();
+      redirectUrl.pathname = '/dashboard';
+      return NextResponse.redirect(redirectUrl);
+    }
+
     return supabaseResponse;
   }
 
@@ -36,26 +59,20 @@ export async function updateSession(request: NextRequest) {
     data: { user },
   } = await supabase.auth.getUser();
 
-  const isAuthPage = request.nextUrl.pathname.startsWith('/login');
-  const isDashboardPage = request.nextUrl.pathname.startsWith('/dashboard') ||
-    request.nextUrl.pathname.startsWith('/campaigns') ||
-    request.nextUrl.pathname.startsWith('/locations') ||
-    request.nextUrl.pathname.startsWith('/approvals') ||
-    request.nextUrl.pathname.startsWith('/reports');
-
   // Protect private dashboard pages
   if (!user && isDashboardPage) {
-    const url = request.nextUrl.clone();
-    url.pathname = '/login';
-    return NextResponse.redirect(url);
+    const redirectUrl = request.nextUrl.clone();
+    redirectUrl.pathname = '/login';
+    return NextResponse.redirect(redirectUrl);
   }
 
   // Redirect authenticated user away from login to dashboard
   if (user && isAuthPage) {
-    const url = request.nextUrl.clone();
-    url.pathname = '/dashboard';
-    return NextResponse.redirect(url);
+    const redirectUrl = request.nextUrl.clone();
+    redirectUrl.pathname = '/dashboard';
+    return NextResponse.redirect(redirectUrl);
   }
 
   return supabaseResponse;
 }
+

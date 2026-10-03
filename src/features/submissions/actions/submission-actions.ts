@@ -4,6 +4,8 @@ import { SupabaseSubmissionRepository } from '@/infrastructure/repositories/supa
 import { getCurrentUserSession } from '@/application/use-cases/auth/get-current-user';
 import { ApprovalAction, UserRole } from '@/domain/enums';
 import { AuthorizationError, ValidationError } from '@/domain/errors';
+import { CloudinaryService } from '@/infrastructure/cloudinary/cloudinary-service';
+import { env } from '@/config/env';
 import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
 
@@ -21,20 +23,47 @@ export async function submitEvidenceAction(
   }
 
   try {
+    const uploadedPhotos: Array<{ imageUrl: string; thumbnailUrl?: string; cloudinaryPublicId: string }> = [];
+
+    for (let idx = 0; idx < photos.length; idx++) {
+      const p = photos[idx];
+      let imageUrl = p.dataUrl;
+      let thumbnailUrl = p.dataUrl;
+      let cloudinaryPublicId = `evidence-${Date.now()}-${idx}`;
+
+      // Upload directly to Cloudinary under folder eventgo/evidence if configured
+      if (env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME && env.CLOUDINARY_API_KEY && env.CLOUDINARY_API_SECRET) {
+        try {
+          const uploaded = await CloudinaryService.uploadImage(p.dataUrl, 'eventgo/evidence');
+          if (uploaded) {
+            imageUrl = uploaded.secureUrl;
+            thumbnailUrl = uploaded.thumbnailUrl;
+            cloudinaryPublicId = uploaded.publicId;
+          }
+        } catch (uploadError) {
+          console.error(`Lỗi khi tải ảnh #${idx + 1} lên Cloudinary:`, uploadError);
+          // Fallback to dataUrl if Cloudinary upload fails
+        }
+      }
+
+      uploadedPhotos.push({
+        imageUrl,
+        thumbnailUrl,
+        cloudinaryPublicId,
+      });
+    }
+
     const repo = new SupabaseSubmissionRepository();
     await repo.submit({
       locationId,
       checklistItemId,
       notes,
       submittedBy: session.user.id,
-      photos: photos.map((p, idx) => ({
-        imageUrl: p.dataUrl,
-        thumbnailUrl: p.dataUrl,
-        cloudinaryPublicId: `evidence-${Date.now()}-${idx}`,
-      })),
+      photos: uploadedPhotos,
     });
 
     revalidatePath(`/locations/${locationId}`);
+    revalidatePath(`/locations/${locationId}/submit`);
     revalidatePath('/approvals');
     revalidatePath('/dashboard');
     return { success: true };

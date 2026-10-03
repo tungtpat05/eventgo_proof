@@ -109,11 +109,11 @@ Mở trình duyệt tại: `http://localhost:3000` (sẽ tự động chuyển h
 
 Hệ thống hỗ trợ nút bấm chọn nhanh tài khoản tại trang Đăng nhập (`/login`):
 
-| Vai trò (Role) | Email đăng nhập | Mật khẩu mẫu | Trách nhiệm chính |
-|---|---|---|---|
-| **Project Manager (PM)** | `pm@eventgo.vn` | `Demo@123456` | Khởi tạo chiến dịch, import địa điểm từ Excel, gán nhân sự, xuất báo cáo. |
-| **Site Supervisor (Giám sát)** | `supervisor@eventgo.vn` | `Demo@123456` | Giao diện mobile hiện trường: xem checklist, chụp/tải ảnh, nộp bằng chứng. |
-| **Approver (Người kiểm duyệt)** | `approver@eventgo.vn` | `Demo@123456` | Kiểm tra ảnh phóng to, phê duyệt, bắt buộc lý do khi yêu cầu chụp lại. |
+| Vai trò (Role) | Email đăng nhập | Trách nhiệm chính |
+|---|---|---|
+| **Project Manager (PM)** | `pm1@eventgo.vn` | Khởi tạo chiến dịch, import địa điểm từ Excel, gán nhân sự, xuất báo cáo. |
+| **Site Supervisor (Giám sát)** | `supervisor1@eventgo.vn` | Giao diện mobile hiện trường: xem checklist, chụp/tải ảnh, nộp bằng chứng. |
+| **Approver (Người kiểm duyệt)** | `approver1@eventgo.vn` | Kiểm tra ảnh phóng to, phê duyệt, bắt buộc lý do khi yêu cầu chụp lại. |
 
 ---
 
