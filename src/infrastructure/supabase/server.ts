@@ -9,8 +9,12 @@ import { env } from '@/config/env';
 export async function createServerSupabaseClient() {
   const cookieStore = await cookies();
 
-  const url = env.NEXT_PUBLIC_SUPABASE_URL || 'https://placeholder.supabase.co';
-  const anonKey = env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'placeholder-anon-key';
+  const url = env.NEXT_PUBLIC_SUPABASE_URL;
+  const anonKey = env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+
+  if (!url || !anonKey) {
+    throw new Error('Supabase environment variables are required.');
+  }
 
   return createServerClient<Database>(url, anonKey, {
     cookies: {
@@ -24,7 +28,7 @@ export async function createServerSupabaseClient() {
           );
         } catch {
           // The `setAll` method was called from a Server Component.
-          // This can be ignored if you have middleware refreshing user sessions.
+          // Server Components cannot write cookies; proxy.ts refreshes the session.
         }
       },
     },

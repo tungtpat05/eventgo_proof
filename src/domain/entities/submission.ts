@@ -6,6 +6,7 @@ export interface Submission {
   id: string;
   locationId: string;
   checklistItemId: string;
+  assignedApproverMemberId: string;
   status: SubmissionStatus;
   notes?: string | null;
   submittedBy?: string | null;

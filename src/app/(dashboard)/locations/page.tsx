@@ -4,8 +4,9 @@ import { getLocationsUseCase } from '@/application/use-cases/locations/get-locat
 import { getCampaignsUseCase } from '@/application/use-cases/campaigns/get-campaigns';
 import { LocationList } from '@/features/locations/components/location-list';
 import { Button } from '@/components/ui/button';
-import { PlusCircle, FileSpreadsheet, MapPin } from 'lucide-react';
+import { PlusCircle, FileSpreadsheet } from 'lucide-react';
 import { Metadata } from 'next';
+import { CampaignRole } from '@/domain/enums';
 
 export const metadata: Metadata = {
   title: 'Quản lý Địa điểm — EventGo Proof',
@@ -23,6 +24,9 @@ export default async function LocationsPage({ searchParams }: LocationsPageProps
   ]);
 
   const selectedCampaign = campaigns.find((c) => c.id === campaignId);
+  const canManage = selectedCampaign
+    ? selectedCampaign.currentUserRole === CampaignRole.MANAGER
+    : campaigns.some((campaign) => campaign.currentUserRole === CampaignRole.MANAGER);
 
   return (
     <div className="space-y-6">
@@ -32,11 +36,11 @@ export default async function LocationsPage({ searchParams }: LocationsPageProps
           <p className="text-sm text-slate-500">
             {selectedCampaign
               ? `Các gian hàng thuộc chiến dịch: ${selectedCampaign.title}`
-              : 'Tất cả các gian hàng và điểm kích hoạt trong tổ chức'}
+              : 'Các location bạn được quyền truy cập'}
           </p>
         </div>
 
-        <div className="flex items-center gap-2">
+        {canManage && <div className="flex items-center gap-2">
           <Link href={campaignId ? `/locations/import?campaignId=${campaignId}` : '/locations/import'}>
             <Button variant="secondary" className="flex items-center gap-1.5 text-xs">
               <FileSpreadsheet className="h-4 w-4 text-emerald-600" />
@@ -50,7 +54,7 @@ export default async function LocationsPage({ searchParams }: LocationsPageProps
               Thêm địa điểm
             </Button>
           </Link>
-        </div>
+        </div>}
       </div>
 
       <LocationList locations={locations} />

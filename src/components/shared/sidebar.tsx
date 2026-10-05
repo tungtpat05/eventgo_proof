@@ -14,11 +14,7 @@ import {
   CheckCircle,
 } from 'lucide-react';
 
-interface SidebarProps {
-  userRole?: string;
-}
-
-export function Sidebar({ userRole }: SidebarProps) {
+export function Sidebar() {
   const pathname = usePathname();
 
   const navigation = [

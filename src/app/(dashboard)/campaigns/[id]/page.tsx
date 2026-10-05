@@ -15,7 +15,10 @@ import {
   PlusCircle,
   FileSpreadsheet,
   ArrowLeft,
+  Users,
 } from 'lucide-react';
+import { CampaignRole } from '@/domain/enums';
+import { Badge } from '@/components/ui/badge';
 
 interface CampaignDetailPageProps {
   params: Promise<{ id: string }>;
@@ -30,6 +33,7 @@ export default async function CampaignDetailPage({ params }: CampaignDetailPageP
   } catch {
     notFound();
   }
+  const isManager = campaign.currentUserRole === CampaignRole.MANAGER;
 
   return (
     <div className="space-y-6">
@@ -52,6 +56,7 @@ export default async function CampaignDetailPage({ params }: CampaignDetailPageP
                 {campaign.brandName}
               </span>
               <StatusBadge status={campaign.status} />
+              <Badge variant="outline">{campaign.currentUserRole}</Badge>
             </div>
             <h1 className="text-2xl font-bold text-slate-900">{campaign.title}</h1>
             {campaign.description && (
@@ -60,6 +65,13 @@ export default async function CampaignDetailPage({ params }: CampaignDetailPageP
           </div>
 
           <div className="flex items-center gap-2">
+            {isManager && (
+              <Link href={`/campaigns/${campaign.id}/members`}>
+                <Button variant="outline" size="sm" className="flex items-center gap-1.5">
+                  <Users className="h-4 w-4" /> Thành viên
+                </Button>
+              </Link>
+            )}
             <Link href={`/reports?campaignId=${campaign.id}`}>
               <Button variant="outline" size="sm" className="flex items-center gap-1.5">
                 <FileText className="h-4 w-4" />
@@ -76,6 +88,7 @@ export default async function CampaignDetailPage({ params }: CampaignDetailPageP
               Thời gian: <strong>{formatDate(campaign.startDate)}</strong> đến <strong>{formatDate(campaign.endDate)}</strong>
             </span>
           </div>
+          <div><span>Công ty: <strong>{campaign.companyName}</strong></span></div>
         </div>
       </div>
 
@@ -102,7 +115,7 @@ export default async function CampaignDetailPage({ params }: CampaignDetailPageP
             <p className="text-xs text-slate-500">
               Quản lý danh sách các gian hàng, điểm bán hoặc trung tâm thương mại tham gia kích hoạt trong chiến dịch này.
             </p>
-            <div className="flex items-center gap-2 pt-2">
+            {isManager && <div className="flex items-center gap-2 pt-2">
               <Link href={`/locations/new?campaignId=${campaign.id}`}>
                 <Button size="sm" className="flex items-center gap-1 text-xs">
                   <PlusCircle className="h-3.5 w-3.5" />
@@ -115,7 +128,7 @@ export default async function CampaignDetailPage({ params }: CampaignDetailPageP
                   Import Excel / CSV
                 </Button>
               </Link>
-            </div>
+            </div>}
           </CardContent>
         </Card>
 

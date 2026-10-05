@@ -1,9 +1,13 @@
 import { Campaign } from '@/domain/entities';
 
+export type CampaignWriteInput = Omit<Campaign, 'id' | 'currentUserRole' | 'createdAt' | 'updatedAt'> & {
+  id?: string;
+};
+
 export interface CampaignRepository {
   findById(id: string): Promise<Campaign | null>;
-  findByOrganization(organizationId: string): Promise<Campaign[]>;
-  save(campaign: Omit<Campaign, 'id' | 'createdAt' | 'updatedAt'> & { id?: string }): Promise<Campaign>;
+  findAccessibleByUser(userId: string): Promise<Campaign[]>;
+  save(campaign: CampaignWriteInput): Promise<Campaign>;
   updateStatus(id: string, status: Campaign['status']): Promise<void>;
   delete(id: string): Promise<void>;
 }

@@ -5,7 +5,7 @@ import * as XLSX from 'xlsx';
 import { Campaign, Location } from '@/domain/entities';
 import { Button } from '@/components/ui/button';
 import { formatDate } from '@/lib/utils';
-import { Printer, Download, Building2, CheckCircle2, ShieldCheck, Tag, Calendar, MapPin } from 'lucide-react';
+import { Printer, Download, CheckCircle2, ShieldCheck } from 'lucide-react';
 
 interface ReportViewProps {
   campaign: Campaign;

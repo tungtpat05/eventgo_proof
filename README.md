@@ -29,10 +29,10 @@ Biên bản nghiệm thu & Xuất báo cáo (Report Generation) ──► Xuất
 
 ## 🏗️ Kiến trúc kỹ thuật (Tech Stack & Architecture)
 
-- **Framework**: [Next.js 15+](https://nextjs.org/) (App Router, React 19, Server Components, Server Actions).
+- **Framework**: [Next.js 16](https://nextjs.org/) (App Router, React 19, Server Components, Server Actions, Proxy).
 - **Ngôn ngữ**: TypeScript Strict Mode.
 - **Giao diện**: Tailwind CSS v4, Lucide Icons, shadcn/ui design tokens.
-- **Xác thực & Database**: Supabase Auth (SSR Cookie-based) & PostgreSQL với Row Level Security (RLS) bảo vệ Multi-tenancy.
+- **Xác thực & Database**: Google OAuth qua Supabase Auth và PostgreSQL RLS phân quyền theo từng chiến dịch/location/submission.
 - **Lưu trữ hình ảnh**: Cloudinary CDN (Direct Signed Upload, nén ảnh thông minh).
 - **Xử lý bảng tính**: SheetJS (`xlsx`) đọc file danh sách địa điểm và xuất báo cáo đối soát.
 - **In ấn & PDF**: CSS `@media print` chuẩn hóa A4 Vector Report.
@@ -89,13 +89,21 @@ CLOUDINARY_API_SECRET=your-cloudinary-api-secret
 NEXT_PUBLIC_APP_URL=http://localhost:3000
 ```
 
-> **Lưu ý:** Khi chưa điền thông tin Supabase/Cloudinary, ứng dụng vẫn hoạt động trơn tru ở chế độ **Mock / Demo In-Memory** để kiểm tra giao diện và luồng nghiệp vụ.
+> **Bắt buộc:** Ứng dụng không còn chế độ Mock/In-Memory. Thiếu Supabase hoặc Cloudinary sẽ trả lỗi cấu hình thay vì báo thành công giả.
+
+Trong Supabase Dashboard:
+
+1. Bật Google provider tại **Authentication → Providers → Google**.
+2. Tắt email/password signup để Google là phương thức đăng nhập duy nhất.
+3. Thêm callback URL `http://localhost:3000/auth/callback` và callback URL production tương ứng.
 
 ### 4. Khởi tạo Cơ sở dữ liệu (Supabase Migrations)
 Khi kết nối dự án Supabase, copy và chạy lần lượt 3 file script SQL trong thư mục `supabase/migrations/` trên **Supabase SQL Editor**:
-1. `20261002000001_initial_schema.sql`: Khởi tạo Enums, 8 Bảng dữ liệu, Foreign Keys, Check Constraints và Indexes.
-2. `20261002000002_rls_policies.sql`: Thiết lập Row Level Security (RLS) cô lập tổ chức và phân quyền Role.
-3. `20261002000003_seed_data.sql`: Nạp dữ liệu mẫu thực tế tại Hà Nội.
+1. `20261002000001_initial_schema.sql`: Khởi tạo profile, campaign membership, assignments, submissions và audit tables.
+2. `20261002000002_rls_policies.sql`: Thiết lập RLS cùng các RPC atomic cho campaign, assignment, evidence và approval.
+3. `20261002000003_seed_data.sql`: Chỉ tạo dữ liệu mẫu khi đã có ít nhất một profile Google.
+
+Các script này là initial schema đã được viết lại. Nếu database từng chạy schema organization/global-role cũ, hãy reset database trước khi chạy lại ba script.
 
 ### 5. Khởi chạy máy chủ phát triển
 ```bash
@@ -105,31 +113,32 @@ Mở trình duyệt tại: `http://localhost:3000` (sẽ tự động chuyển h
 
 ---
 
-## 👥 Tài khoản thử nghiệm (Demo Roles)
+## 👥 Google OAuth và role theo chiến dịch
 
-Hệ thống hỗ trợ nút bấm chọn nhanh tài khoản tại trang Đăng nhập (`/login`):
-
-| Vai trò (Role) | Email đăng nhập | Trách nhiệm chính |
-|---|---|---|
-| **Project Manager (PM)** | `pm1@eventgo.vn` | Khởi tạo chiến dịch, import địa điểm từ Excel, gán nhân sự, xuất báo cáo. |
-| **Site Supervisor (Giám sát)** | `supervisor1@eventgo.vn` | Giao diện mobile hiện trường: xem checklist, chụp/tải ảnh, nộp bằng chứng. |
-| **Approver (Người kiểm duyệt)** | `approver1@eventgo.vn` | Kiểm tra ảnh phóng to, phê duyệt, bắt buộc lý do khi yêu cầu chụp lại. |
+- Mọi tài khoản đăng nhập bằng Google và đều có thể tạo chiến dịch.
+- Người tạo tự động trở thành `MANAGER`.
+- Manager thêm tài khoản khác bằng email với role `MANAGER`, `SUPERVISOR` hoặc `APPROVER`.
+- Supervisor chỉ xem và nộp evidence tại location được giao.
+- Approver chỉ xem và duyệt submission được giao.
+- Manager không nộp evidence và không duyệt; Manager chỉ quản trị campaign, member và assignment.
+- Có thể thay đổi role hoặc thu hồi quyền người tạo nếu campaign vẫn còn ít nhất một Manager.
 
 ---
 
 ## 🧪 Kịch bản kiểm thử End-to-End (Demo Flow)
 
-1. **Đăng nhập với vai trò PM**:
+1. **Đăng nhập Google và tạo campaign**:
    - Truy cập `/campaigns` $\rightarrow$ Nhấn **"Tạo chiến dịch mới"** (VD: *Summer Activation 2026*).
    - Truy cập `/locations/import` $\rightarrow$ Tải lên file Excel mẫu để nhập hàng loạt các điểm Vincom, Aeon Mall.
-2. **Đóng vai trò Site Supervisor (Hiện trường)**:
+   - Thêm Supervisor và Approver bằng email, sau đó phân công cho location.
+2. **Đăng nhập bằng tài khoản Supervisor được phân công**:
    - Mở chi tiết địa điểm `/locations/[id]` $\rightarrow$ Nhấn **"Chụp & Nộp bằng chứng"**.
    - Chọn tiêu chí cần nghiệm thu $\rightarrow$ Chọn/chụp ảnh từ điện thoại (ảnh tự động nén tối ưu dưới 600KB) $\rightarrow$ Nhập ghi chú $\rightarrow$ Nhấn **"Nộp bằng chứng"**.
-3. **Đóng vai trò Approver (Duyệt)**:
+3. **Đăng nhập bằng tài khoản Approver được phân công**:
    - Truy cập `/approvals` $\rightarrow$ Kiểm tra ảnh bằng chứng hiện trường phóng to.
    - Nhấn **"Yêu cầu chụp lại"** (bắt buộc nhập lý do: *"Ảnh logo bị lóa đèn sảnh"*).
    - Supervisor nộp lại ảnh mới $\rightarrow$ Approver nhấn **"Duyệt Đạt"**.
-4. **Đóng vai trò PM (Xuất biên bản)**:
+4. **Quay lại tài khoản Manager để xuất biên bản**:
    - Truy cập `/reports` $\rightarrow$ Xem biên bản nghiệm thu chiến dịch tổng thể.
    - Nhấn **"In / Xuất PDF"** hoặc **"Xuất Excel (.xlsx)"** để bàn giao đối tác.
 

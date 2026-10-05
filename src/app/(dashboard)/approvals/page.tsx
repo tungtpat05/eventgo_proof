@@ -4,8 +4,8 @@ import { SupabaseLocationRepository } from '@/infrastructure/repositories/supaba
 import { SupabaseChecklistRepository } from '@/infrastructure/repositories/supabase-checklist-repository';
 import { getCurrentUserSession } from '@/application/use-cases/auth/get-current-user';
 import { ReviewPanel } from '@/features/approvals/components/review-panel';
-import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
-import { ClipboardCheck, CheckCircle2 } from 'lucide-react';
+import { Card } from '@/components/ui/card';
+import { CheckCircle2 } from 'lucide-react';
 import { Metadata } from 'next';
 
 export const metadata: Metadata = {
@@ -18,7 +18,7 @@ export default async function ApprovalsPage() {
   const locRepo = new SupabaseLocationRepository();
   const checkRepo = new SupabaseChecklistRepository();
 
-  const pendingSubmissions = await subRepo.findPendingReviews(session.user.organizationId);
+  const pendingSubmissions = await subRepo.findPendingReviews(session.user.id);
 
   // Load locations and criteria details for pending items
   const fullSubmissions = await Promise.all(

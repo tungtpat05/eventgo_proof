@@ -4,23 +4,28 @@ import React, { useState } from 'react';
 import { assignPersonnelAction } from '../actions/location-actions';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { UserCheck, Calendar, Loader2, CheckCircle2 } from 'lucide-react';
+import { UserCheck, Loader2, CheckCircle2 } from 'lucide-react';
+import { CampaignMember } from '@/domain/entities';
 
-interface AssignmentDialogProps {
+export interface AssignmentPanelProps {
   locationId: string;
-  currentSupervisorId?: string | null;
-  currentApproverId?: string | null;
+  supervisors?: CampaignMember[];
+  approvers?: CampaignMember[];
+  currentSupervisorMemberId?: string | null;
+  currentApproverMemberId?: string | null;
   currentDeadline?: string | null;
 }
 
 export function AssignmentPanel({
   locationId,
-  currentSupervisorId,
-  currentApproverId,
+  supervisors = [],
+  approvers = [],
+  currentSupervisorMemberId,
+  currentApproverMemberId,
   currentDeadline,
-}: AssignmentDialogProps) {
-  const [supervisorId, setSupervisorId] = useState(currentSupervisorId || 'demo-supervisor-uuid');
-  const [approverId, setApproverId] = useState(currentApproverId || 'demo-approver-uuid');
+}: AssignmentPanelProps) {
+  const [supervisorMemberId, setSupervisorMemberId] = useState(currentSupervisorMemberId || '');
+  const [approverMemberId, setApproverMemberId] = useState(currentApproverMemberId || '');
   const [deadline, setDeadline] = useState(currentDeadline || '');
   const [isLoading, setIsLoading] = useState(false);
   const [message, setMessage] = useState<{ text: string; isError?: boolean } | null>(null);
@@ -30,7 +35,12 @@ export function AssignmentPanel({
     setIsLoading(true);
     setMessage(null);
 
-    const res = await assignPersonnelAction(locationId, supervisorId, approverId, deadline || null);
+    const res = await assignPersonnelAction(
+      locationId,
+      supervisorMemberId || null,
+      approverMemberId || null,
+      deadline || null
+    );
     setIsLoading(false);
 
     if (res.success) {
@@ -62,28 +72,37 @@ export function AssignmentPanel({
 
       <div className="space-y-1.5">
         <label className="text-xs font-semibold uppercase text-slate-700">
-          Giám sát hiện trường (Site Supervisor) *
+          Giám sát hiện trường (Site Supervisor)
         </label>
         <select
-          value={supervisorId}
-          onChange={(e) => setSupervisorId(e.target.value)}
+          value={supervisorMemberId}
+          onChange={(e) => setSupervisorMemberId(e.target.value)}
           className="flex h-10 w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm ring-offset-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600 focus-visible:ring-offset-2"
         >
-          <option value="5ec73217-0087-49ec-8e34-5d3ee9402aea">Nguyễn Thanh Tùng (supervisor1@eventgo.vn)</option>
+          <option value="">-- Chưa phân công --</option>
+          {supervisors.map((member) => (
+            <option key={member.id} value={member.id}>
+              {member.fullName} ({member.email})
+            </option>
+          ))}
         </select>
       </div>
 
       <div className="space-y-1.5">
         <label className="text-xs font-semibold uppercase text-slate-700">
-          Người kiểm duyệt (Approver) *
+          Người kiểm duyệt (Approver)
         </label>
         <select
-          value={approverId}
-          onChange={(e) => setApproverId(e.target.value)}
+          value={approverMemberId}
+          onChange={(e) => setApproverMemberId(e.target.value)}
           className="flex h-10 w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm ring-offset-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600 focus-visible:ring-offset-2"
         >
-          <option value="912cabb3-731e-496a-be52-6d603d8824c9">Lê Bá Nhật Nam (approver1@eventgo.vn)</option>
-          <option value="e31ecfe6-6008-4ae5-aa9c-2cc65d2c191a">Nguyễn Thị Bảo Ngọc (pm1@eventgo.vn)</option>
+          <option value="">-- Chưa phân công --</option>
+          {approvers.map((member) => (
+            <option key={member.id} value={member.id}>
+              {member.fullName} ({member.email})
+            </option>
+          ))}
         </select>
       </div>
 

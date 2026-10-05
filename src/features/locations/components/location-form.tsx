@@ -46,8 +46,9 @@ export function LocationForm({ campaigns, defaultCampaignId }: LocationFormProps
         <form action={formAction}>
           <CardContent className="space-y-4">
             {state?.error && (
-              <div className="rounded-lg bg-red-50 p-3 text-sm text-red-600 border border-red-200">
-                {state.error}
+              <div className="rounded-lg bg-red-50 p-3 text-sm text-red-700 border border-red-200 flex items-start gap-2">
+                <span className="font-semibold shrink-0">Lỗi:</span>
+                <span>{state.error}</span>
               </div>
             )}
 
@@ -60,7 +61,11 @@ export function LocationForm({ campaigns, defaultCampaignId }: LocationFormProps
                 name="campaignId"
                 required
                 defaultValue={defaultCampaignId || campaigns[0]?.id || ''}
-                className="flex h-10 w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm ring-offset-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600 focus-visible:ring-offset-2"
+                className={`flex h-10 w-full rounded-md border bg-white px-3 py-2 text-sm ring-offset-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 ${
+                  state?.fieldErrors?.campaignId
+                    ? 'border-red-500 focus-visible:ring-red-500'
+                    : 'border-slate-200 focus-visible:ring-blue-600'
+                }`}
               >
                 {campaigns.map((c) => (
                   <option key={c.id} value={c.id}>
@@ -68,6 +73,9 @@ export function LocationForm({ campaigns, defaultCampaignId }: LocationFormProps
                   </option>
                 ))}
               </select>
+              {state?.fieldErrors?.campaignId && (
+                <p className="text-xs text-red-600 font-medium">{state.fieldErrors.campaignId[0]}</p>
+              )}
             </div>
 
             <div className="space-y-1.5">
@@ -79,7 +87,11 @@ export function LocationForm({ campaigns, defaultCampaignId }: LocationFormProps
                 name="name"
                 required
                 placeholder="VD: Gian Hàng Sảnh A — Vincom Center Bà Triệu"
+                className={state?.fieldErrors?.name ? 'border-red-500 focus-visible:ring-red-500' : ''}
               />
+              {state?.fieldErrors?.name && (
+                <p className="text-xs text-red-600 font-medium">{state.fieldErrors.name[0]}</p>
+              )}
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
@@ -92,7 +104,11 @@ export function LocationForm({ campaigns, defaultCampaignId }: LocationFormProps
                   name="address"
                   required
                   placeholder="VD: 191 Bà Triệu, Lê Đại Hành, Hai Bà Trưng"
+                  className={state?.fieldErrors?.address ? 'border-red-500 focus-visible:ring-red-500' : ''}
                 />
+                {state?.fieldErrors?.address && (
+                  <p className="text-xs text-red-600 font-medium">{state.fieldErrors.address[0]}</p>
+                )}
               </div>
 
               <div className="space-y-1.5">
@@ -104,7 +120,11 @@ export function LocationForm({ campaigns, defaultCampaignId }: LocationFormProps
                   name="city"
                   required
                   placeholder="VD: Hà Nội / TP.HCM"
+                  className={state?.fieldErrors?.city ? 'border-red-500 focus-visible:ring-red-500' : ''}
                 />
+                {state?.fieldErrors?.city && (
+                  <p className="text-xs text-red-600 font-medium">{state.fieldErrors.city[0]}</p>
+                )}
               </div>
             </div>
 
@@ -116,7 +136,11 @@ export function LocationForm({ campaigns, defaultCampaignId }: LocationFormProps
                 id="deadline"
                 name="deadline"
                 type="datetime-local"
+                className={state?.fieldErrors?.deadline ? 'border-red-500 focus-visible:ring-red-500' : ''}
               />
+              {state?.fieldErrors?.deadline && (
+                <p className="text-xs text-red-600 font-medium">{state.fieldErrors.deadline[0]}</p>
+              )}
             </div>
           </CardContent>
 

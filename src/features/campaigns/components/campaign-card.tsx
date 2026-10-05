@@ -6,6 +6,7 @@ import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter }
 import { Button } from '@/components/ui/button';
 import { formatDate } from '@/lib/utils';
 import { Calendar, Tag, ArrowRight } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
 
 interface CampaignCardProps {
   campaign: Campaign;
@@ -34,6 +35,7 @@ export function CampaignCard({ campaign, locationsCount = 0 }: CampaignCardProps
       </CardHeader>
 
       <CardContent className="pb-3">
+        <Badge variant="outline" className="mb-2">{campaign.currentUserRole}</Badge>
         <div className="flex items-center gap-2 text-xs text-slate-500">
           <Calendar className="h-3.5 w-3.5 text-slate-400" />
           <span>

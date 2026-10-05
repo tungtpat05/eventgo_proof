@@ -2,9 +2,9 @@
 
 import React, { useState, useActionState } from 'react';
 import { useRouter } from 'next/navigation';
-import { parseExcelFileAction, confirmImportAction, ImportPreviewState } from '../actions/location-actions';
+import { parseExcelFileAction, confirmImportAction } from '../actions/location-actions';
 import { Button } from '@/components/ui/button';
-import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from '@/components/ui/card';
+import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
 import { UploadCloud, CheckCircle2, AlertTriangle, FileSpreadsheet, Loader2 } from 'lucide-react';
 
 interface ImportModalProps {

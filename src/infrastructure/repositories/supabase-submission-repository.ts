@@ -1,202 +1,160 @@
+import { ApprovalHistory, Evidence, Submission } from '@/domain/entities';
+import { CampaignMemberStatus, CampaignRole, SubmissionStatus } from '@/domain/enums';
 import { SubmissionRepository } from '@/domain/repositories/submission-repository';
-import { Submission, Evidence, ApprovalHistory } from '@/domain/entities';
-import { SubmissionStatus, ApprovalAction } from '@/domain/enums';
 import { createServerSupabaseClient } from '@/infrastructure/supabase/server';
-import { env } from '@/config/env';
+import { Database, Json } from '@/types/database.types';
 
-// In-memory submissions for local prototyping & demonstration
-let inMemorySubmissions: Submission[] = [
-  {
-    id: 'sub-vincom-1',
-    locationId: 'loc-vincom-ba-trieu',
-    checklistItemId: 'item-booth-structure',
-    status: SubmissionStatus.APPROVED,
-    notes: 'Đã hoàn thiện lắp đặt khung sắt và sàn nâng theo đúng 3D.',
-    submittedBy: 'demo-supervisor-uuid',
-    submittedAt: new Date('2026-06-10T10:00:00Z'),
-    createdAt: new Date('2026-06-10T09:30:00Z'),
-    updatedAt: new Date('2026-06-10T11:00:00Z'),
-    evidence: [
-      {
-        id: 'evi-1',
-        submissionId: 'sub-vincom-1',
-        imageUrl: 'https://images.unsplash.com/photo-1540575467063-178a50c2df87?w=1200&auto=format&fit=crop&q=80',
-        thumbnailUrl: 'https://images.unsplash.com/photo-1540575467063-178a50c2df87?w=300&auto=format&fit=crop&q=80',
-        cloudinaryPublicId: 'demo/booth-full',
-        uploadedBy: 'demo-supervisor-uuid',
-        createdAt: new Date('2026-06-10T09:45:00Z'),
-      },
-    ],
-    history: [
-      {
-        id: 'hist-1',
-        submissionId: 'sub-vincom-1',
-        reviewerId: 'demo-approver-uuid',
-        action: ApprovalAction.APPROVE,
-        notes: 'Gian hàng đạt chuẩn thiết kế, kết cấu vững chãi.',
-        createdAt: new Date('2026-06-10T11:00:00Z'),
-      },
-    ],
-  },
-  {
-    id: 'sub-vincom-2',
-    locationId: 'loc-vincom-ba-trieu',
-    checklistItemId: 'item-brand-logo',
-    status: SubmissionStatus.NEEDS_REVISION,
-    notes: 'Logo dán trên mặt trước quầy.',
-    submittedBy: 'demo-supervisor-uuid',
-    submittedAt: new Date('2026-06-10T10:15:00Z'),
-    createdAt: new Date('2026-06-10T10:00:00Z'),
-    updatedAt: new Date('2026-06-10T11:05:00Z'),
-    evidence: [
-      {
-        id: 'evi-2',
-        submissionId: 'sub-vincom-2',
-        imageUrl: 'https://images.unsplash.com/photo-1511578314322-379afb476865?w=1200&auto=format&fit=crop&q=80',
-        thumbnailUrl: 'https://images.unsplash.com/photo-1511578314322-379afb476865?w=300&auto=format&fit=crop&q=80',
-        cloudinaryPublicId: 'demo/logo-dim',
-        uploadedBy: 'demo-supervisor-uuid',
-        createdAt: new Date('2026-06-10T10:10:00Z'),
-      },
-    ],
-    history: [
-      {
-        id: 'hist-2',
-        submissionId: 'sub-vincom-2',
-        reviewerId: 'demo-approver-uuid',
-        action: ApprovalAction.REQUEST_REVISION,
-        notes: 'Ảnh logo bị mờ và lóa đèn sảnh, vui lòng chụp lại rõ nét trực diện.',
-        createdAt: new Date('2026-06-10T11:05:00Z'),
-      },
-    ],
-  },
-  {
-    id: 'sub-vincom-3',
-    locationId: 'loc-vincom-ba-trieu',
-    checklistItemId: 'item-posm-display',
-    status: SubmissionStatus.SUBMITTED,
-    notes: 'Đã dựng 2 standee hai bên lối vào và đặt tờ rơi tại quầy.',
-    submittedBy: 'demo-supervisor-uuid',
-    submittedAt: new Date('2026-06-10T14:30:00Z'),
-    createdAt: new Date('2026-06-10T14:00:00Z'),
-    updatedAt: new Date('2026-06-10T14:30:00Z'),
-    evidence: [
-      {
-        id: 'evi-3',
-        submissionId: 'sub-vincom-3',
-        imageUrl: 'https://images.unsplash.com/photo-1492684223066-81342ee5ff30?w=1200&auto=format&fit=crop&q=80',
-        thumbnailUrl: 'https://images.unsplash.com/photo-1492684223066-81342ee5ff30?w=300&auto=format&fit=crop&q=80',
-        cloudinaryPublicId: 'demo/posm',
-        uploadedBy: 'demo-supervisor-uuid',
-        createdAt: new Date('2026-06-10T14:20:00Z'),
-      },
-    ],
-    history: [],
-  },
-];
+type SubmissionRow = Database['public']['Tables']['submissions']['Row'];
+type EvidenceRow = Database['public']['Tables']['evidence']['Row'];
+type HistoryRow = Database['public']['Tables']['approval_history']['Row'];
+
+function mapEvidence(row: EvidenceRow): Evidence {
+  return {
+    id: row.id,
+    submissionId: row.submission_id,
+    imageUrl: row.image_url,
+    thumbnailUrl: row.thumbnail_url,
+    cloudinaryPublicId: row.cloudinary_public_id,
+    fileSizeBytes: row.file_size_bytes,
+    width: row.width,
+    height: row.height,
+    uploadedBy: row.uploaded_by,
+    createdAt: new Date(row.created_at),
+  };
+}
+
+function mapHistory(row: HistoryRow): ApprovalHistory {
+  return {
+    id: row.id,
+    submissionId: row.submission_id,
+    reviewerId: row.reviewer_id,
+    action: row.action,
+    notes: row.notes,
+    createdAt: new Date(row.created_at),
+  };
+}
+
+function mapSubmission(row: SubmissionRow, evidence: Evidence[] = [], history: ApprovalHistory[] = []): Submission {
+  return {
+    id: row.id,
+    locationId: row.location_id,
+    checklistItemId: row.checklist_item_id,
+    assignedApproverMemberId: row.assigned_approver_member_id,
+    status: row.status,
+    notes: row.notes,
+    submittedBy: row.submitted_by,
+    submittedAt: row.submitted_at ? new Date(row.submitted_at) : null,
+    createdAt: new Date(row.created_at),
+    updatedAt: new Date(row.updated_at),
+    evidence,
+    history,
+  };
+}
 
 export class SupabaseSubmissionRepository implements SubmissionRepository {
-  private isSupabaseConfigured(): boolean {
-    return Boolean(env.NEXT_PUBLIC_SUPABASE_URL && env.NEXT_PUBLIC_SUPABASE_ANON_KEY);
+  private async hydrate(rows: SubmissionRow[]): Promise<Submission[]> {
+    if (rows.length === 0) return [];
+    const supabase = await createServerSupabaseClient();
+    const ids = rows.map((row) => row.id);
+    const [{ data: evidence, error: evidenceError }, { data: history, error: historyError }] = await Promise.all([
+      supabase.from('evidence').select('*').in('submission_id', ids).order('created_at'),
+      supabase.from('approval_history').select('*').in('submission_id', ids).order('created_at', { ascending: false }),
+    ]);
+    if (evidenceError) throw new Error(evidenceError.message);
+    if (historyError) throw new Error(historyError.message);
+
+    return rows.map((row) =>
+      mapSubmission(
+        row,
+        evidence.filter((item) => item.submission_id === row.id).map(mapEvidence),
+        history.filter((item) => item.submission_id === row.id).map(mapHistory)
+      )
+    );
   }
 
   async findById(id: string): Promise<Submission | null> {
-    const found = inMemorySubmissions.find((s) => s.id === id);
-    return found ? { ...found } : null;
+    const supabase = await createServerSupabaseClient();
+    const { data, error } = await supabase.from('submissions').select('*').eq('id', id).maybeSingle();
+    if (error) throw new Error(error.message);
+    if (!data) return null;
+    return (await this.hydrate([data]))[0];
   }
 
   async findByLocation(locationId: string): Promise<Submission[]> {
-    return inMemorySubmissions.filter((s) => s.locationId === locationId);
+    const supabase = await createServerSupabaseClient();
+    const { data, error } = await supabase
+      .from('submissions')
+      .select('*')
+      .eq('location_id', locationId)
+      .order('created_at');
+    if (error) throw new Error(error.message);
+    return this.hydrate(data);
   }
 
   async findByChecklistItem(locationId: string, checklistItemId: string): Promise<Submission | null> {
-    const found = inMemorySubmissions.find(
-      (s) => s.locationId === locationId && s.checklistItemId === checklistItemId
-    );
-    return found ? { ...found } : null;
+    const supabase = await createServerSupabaseClient();
+    const { data, error } = await supabase
+      .from('submissions')
+      .select('*')
+      .eq('location_id', locationId)
+      .eq('checklist_item_id', checklistItemId)
+      .maybeSingle();
+    if (error) throw new Error(error.message);
+    if (!data) return null;
+    return (await this.hydrate([data]))[0];
   }
 
-  async findPendingReviews(organizationId: string): Promise<Submission[]> {
-    return inMemorySubmissions.filter((s) => s.status === SubmissionStatus.SUBMITTED);
+  async findPendingReviews(userId: string): Promise<Submission[]> {
+    const supabase = await createServerSupabaseClient();
+    const { data: memberships, error: membershipError } = await supabase
+      .from('campaign_members')
+      .select('id')
+      .eq('user_id', userId)
+      .eq('role', CampaignRole.APPROVER)
+      .eq('status', CampaignMemberStatus.ACTIVE);
+    if (membershipError) throw new Error(membershipError.message);
+    if (memberships.length === 0) return [];
+
+    const { data, error } = await supabase
+      .from('submissions')
+      .select('*')
+      .in('assigned_approver_member_id', memberships.map((membership) => membership.id))
+      .eq('status', SubmissionStatus.SUBMITTED)
+      .order('submitted_at');
+    if (error) throw new Error(error.message);
+    return this.hydrate(data);
   }
 
   async submit(params: {
     locationId: string;
     checklistItemId: string;
     notes?: string;
-    submittedBy: string;
     photos: Array<{ imageUrl: string; thumbnailUrl?: string; cloudinaryPublicId: string }>;
   }): Promise<Submission> {
-    const now = new Date();
-    const existingIdx = inMemorySubmissions.findIndex(
-      (s) => s.locationId === params.locationId && s.checklistItemId === params.checklistItemId
-    );
-
-    const newEvidence: Evidence[] = params.photos.map((p, idx) => ({
-      id: `evi-${Date.now()}-${idx}`,
-      submissionId: existingIdx !== -1 ? inMemorySubmissions[existingIdx].id : `sub-${Date.now()}`,
-      imageUrl: p.imageUrl,
-      thumbnailUrl: p.thumbnailUrl || p.imageUrl,
-      cloudinaryPublicId: p.cloudinaryPublicId,
-      uploadedBy: params.submittedBy,
-      createdAt: now,
-    }));
-
-    if (existingIdx !== -1) {
-      const existing = inMemorySubmissions[existingIdx];
-      existing.status = SubmissionStatus.SUBMITTED;
-      existing.notes = params.notes || existing.notes;
-      existing.submittedBy = params.submittedBy;
-      existing.submittedAt = now;
-      existing.updatedAt = now;
-      existing.evidence = [...(existing.evidence || []), ...newEvidence];
-      return existing;
-    }
-
-    const newSub: Submission = {
-      id: `sub-${Date.now()}`,
-      locationId: params.locationId,
-      checklistItemId: params.checklistItemId,
-      status: SubmissionStatus.SUBMITTED,
-      notes: params.notes,
-      submittedBy: params.submittedBy,
-      submittedAt: now,
-      createdAt: now,
-      updatedAt: now,
-      evidence: newEvidence,
-      history: [],
-    };
-    inMemorySubmissions.push(newSub);
-    return newSub;
+    const supabase = await createServerSupabaseClient();
+    const { data: submissionId, error } = await supabase.rpc('submit_evidence', {
+      p_location_id: params.locationId,
+      p_checklist_item_id: params.checklistItemId,
+      p_notes: params.notes || '',
+      p_photos: params.photos as Json,
+    });
+    if (error) throw new Error(error.message);
+    const submission = await this.findById(submissionId);
+    if (!submission) throw new Error('Không thể tải submission vừa tạo.');
+    return submission;
   }
 
   async review(params: {
     submissionId: string;
-    reviewerId: string;
-    action: ApprovalAction;
+    action: Database['public']['Enums']['approval_action'];
     notes?: string;
   }): Promise<void> {
-    const now = new Date();
-    const sub = inMemorySubmissions.find((s) => s.id === params.submissionId);
-    if (!sub) return;
-
-    if (params.action === ApprovalAction.APPROVE) {
-      sub.status = SubmissionStatus.APPROVED;
-    } else {
-      sub.status = SubmissionStatus.NEEDS_REVISION;
-    }
-    sub.updatedAt = now;
-
-    const newHistory: ApprovalHistory = {
-      id: `hist-${Date.now()}`,
-      submissionId: params.submissionId,
-      reviewerId: params.reviewerId,
-      action: params.action,
-      notes: params.notes || null,
-      createdAt: now,
-    };
-
-    if (!sub.history) sub.history = [];
-    sub.history.unshift(newHistory);
+    const supabase = await createServerSupabaseClient();
+    const { error } = await supabase.rpc('review_submission', {
+      p_submission_id: params.submissionId,
+      p_action: params.action,
+      p_notes: params.notes || '',
+    });
+    if (error) throw new Error(error.message);
   }
 }

@@ -1,234 +1,132 @@
-import { CampaignRepository } from '@/domain/repositories/campaign-repository';
 import { Campaign } from '@/domain/entities';
-import { CampaignStatus } from '@/domain/enums';
+import { CampaignRepository, CampaignWriteInput } from '@/domain/repositories/campaign-repository';
+import { CampaignMemberStatus, CampaignRole } from '@/domain/enums';
 import { createServerSupabaseClient } from '@/infrastructure/supabase/server';
-import { env } from '@/config/env';
 import { Database } from '@/types/database.types';
 
 type CampaignRow = Database['public']['Tables']['campaigns']['Row'];
 
-// In-memory store for fallback/demo mode when Supabase credentials are pending
-let inMemoryCampaigns: Campaign[] = [
-  {
-    id: 'camp-summer-2026',
-    organizationId: 'demo-org-uuid',
-    title: 'Summer Activation 2026 — Trưng Bày Đồ Uống Mùa Hè',
-    brandName: 'FreshJuice Co.',
-    description: 'Chiến dịch kích hoạt thương hiệu tại 15 trung tâm thương mại lớn Hà Nội & TP.HCM.',
-    startDate: new Date('2026-06-01'),
-    endDate: new Date('2026-08-30'),
-    status: CampaignStatus.ACTIVE,
-    createdBy: 'demo-pm-uuid',
-    createdAt: new Date('2026-05-15'),
-    updatedAt: new Date('2026-05-15'),
-  },
-  {
-    id: 'camp-tech-roadshow',
-    organizationId: 'demo-org-uuid',
-    title: 'Tech Roadshow 2026 — Trải Nghiệm Laptop AI',
-    brandName: 'NexGen Tech',
-    description: 'Roadshow quảng bá dòng sản phẩm laptop trí tuệ nhân tạo thế hệ mới.',
-    startDate: new Date('2026-09-01'),
-    endDate: new Date('2026-10-15'),
-    status: CampaignStatus.DRAFT,
-    createdBy: 'demo-pm-uuid',
-    createdAt: new Date('2026-08-20'),
-    updatedAt: new Date('2026-08-20'),
-  },
-];
+function mapCampaign(row: CampaignRow, role: CampaignRole): Campaign {
+  return {
+    id: row.id,
+    title: row.title,
+    brandName: row.brand_name,
+    description: row.description,
+    companyName: row.company_name,
+    companyTaxCode: row.company_tax_code,
+    companyAddress: row.company_address,
+    companyContactName: row.company_contact_name,
+    companyContactEmail: row.company_contact_email,
+    companyContactPhone: row.company_contact_phone,
+    startDate: new Date(row.start_date),
+    endDate: new Date(row.end_date),
+    status: row.status,
+    createdBy: row.created_by,
+    currentUserRole: role,
+    createdAt: new Date(row.created_at),
+    updatedAt: new Date(row.updated_at),
+  };
+}
 
 export class SupabaseCampaignRepository implements CampaignRepository {
-  private isSupabaseConfigured(): boolean {
-    return Boolean(env.NEXT_PUBLIC_SUPABASE_URL && env.NEXT_PUBLIC_SUPABASE_ANON_KEY);
-  }
-
   async findById(id: string): Promise<Campaign | null> {
-    if (this.isSupabaseConfigured()) {
-      try {
-        const supabase = await createServerSupabaseClient();
-        const { data, error } = await (supabase.from('campaigns') as any)
-          .select('*')
-          .eq('id', id)
-          .single();
+    const supabase = await createServerSupabaseClient();
+    const { data: userData } = await supabase.auth.getUser();
+    if (!userData.user) return null;
 
-        if (error || !data) return null;
-        const row = data as CampaignRow;
+    const [{ data: campaign, error }, { data: membership }] = await Promise.all([
+      supabase.from('campaigns').select('*').eq('id', id).maybeSingle(),
+      supabase
+        .from('campaign_members')
+        .select('role')
+        .eq('campaign_id', id)
+        .eq('user_id', userData.user.id)
+        .eq('status', CampaignMemberStatus.ACTIVE)
+        .maybeSingle(),
+    ]);
 
-        return {
-          id: row.id,
-          organizationId: row.organization_id,
-          title: row.title,
-          brandName: row.brand_name,
-          description: row.description,
-          startDate: new Date(row.start_date),
-          endDate: new Date(row.end_date),
-          status: row.status,
-          createdBy: row.created_by,
-          createdAt: new Date(row.created_at),
-          updatedAt: new Date(row.updated_at),
-        };
-      } catch {
-        // Fall back to memory
-      }
-    }
-
-    const found = inMemoryCampaigns.find((c) => c.id === id);
-    return found ? { ...found } : null;
+    if (error) throw new Error(error.message);
+    if (!campaign || !membership) return null;
+    return mapCampaign(campaign, membership.role);
   }
 
-  async findByOrganization(organizationId: string): Promise<Campaign[]> {
-    if (this.isSupabaseConfigured()) {
-      try {
-        const supabase = await createServerSupabaseClient();
-        const { data, error } = await (supabase.from('campaigns') as any)
-          .select('*')
-          .eq('organization_id', organizationId)
-          .order('created_at', { ascending: false });
+  async findAccessibleByUser(userId: string): Promise<Campaign[]> {
+    const supabase = await createServerSupabaseClient();
+    const [{ data: campaigns, error }, { data: memberships, error: membershipError }] = await Promise.all([
+      supabase.from('campaigns').select('*').order('created_at', { ascending: false }),
+      supabase
+        .from('campaign_members')
+        .select('campaign_id, role')
+        .eq('user_id', userId)
+        .eq('status', CampaignMemberStatus.ACTIVE),
+    ]);
 
-        if (!error && data) {
-          return (data as CampaignRow[]).map((item) => ({
-            id: item.id,
-            organizationId: item.organization_id,
-            title: item.title,
-            brandName: item.brand_name,
-            description: item.description,
-            startDate: new Date(item.start_date),
-            endDate: new Date(item.end_date),
-            status: item.status,
-            createdBy: item.created_by,
-            createdAt: new Date(item.created_at),
-            updatedAt: new Date(item.updated_at),
-          }));
-        }
-      } catch {
-        // Fall back to memory
-      }
-    }
+    if (error) throw new Error(error.message);
+    if (membershipError) throw new Error(membershipError.message);
 
-    return [...inMemoryCampaigns].sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
+    const roleByCampaign = new Map(memberships.map((item) => [item.campaign_id, item.role]));
+    return campaigns.flatMap((row) => {
+      const role = roleByCampaign.get(row.id);
+      return role ? [mapCampaign(row, role)] : [];
+    });
   }
 
-  async save(campaignInput: Omit<Campaign, 'id' | 'createdAt' | 'updatedAt'> & { id?: string }): Promise<Campaign> {
-    if (this.isSupabaseConfigured()) {
-      try {
-        const supabase = await createServerSupabaseClient();
-        if (campaignInput.id) {
-          const { data, error } = await (supabase.from('campaigns') as any)
-            .update({
-              title: campaignInput.title,
-              brand_name: campaignInput.brandName,
-              description: campaignInput.description,
-              start_date: campaignInput.startDate.toISOString().split('T')[0],
-              end_date: campaignInput.endDate.toISOString().split('T')[0],
-              status: campaignInput.status,
-            })
-            .eq('id', campaignInput.id)
-            .select()
-            .single();
+  async save(input: CampaignWriteInput): Promise<Campaign> {
+    const supabase = await createServerSupabaseClient();
 
-          if (error) throw new Error(error.message);
-          const row = data as CampaignRow;
-          return {
-            id: row.id,
-            organizationId: row.organization_id,
-            title: row.title,
-            brandName: row.brand_name,
-            description: row.description,
-            startDate: new Date(row.start_date),
-            endDate: new Date(row.end_date),
-            status: row.status,
-            createdBy: row.created_by,
-            createdAt: new Date(row.created_at),
-            updatedAt: new Date(row.updated_at),
-          };
-        } else {
-          const { data, error } = await (supabase.from('campaigns') as any)
-            .insert({
-              organization_id: campaignInput.organizationId,
-              title: campaignInput.title,
-              brand_name: campaignInput.brandName,
-              description: campaignInput.description,
-              start_date: campaignInput.startDate.toISOString().split('T')[0],
-              end_date: campaignInput.endDate.toISOString().split('T')[0],
-              status: campaignInput.status,
-              created_by: campaignInput.createdBy,
-            })
-            .select()
-            .single();
-
-          if (error) throw new Error(error.message);
-          const row = data as CampaignRow;
-          return {
-            id: row.id,
-            organizationId: row.organization_id,
-            title: row.title,
-            brandName: row.brand_name,
-            description: row.description,
-            startDate: new Date(row.start_date),
-            endDate: new Date(row.end_date),
-            status: row.status,
-            createdBy: row.created_by,
-            createdAt: new Date(row.created_at),
-            updatedAt: new Date(row.updated_at),
-          };
-        }
-      } catch {
-        // Fall back to memory
-      }
+    if (!input.id) {
+      const { data: campaignId, error } = await supabase.rpc('create_campaign_with_manager', {
+        p_title: input.title,
+        p_brand_name: input.brandName,
+        p_description: input.description || '',
+        p_company_name: input.companyName,
+        p_company_tax_code: input.companyTaxCode || '',
+        p_company_address: input.companyAddress || '',
+        p_company_contact_name: input.companyContactName || '',
+        p_company_contact_email: input.companyContactEmail || '',
+        p_company_contact_phone: input.companyContactPhone || '',
+        p_start_date: input.startDate.toISOString().split('T')[0],
+        p_end_date: input.endDate.toISOString().split('T')[0],
+        p_status: input.status,
+      });
+      if (error) throw new Error(error.message);
+      const created = campaignId ? await this.findById(campaignId) : null;
+      if (!created) throw new Error('Không thể tải chiến dịch vừa tạo.');
+      return created;
     }
 
-    const now = new Date();
-    if (campaignInput.id) {
-      const idx = inMemoryCampaigns.findIndex((c) => c.id === campaignInput.id);
-      if (idx !== -1) {
-        inMemoryCampaigns[idx] = {
-          ...inMemoryCampaigns[idx],
-          ...campaignInput,
-          updatedAt: now,
-        };
-        return inMemoryCampaigns[idx];
-      }
-    }
-
-    const newCampaign: Campaign = {
-      ...campaignInput,
-      id: campaignInput.id || `camp-${Date.now()}`,
-      createdAt: now,
-      updatedAt: now,
-    };
-    inMemoryCampaigns.unshift(newCampaign);
-    return newCampaign;
+    const { data, error } = await supabase
+      .from('campaigns')
+      .update({
+        title: input.title,
+        brand_name: input.brandName,
+        description: input.description,
+        company_name: input.companyName,
+        company_tax_code: input.companyTaxCode,
+        company_address: input.companyAddress,
+        company_contact_name: input.companyContactName,
+        company_contact_email: input.companyContactEmail,
+        company_contact_phone: input.companyContactPhone,
+        start_date: input.startDate.toISOString().split('T')[0],
+        end_date: input.endDate.toISOString().split('T')[0],
+        status: input.status,
+      })
+      .eq('id', input.id)
+      .select('*')
+      .single();
+    if (error) throw new Error(error.message);
+    return mapCampaign(data, CampaignRole.MANAGER);
   }
 
-  async updateStatus(id: string, status: CampaignStatus): Promise<void> {
-    if (this.isSupabaseConfigured()) {
-      try {
-        const supabase = await createServerSupabaseClient();
-        await (supabase.from('campaigns') as any).update({ status }).eq('id', id);
-        return;
-      } catch {
-        // Fall back to memory
-      }
-    }
-
-    const campaign = inMemoryCampaigns.find((c) => c.id === id);
-    if (campaign) {
-      campaign.status = status;
-      campaign.updatedAt = new Date();
-    }
+  async updateStatus(id: string, status: Campaign['status']): Promise<void> {
+    const supabase = await createServerSupabaseClient();
+    const { error } = await supabase.from('campaigns').update({ status }).eq('id', id);
+    if (error) throw new Error(error.message);
   }
 
   async delete(id: string): Promise<void> {
-    if (this.isSupabaseConfigured()) {
-      try {
-        const supabase = await createServerSupabaseClient();
-        await (supabase.from('campaigns') as any).delete().eq('id', id);
-        return;
-      } catch {
-        // Fall back to memory
-      }
-    }
-
-    inMemoryCampaigns = inMemoryCampaigns.filter((c) => c.id !== id);
+    const supabase = await createServerSupabaseClient();
+    const { error } = await supabase.from('campaigns').delete().eq('id', id);
+    if (error) throw new Error(error.message);
   }
 }

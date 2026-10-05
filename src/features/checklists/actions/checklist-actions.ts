@@ -3,6 +3,7 @@
 import { SupabaseChecklistRepository } from '@/infrastructure/repositories/supabase-checklist-repository';
 import { ChecklistCategory } from '@/domain/enums';
 import { revalidatePath } from 'next/cache';
+import { requireCampaignManager } from '@/application/authorization/campaign-access';
 
 export async function createChecklistItemAction(formData: FormData) {
   const campaignId = formData.get('campaignId') as string;
@@ -16,6 +17,7 @@ export async function createChecklistItemAction(formData: FormData) {
   }
 
   try {
+    await requireCampaignManager(campaignId);
     const repo = new SupabaseChecklistRepository();
     const existing = await repo.findByCampaign(campaignId);
     await repo.save({

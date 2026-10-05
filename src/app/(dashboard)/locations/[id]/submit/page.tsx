@@ -4,6 +4,8 @@ import { getLocationDetailsUseCase } from '@/application/use-cases/locations/get
 import { getChecklistItemsUseCase } from '@/application/use-cases/checklists/get-checklist-items';
 import { SupervisorSubmitForm } from '@/features/submissions/components/supervisor-submit-form';
 import { Metadata } from 'next';
+import { getCampaignDetailsUseCase } from '@/application/use-cases/campaigns/get-campaign-details';
+import { CampaignRole } from '@/domain/enums';
 
 export const metadata: Metadata = {
   title: 'Nộp Bằng Chứng Nghiệm Thu — EventGo Proof',
@@ -20,6 +22,8 @@ export default async function LocationSubmitPage({ params }: SubmitPageProps) {
   let checklistItems;
   try {
     location = await getLocationDetailsUseCase(id);
+    const campaign = await getCampaignDetailsUseCase(location.campaignId);
+    if (campaign.currentUserRole !== CampaignRole.SUPERVISOR) notFound();
     checklistItems = await getChecklistItemsUseCase(location.campaignId);
   } catch {
     notFound();

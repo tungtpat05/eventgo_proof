@@ -3,7 +3,7 @@ import Link from 'next/link';
 import { Location } from '@/domain/entities';
 import { Button } from '@/components/ui/button';
 import { formatDate } from '@/lib/utils';
-import { MapPin, Calendar, User, ArrowRight, CheckCircle2 } from 'lucide-react';
+import { MapPin, Calendar, User, ArrowRight } from 'lucide-react';
 
 interface LocationListProps {
   locations: Location[];
@@ -54,7 +54,7 @@ export function LocationList({ locations }: LocationListProps) {
             <div className="flex items-center justify-between pt-1">
               <span className="text-[11px] text-slate-400 flex items-center gap-1">
                 <User className="h-3.5 w-3.5" />
-                {loc.assignedSupervisorId ? 'Đã gán giám sát' : 'Chưa gán'}
+                {loc.supervisorMemberId ? 'Đã gán giám sát' : 'Chưa gán'}
               </span>
 
               <Link href={`/locations/${loc.id}`}>

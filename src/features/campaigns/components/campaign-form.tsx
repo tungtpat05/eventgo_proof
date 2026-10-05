@@ -36,8 +36,9 @@ export function CampaignForm() {
         <form action={formAction}>
           <CardContent className="space-y-4">
             {state?.error && (
-              <div className="rounded-lg bg-red-50 p-3 text-sm text-red-600 border border-red-200">
-                {state.error}
+              <div className="rounded-lg bg-red-50 p-3 text-sm text-red-700 border border-red-200 flex items-start gap-2">
+                <span className="font-semibold shrink-0">Lỗi:</span>
+                <span>{state.error}</span>
               </div>
             )}
 
@@ -50,7 +51,58 @@ export function CampaignForm() {
                 name="title"
                 required
                 placeholder="VD: Summer Activation 2026 — Trưng Bày Đồ Uống"
+                className={state?.fieldErrors?.title ? 'border-red-500 focus-visible:ring-red-500' : ''}
               />
+              {state?.fieldErrors?.title && (
+                <p className="text-xs text-red-600 font-medium">{state.fieldErrors.title[0]}</p>
+              )}
+            </div>
+
+            <div className="rounded-lg border border-slate-200 bg-slate-50 p-4 space-y-4">
+              <h3 className="text-sm font-bold text-slate-900">Thông tin công ty / khách hàng</h3>
+              <div className="space-y-1.5">
+                <label className="text-xs font-semibold uppercase text-slate-700" htmlFor="companyName">Tên công ty *</label>
+                <Input
+                  id="companyName"
+                  name="companyName"
+                  required
+                  placeholder="VD: Công ty TNHH FreshJuice Việt Nam"
+                  className={state?.fieldErrors?.companyName ? 'border-red-500 focus-visible:ring-red-500' : ''}
+                />
+                {state?.fieldErrors?.companyName && (
+                  <p className="text-xs text-red-600 font-medium">{state.fieldErrors.companyName[0]}</p>
+                )}
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="space-y-1">
+                  <Input name="companyTaxCode" placeholder="Mã số thuế" />
+                  {state?.fieldErrors?.companyTaxCode && (
+                    <p className="text-xs text-red-600 font-medium">{state.fieldErrors.companyTaxCode[0]}</p>
+                  )}
+                </div>
+                <div className="space-y-1">
+                  <Input name="companyContactName" placeholder="Người liên hệ" />
+                  {state?.fieldErrors?.companyContactName && (
+                    <p className="text-xs text-red-600 font-medium">{state.fieldErrors.companyContactName[0]}</p>
+                  )}
+                </div>
+                <div className="space-y-1">
+                  <Input name="companyContactEmail" type="email" placeholder="Email liên hệ" />
+                  {state?.fieldErrors?.companyContactEmail && (
+                    <p className="text-xs text-red-600 font-medium">{state.fieldErrors.companyContactEmail[0]}</p>
+                  )}
+                </div>
+                <div className="space-y-1">
+                  <Input name="companyContactPhone" placeholder="Số điện thoại liên hệ" />
+                  {state?.fieldErrors?.companyContactPhone && (
+                    <p className="text-xs text-red-600 font-medium">{state.fieldErrors.companyContactPhone[0]}</p>
+                  )}
+                </div>
+              </div>
+              <Input name="companyAddress" placeholder="Địa chỉ công ty" />
+              {state?.fieldErrors?.companyAddress && (
+                <p className="text-xs text-red-600 font-medium">{state.fieldErrors.companyAddress[0]}</p>
+              )}
             </div>
 
             <div className="space-y-1.5">
@@ -62,7 +114,11 @@ export function CampaignForm() {
                 name="brandName"
                 required
                 placeholder="VD: FreshJuice Co. / Samsung / Unilever"
+                className={state?.fieldErrors?.brandName ? 'border-red-500 focus-visible:ring-red-500' : ''}
               />
+              {state?.fieldErrors?.brandName && (
+                <p className="text-xs text-red-600 font-medium">{state.fieldErrors.brandName[0]}</p>
+              )}
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -76,7 +132,11 @@ export function CampaignForm() {
                   type="date"
                   required
                   defaultValue={today}
+                  className={state?.fieldErrors?.startDate ? 'border-red-500 focus-visible:ring-red-500' : ''}
                 />
+                {state?.fieldErrors?.startDate && (
+                  <p className="text-xs text-red-600 font-medium">{state.fieldErrors.startDate[0]}</p>
+                )}
               </div>
 
               <div className="space-y-1.5">
@@ -89,7 +149,11 @@ export function CampaignForm() {
                   type="date"
                   required
                   defaultValue={today}
+                  className={state?.fieldErrors?.endDate ? 'border-red-500 focus-visible:ring-red-500' : ''}
                 />
+                {state?.fieldErrors?.endDate && (
+                  <p className="text-xs text-red-600 font-medium">{state.fieldErrors.endDate[0]}</p>
+                )}
               </div>
             </div>
 

@@ -1,12 +1,9 @@
-import { UserRole } from '@/domain/enums';
-
 export interface UserProfile {
   id: string;
-  organizationId: string;
   email: string;
   fullName: string;
+  avatarUrl?: string | null;
   phone?: string | null;
-  role: UserRole;
   createdAt: Date;
   updatedAt: Date;
 }

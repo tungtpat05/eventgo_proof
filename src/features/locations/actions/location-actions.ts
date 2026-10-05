@@ -6,9 +6,16 @@ import { ExcelImportService } from '@/infrastructure/excel/excel-import-service'
 import { SupabaseLocationRepository } from '@/infrastructure/repositories/supabase-location-repository';
 import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
+import { getCurrentUserSession } from '@/application/use-cases/auth/get-current-user';
+import { requireCampaignManager } from '@/application/authorization/campaign-access';
+import { getLocationDetailsUseCase } from '@/application/use-cases/locations/get-location-details';
+import { createServerSupabaseClient } from '@/infrastructure/supabase/server';
+
+import { formatActionError } from '@/lib/action-error';
 
 export interface LocationActionState {
   error?: string;
+  fieldErrors?: Record<string, string[]>;
   success?: boolean;
 }
 
@@ -35,11 +42,7 @@ export async function createLocationAction(
     revalidatePath(`/campaigns/${campaignId}`);
     redirect(`/locations/${loc.id}`);
   } catch (err: unknown) {
-    if (err && typeof err === 'object' && 'digest' in err) {
-      throw err;
-    }
-    const message = err instanceof Error ? err.message : 'Lỗi khi tạo địa điểm.';
-    return { error: message };
+    return formatActionError(err, 'Lỗi khi tạo địa điểm.');
   }
 }
 
@@ -61,6 +64,7 @@ export async function parseExcelFileAction(
   }
 
   try {
+    await getCurrentUserSession();
     const buffer = await file.arrayBuffer();
     const result = ExcelImportService.parseLocations(buffer);
 
@@ -87,8 +91,8 @@ export async function confirmImportAction(
     revalidatePath(`/campaigns/${campaignId}`);
     return { success: true, count: result.count };
   } catch (err: unknown) {
-    const message = err instanceof Error ? err.message : 'Lỗi khi lưu dữ liệu import.';
-    return { error: message };
+    const formatted = formatActionError(err, 'Lỗi khi lưu dữ liệu import.');
+    return { error: formatted.error };
   }
 }
 
@@ -99,6 +103,8 @@ export async function assignPersonnelAction(
   deadlineStr: string | null
 ): Promise<{ success: boolean; error?: string }> {
   try {
+    const location = await getLocationDetailsUseCase(locationId);
+    await requireCampaignManager(location.campaignId);
     const repo = new SupabaseLocationRepository();
     const deadline = deadlineStr ? new Date(deadlineStr) : null;
     await repo.assignPersonnel(locationId, supervisorId, approverId, deadline);
@@ -106,7 +112,29 @@ export async function assignPersonnelAction(
     revalidatePath('/locations');
     return { success: true };
   } catch (err: unknown) {
-    const message = err instanceof Error ? err.message : 'Lỗi khi cập nhật phân công nhân sự.';
-    return { success: false, error: message };
+    const formatted = formatActionError(err, 'Lỗi khi cập nhật phân công nhân sự.');
+    return { success: false, error: formatted.error };
+  }
+}
+
+export async function assignSubmissionApproverAction(
+  campaignId: string,
+  submissionId: string,
+  approverMemberId: string
+): Promise<{ success?: boolean; error?: string }> {
+  try {
+    await requireCampaignManager(campaignId);
+    const supabase = await createServerSupabaseClient();
+    const { error } = await supabase.rpc('assign_submission_approver', {
+      p_submission_id: submissionId,
+      p_approver_member_id: approverMemberId,
+    });
+    if (error) throw new Error(error.message);
+    revalidatePath(`/locations`);
+    revalidatePath('/approvals');
+    return { success: true };
+  } catch (error: unknown) {
+    const formatted = formatActionError(error, 'Không thể đổi Approver của submission.');
+    return { error: formatted.error };
   }
 }

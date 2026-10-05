@@ -6,6 +6,11 @@ export const metadata: Metadata = {
   description: 'Hệ thống quản lý và nghiệm thu chiến dịch gian hàng',
 };
 
-export default function LoginPage() {
-  return <LoginForm />;
+interface LoginPageProps {
+  searchParams: Promise<{ error?: string }>;
+}
+
+export default async function LoginPage({ searchParams }: LoginPageProps) {
+  const { error } = await searchParams;
+  return <LoginForm error={error} />;
 }

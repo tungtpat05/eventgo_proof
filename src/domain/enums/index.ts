@@ -1,10 +1,19 @@
-/**
- * User roles in EventGo Proof platform.
- */
-export enum UserRole {
-  PROJECT_MANAGER = 'PROJECT_MANAGER',
+export enum CampaignRole {
+  MANAGER = 'MANAGER',
   SUPERVISOR = 'SUPERVISOR',
   APPROVER = 'APPROVER',
+}
+
+export enum CampaignMemberStatus {
+  ACTIVE = 'ACTIVE',
+  REVOKED = 'REVOKED',
+}
+
+export enum CampaignInviteStatus {
+  PENDING = 'PENDING',
+  ACCEPTED = 'ACCEPTED',
+  REVOKED = 'REVOKED',
+  EXPIRED = 'EXPIRED',
 }
 
 /**

@@ -1,75 +1,48 @@
 'use server';
 
-import { SupabaseSubmissionRepository } from '@/infrastructure/repositories/supabase-submission-repository';
-import { getCurrentUserSession } from '@/application/use-cases/auth/get-current-user';
-import { ApprovalAction, UserRole } from '@/domain/enums';
-import { AuthorizationError, ValidationError } from '@/domain/errors';
+import { requireAssignedApprover, requireAssignedSupervisor } from '@/application/authorization/campaign-access';
+import { ApprovalAction } from '@/domain/enums';
 import { CloudinaryService } from '@/infrastructure/cloudinary/cloudinary-service';
+import { SupabaseSubmissionRepository } from '@/infrastructure/repositories/supabase-submission-repository';
 import { env } from '@/config/env';
 import { revalidatePath } from 'next/cache';
-import { redirect } from 'next/navigation';
 
 export async function submitEvidenceAction(
   locationId: string,
   checklistItemId: string,
   notes: string,
   photosJson: string
-) {
-  const session = await getCurrentUserSession();
-  const photos = JSON.parse(photosJson) as Array<{ dataUrl: string }>;
-
-  if (!photos || photos.length === 0) {
-    return { error: 'Vui lòng đính kèm ít nhất một hình ảnh bằng chứng nghiệm thu.' };
-  }
-
+): Promise<{ success?: boolean; error?: string }> {
   try {
-    const uploadedPhotos: Array<{ imageUrl: string; thumbnailUrl?: string; cloudinaryPublicId: string }> = [];
+    await requireAssignedSupervisor(locationId);
+    const photos = JSON.parse(photosJson) as Array<{ dataUrl?: string }>;
+    if (!Array.isArray(photos) || photos.length === 0 || photos.some((photo) => !photo.dataUrl)) {
+      return { error: 'Vui lòng đính kèm ít nhất một hình ảnh bằng chứng nghiệm thu.' };
+    }
+    if (!env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME || !env.CLOUDINARY_API_KEY || !env.CLOUDINARY_API_SECRET) {
+      return { error: 'Cloudinary chưa được cấu hình. Không thể lưu evidence an toàn.' };
+    }
 
-    for (let idx = 0; idx < photos.length; idx++) {
-      const p = photos[idx];
-      let imageUrl = p.dataUrl;
-      let thumbnailUrl = p.dataUrl;
-      let cloudinaryPublicId = `evidence-${Date.now()}-${idx}`;
-
-      // Upload directly to Cloudinary under folder eventgo/evidence if configured
-      if (env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME && env.CLOUDINARY_API_KEY && env.CLOUDINARY_API_SECRET) {
-        try {
-          const uploaded = await CloudinaryService.uploadImage(p.dataUrl, 'eventgo/evidence');
-          if (uploaded) {
-            imageUrl = uploaded.secureUrl;
-            thumbnailUrl = uploaded.thumbnailUrl;
-            cloudinaryPublicId = uploaded.publicId;
-          }
-        } catch (uploadError) {
-          console.error(`Lỗi khi tải ảnh #${idx + 1} lên Cloudinary:`, uploadError);
-          // Fallback to dataUrl if Cloudinary upload fails
-        }
-      }
-
+    const uploadedPhotos = [];
+    for (const photo of photos) {
+      const uploaded = await CloudinaryService.uploadImage(photo.dataUrl!, 'eventgo/evidence');
+      if (!uploaded) throw new Error('Cloudinary không trả về thông tin ảnh đã tải lên.');
       uploadedPhotos.push({
-        imageUrl,
-        thumbnailUrl,
-        cloudinaryPublicId,
+        imageUrl: uploaded.secureUrl,
+        thumbnailUrl: uploaded.thumbnailUrl,
+        cloudinaryPublicId: uploaded.publicId,
       });
     }
 
     const repo = new SupabaseSubmissionRepository();
-    await repo.submit({
-      locationId,
-      checklistItemId,
-      notes,
-      submittedBy: session.user.id,
-      photos: uploadedPhotos,
-    });
-
+    await repo.submit({ locationId, checklistItemId, notes, photos: uploadedPhotos });
     revalidatePath(`/locations/${locationId}`);
     revalidatePath(`/locations/${locationId}/submit`);
     revalidatePath('/approvals');
     revalidatePath('/dashboard');
     return { success: true };
-  } catch (err: unknown) {
-    const message = err instanceof Error ? err.message : 'Lỗi khi nộp bằng chứng nghiệm thu.';
-    return { error: message };
+  } catch (error: unknown) {
+    return { error: error instanceof Error ? error.message : 'Lỗi khi nộp bằng chứng nghiệm thu.' };
   }
 }
 
@@ -77,31 +50,19 @@ export async function reviewSubmissionAction(
   submissionId: string,
   action: ApprovalAction,
   notes: string
-) {
-  const session = await getCurrentUserSession();
-
-  if (session.user.role !== UserRole.PROJECT_MANAGER && session.user.role !== UserRole.APPROVER) {
-    throw new AuthorizationError('Chỉ Quản lý dự án hoặc Người duyệt mới có quyền phê duyệt.');
-  }
-
-  if (action === ApprovalAction.REQUEST_REVISION && (!notes || notes.trim().length === 0)) {
-    return { error: 'Bắt buộc phải nhập lý do khi yêu cầu chỉnh sửa.' };
-  }
-
+): Promise<{ success?: boolean; error?: string }> {
   try {
-    const repo = new SupabaseSubmissionRepository();
-    await repo.review({
-      submissionId,
-      reviewerId: session.user.id,
-      action,
-      notes,
-    });
+    await requireAssignedApprover(submissionId);
+    if (action === ApprovalAction.REQUEST_REVISION && notes.trim().length === 0) {
+      return { error: 'Bắt buộc phải nhập lý do khi yêu cầu chỉnh sửa.' };
+    }
 
+    const repo = new SupabaseSubmissionRepository();
+    await repo.review({ submissionId, action, notes });
     revalidatePath('/approvals');
     revalidatePath('/dashboard');
     return { success: true };
-  } catch (err: unknown) {
-    const message = err instanceof Error ? err.message : 'Lỗi khi ghi nhận kết quả duyệt.';
-    return { error: message };
+  } catch (error: unknown) {
+    return { error: error instanceof Error ? error.message : 'Lỗi khi ghi nhận kết quả duyệt.' };
   }
 }

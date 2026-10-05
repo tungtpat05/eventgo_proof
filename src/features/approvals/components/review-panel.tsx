@@ -7,8 +7,8 @@ import { reviewSubmissionAction } from '@/features/submissions/actions/submissio
 import { StatusBadge } from '@/components/shared/status-badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
-import { formatDate, formatDateTime } from '@/lib/utils';
-import { CheckCircle2, AlertTriangle, Clock, History, User, MessageSquare, ZoomIn, Loader2 } from 'lucide-react';
+import { formatDateTime } from '@/lib/utils';
+import { CheckCircle2, AlertTriangle, History, MessageSquare, ZoomIn } from 'lucide-react';
 
 interface ReviewPanelProps {
   submission: Submission;
