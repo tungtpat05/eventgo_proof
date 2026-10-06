@@ -2,6 +2,7 @@ export * from './user-profile';
 export * from './campaign';
 export * from './campaign-member';
 export * from './location';
+export * from './booth';
 export * from './checklist-item';
 export * from './submission';
 export * from './evidence';

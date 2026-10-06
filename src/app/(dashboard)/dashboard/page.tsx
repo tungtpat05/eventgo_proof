@@ -32,7 +32,6 @@ export default async function DashboardPage() {
           <h1 className="text-2xl font-bold tracking-tight text-slate-900">Xin chào, {user.fullName}</h1>
           <p className="text-sm text-slate-500">Vai trò được xác định độc lập trên từng chiến dịch.</p>
         </div>
-        <Link href="/campaigns/new"><Button className="gap-2"><PlusCircle className="h-4 w-4" />Tạo chiến dịch</Button></Link>
       </div>
 
       {pendingReviews.length > 0 && (

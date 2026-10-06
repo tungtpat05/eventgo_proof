@@ -3,7 +3,7 @@ import Link from 'next/link';
 import { Location } from '@/domain/entities';
 import { Button } from '@/components/ui/button';
 import { formatDate } from '@/lib/utils';
-import { MapPin, Calendar, User, ArrowRight } from 'lucide-react';
+import { MapPin, Calendar, Store, ArrowRight } from 'lucide-react';
 
 interface LocationListProps {
   locations: Location[];
@@ -52,14 +52,14 @@ export function LocationList({ locations }: LocationListProps) {
             )}
 
             <div className="flex items-center justify-between pt-1">
-              <span className="text-[11px] text-slate-400 flex items-center gap-1">
-                <User className="h-3.5 w-3.5" />
-                {loc.supervisorMemberId ? 'Đã gán giám sát' : 'Chưa gán'}
+              <span className="text-[11px] text-slate-500 flex items-center gap-1">
+                <Store className="h-3.5 w-3.5 text-slate-400" />
+                {loc.booths?.length || 0} gian hàng (booths)
               </span>
 
-              <Link href={`/locations/${loc.id}`}>
+              <Link href={`/campaigns/${loc.campaignId}`}>
                 <Button size="sm" variant="outline" className="text-xs h-8 px-2.5 flex items-center gap-1">
-                  Nghiệm thu
+                  Xem chi tiết
                   <ArrowRight className="h-3.5 w-3.5" />
                 </Button>
               </Link>

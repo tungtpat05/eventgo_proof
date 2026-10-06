@@ -2,7 +2,7 @@ import { ChecklistCategory } from '@/domain/enums';
 
 export interface ChecklistItem {
   id: string;
-  campaignId: string;
+  boothId: string;
   title: string;
   description?: string | null;
   category: ChecklistCategory;

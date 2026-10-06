@@ -98,8 +98,8 @@ export async function confirmImportAction(
 
 export async function assignPersonnelAction(
   locationId: string,
-  supervisorId: string | null,
-  approverId: string | null,
+  _supervisorId: string | null,
+  _approverId: string | null,
   deadlineStr: string | null
 ): Promise<{ success: boolean; error?: string }> {
   try {
@@ -107,12 +107,19 @@ export async function assignPersonnelAction(
     await requireCampaignManager(location.campaignId);
     const repo = new SupabaseLocationRepository();
     const deadline = deadlineStr ? new Date(deadlineStr) : null;
-    await repo.assignPersonnel(locationId, supervisorId, approverId, deadline);
+    await repo.save({
+      id: locationId,
+      campaignId: location.campaignId,
+      name: location.name,
+      address: location.address,
+      city: location.city,
+      deadline,
+    });
     revalidatePath(`/locations/${locationId}`);
     revalidatePath('/locations');
     return { success: true };
   } catch (err: unknown) {
-    const formatted = formatActionError(err, 'Lỗi khi cập nhật phân công nhân sự.');
+    const formatted = formatActionError(err, 'Lỗi khi cập nhật thông tin địa điểm.');
     return { success: false, error: formatted.error };
   }
 }

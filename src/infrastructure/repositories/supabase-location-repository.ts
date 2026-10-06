@@ -2,22 +2,17 @@ import { Location } from '@/domain/entities';
 import { LocationRepository, LocationWriteInput } from '@/domain/repositories/location-repository';
 import { createServerSupabaseClient } from '@/infrastructure/supabase/server';
 import { Database } from '@/types/database.types';
+import { SupabaseBoothRepository } from './supabase-booth-repository';
 
 type LocationRow = Database['public']['Tables']['locations']['Row'];
 
-function mapLocation(
-  row: LocationRow,
-  supervisorMemberId?: string | null,
-  approverMemberId?: string | null
-): Location {
+function mapLocation(row: LocationRow): Location {
   return {
     id: row.id,
     campaignId: row.campaign_id,
     name: row.name,
     address: row.address,
     city: row.city,
-    supervisorMemberId,
-    approverMemberId,
     deadline: row.deadline ? new Date(row.deadline) : null,
     createdAt: new Date(row.created_at),
     updatedAt: new Date(row.updated_at),
@@ -25,38 +20,16 @@ function mapLocation(
 }
 
 export class SupabaseLocationRepository implements LocationRepository {
-  private async hydrateAssignments(rows: LocationRow[]): Promise<Location[]> {
-    if (rows.length === 0) return [];
-    const supabase = await createServerSupabaseClient();
-    const ids = rows.map((row) => row.id);
-    const [{ data: supervisors, error: supervisorError }, { data: approvers, error: approverError }] =
-      await Promise.all([
-        supabase
-          .from('location_supervisor_assignments')
-          .select('location_id, supervisor_member_id')
-          .in('location_id', ids),
-        supabase
-          .from('location_approver_assignments')
-          .select('location_id, approver_member_id')
-          .in('location_id', ids),
-      ]);
-
-    if (supervisorError) throw new Error(supervisorError.message);
-    if (approverError) throw new Error(approverError.message);
-    const supervisorsByLocation = new Map(supervisors.map((item) => [item.location_id, item.supervisor_member_id]));
-    const approversByLocation = new Map(approvers.map((item) => [item.location_id, item.approver_member_id]));
-
-    return rows.map((row) =>
-      mapLocation(row, supervisorsByLocation.get(row.id), approversByLocation.get(row.id))
-    );
-  }
-
   async findById(id: string): Promise<Location | null> {
     const supabase = await createServerSupabaseClient();
     const { data, error } = await supabase.from('locations').select('*').eq('id', id).maybeSingle();
     if (error) throw new Error(error.message);
     if (!data) return null;
-    return (await this.hydrateAssignments([data]))[0];
+
+    const location = mapLocation(data);
+    const boothRepo = new SupabaseBoothRepository();
+    location.booths = await boothRepo.findByLocation(id);
+    return location;
   }
 
   async findByCampaign(campaignId: string): Promise<Location[]> {
@@ -67,14 +40,29 @@ export class SupabaseLocationRepository implements LocationRepository {
       .eq('campaign_id', campaignId)
       .order('name');
     if (error) throw new Error(error.message);
-    return this.hydrateAssignments(data);
+    if (!data || data.length === 0) return [];
+
+    const boothRepo = new SupabaseBoothRepository();
+    const allBooths = await boothRepo.findByCampaign(campaignId);
+    const boothsByLoc = new Map<string, typeof allBooths>();
+    for (const b of allBooths) {
+      const list = boothsByLoc.get(b.locationId) || [];
+      list.push(b);
+      boothsByLoc.set(b.locationId, list);
+    }
+
+    return data.map((row) => {
+      const loc = mapLocation(row);
+      loc.booths = boothsByLoc.get(loc.id) || [];
+      return loc;
+    });
   }
 
   async findAccessible(): Promise<Location[]> {
     const supabase = await createServerSupabaseClient();
     const { data, error } = await supabase.from('locations').select('*').order('created_at', { ascending: false });
     if (error) throw new Error(error.message);
-    return this.hydrateAssignments(data);
+    return (data || []).map(mapLocation);
   }
 
   async save(input: LocationWriteInput): Promise<Location> {
@@ -93,7 +81,7 @@ export class SupabaseLocationRepository implements LocationRepository {
         .select('*')
         .single();
       if (error) throw new Error(error.message);
-      return (await this.hydrateAssignments([data]))[0];
+      return mapLocation(data);
     }
 
     const { data, error } = await supabase
@@ -128,22 +116,6 @@ export class SupabaseLocationRepository implements LocationRepository {
       .select('*');
     if (error) throw new Error(error.message);
     return data.map((row) => mapLocation(row));
-  }
-
-  async assignPersonnel(
-    locationId: string,
-    supervisorMemberId?: string | null,
-    approverMemberId?: string | null,
-    deadline?: Date | null
-  ): Promise<void> {
-    const supabase = await createServerSupabaseClient();
-    const { error } = await supabase.rpc('assign_location_personnel', {
-      p_location_id: locationId,
-      p_supervisor_member_id: supervisorMemberId || null,
-      p_approver_member_id: approverMemberId || null,
-      p_deadline: deadline?.toISOString() || null,
-    });
-    if (error) throw new Error(error.message);
   }
 
   async delete(id: string): Promise<void> {

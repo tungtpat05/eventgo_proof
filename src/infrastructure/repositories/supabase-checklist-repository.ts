@@ -8,7 +8,7 @@ type ChecklistRow = Database['public']['Tables']['checklist_items']['Row'];
 function mapChecklistItem(row: ChecklistRow): ChecklistItem {
   return {
     id: row.id,
-    campaignId: row.campaign_id,
+    boothId: row.booth_id,
     title: row.title,
     description: row.description,
     category: row.category,
@@ -20,15 +20,35 @@ function mapChecklistItem(row: ChecklistRow): ChecklistItem {
 }
 
 export class SupabaseChecklistRepository implements ChecklistRepository {
-  async findByCampaign(campaignId: string): Promise<ChecklistItem[]> {
+  async findByBooth(boothId: string): Promise<ChecklistItem[]> {
     const supabase = await createServerSupabaseClient();
     const { data, error } = await supabase
       .from('checklist_items')
       .select('*')
-      .eq('campaign_id', campaignId)
+      .eq('booth_id', boothId)
       .order('order_index');
     if (error) throw new Error(error.message);
-    return data.map(mapChecklistItem);
+    return (data || []).map(mapChecklistItem);
+  }
+
+  async findByCampaign(campaignId: string): Promise<ChecklistItem[]> {
+    const supabase = await createServerSupabaseClient();
+    // First find all booths in this campaign
+    const { data: locations } = await supabase.from('locations').select('id').eq('campaign_id', campaignId);
+    if (!locations || locations.length === 0) return [];
+
+    const locIds = locations.map((l) => l.id);
+    const { data: booths } = await supabase.from('booths').select('id').in('location_id', locIds);
+    if (!booths || booths.length === 0) return [];
+
+    const boothIds = booths.map((b) => b.id);
+    const { data, error } = await supabase
+      .from('checklist_items')
+      .select('*')
+      .in('booth_id', boothIds)
+      .order('order_index');
+    if (error) throw new Error(error.message);
+    return (data || []).map(mapChecklistItem);
   }
 
   async save(input: Omit<ChecklistItem, 'id' | 'createdAt' | 'updatedAt'> & { id?: string }): Promise<ChecklistItem> {
@@ -53,7 +73,7 @@ export class SupabaseChecklistRepository implements ChecklistRepository {
     const { data, error } = await supabase
       .from('checklist_items')
       .insert({
-        campaign_id: input.campaignId,
+        booth_id: input.boothId,
         title: input.title,
         description: input.description,
         category: input.category,
@@ -73,7 +93,7 @@ export class SupabaseChecklistRepository implements ChecklistRepository {
       .from('checklist_items')
       .insert(
         items.map((item) => ({
-          campaign_id: item.campaignId,
+          booth_id: item.boothId,
           title: item.title,
           description: item.description,
           category: item.category,
@@ -83,7 +103,7 @@ export class SupabaseChecklistRepository implements ChecklistRepository {
       )
       .select('*');
     if (error) throw new Error(error.message);
-    return data.map(mapChecklistItem);
+    return (data || []).map(mapChecklistItem);
   }
 
   async delete(id: string): Promise<void> {

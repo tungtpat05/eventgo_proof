@@ -37,7 +37,7 @@ function mapHistory(row: HistoryRow): ApprovalHistory {
 function mapSubmission(row: SubmissionRow, evidence: Evidence[] = [], history: ApprovalHistory[] = []): Submission {
   return {
     id: row.id,
-    locationId: row.location_id,
+    boothId: row.booth_id,
     checklistItemId: row.checklist_item_id,
     assignedApproverMemberId: row.assigned_approver_member_id,
     status: row.status,
@@ -66,8 +66,8 @@ export class SupabaseSubmissionRepository implements SubmissionRepository {
     return rows.map((row) =>
       mapSubmission(
         row,
-        evidence.filter((item) => item.submission_id === row.id).map(mapEvidence),
-        history.filter((item) => item.submission_id === row.id).map(mapHistory)
+        (evidence || []).filter((item) => item.submission_id === row.id).map(mapEvidence),
+        (history || []).filter((item) => item.submission_id === row.id).map(mapHistory)
       )
     );
   }
@@ -80,23 +80,23 @@ export class SupabaseSubmissionRepository implements SubmissionRepository {
     return (await this.hydrate([data]))[0];
   }
 
-  async findByLocation(locationId: string): Promise<Submission[]> {
+  async findByBooth(boothId: string): Promise<Submission[]> {
     const supabase = await createServerSupabaseClient();
     const { data, error } = await supabase
       .from('submissions')
       .select('*')
-      .eq('location_id', locationId)
+      .eq('booth_id', boothId)
       .order('created_at');
     if (error) throw new Error(error.message);
-    return this.hydrate(data);
+    return this.hydrate(data || []);
   }
 
-  async findByChecklistItem(locationId: string, checklistItemId: string): Promise<Submission | null> {
+  async findByChecklistItem(boothId: string, checklistItemId: string): Promise<Submission | null> {
     const supabase = await createServerSupabaseClient();
     const { data, error } = await supabase
       .from('submissions')
       .select('*')
-      .eq('location_id', locationId)
+      .eq('booth_id', boothId)
       .eq('checklist_item_id', checklistItemId)
       .maybeSingle();
     if (error) throw new Error(error.message);
@@ -113,7 +113,7 @@ export class SupabaseSubmissionRepository implements SubmissionRepository {
       .eq('role', CampaignRole.APPROVER)
       .eq('status', CampaignMemberStatus.ACTIVE);
     if (membershipError) throw new Error(membershipError.message);
-    if (memberships.length === 0) return [];
+    if (!memberships || memberships.length === 0) return [];
 
     const { data, error } = await supabase
       .from('submissions')
@@ -122,18 +122,18 @@ export class SupabaseSubmissionRepository implements SubmissionRepository {
       .eq('status', SubmissionStatus.SUBMITTED)
       .order('submitted_at');
     if (error) throw new Error(error.message);
-    return this.hydrate(data);
+    return this.hydrate(data || []);
   }
 
   async submit(params: {
-    locationId: string;
+    boothId: string;
     checklistItemId: string;
     notes?: string;
     photos: Array<{ imageUrl: string; thumbnailUrl?: string; cloudinaryPublicId: string }>;
   }): Promise<Submission> {
     const supabase = await createServerSupabaseClient();
     const { data: submissionId, error } = await supabase.rpc('submit_evidence', {
-      p_location_id: params.locationId,
+      p_booth_id: params.boothId,
       p_checklist_item_id: params.checklistItemId,
       p_notes: params.notes || '',
       p_photos: params.photos as Json,

@@ -8,15 +8,19 @@ import { StatusBadge } from '@/components/shared/status-badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { formatDateTime } from '@/lib/utils';
-import { CheckCircle2, AlertTriangle, History, MessageSquare, ZoomIn } from 'lucide-react';
+import { CheckCircle2, AlertTriangle, History, MessageSquare, ZoomIn, Store } from 'lucide-react';
+import { useRouter } from 'next/navigation';
 
 interface ReviewPanelProps {
   submission: Submission;
   location?: Location | null;
   checklistItem?: ChecklistItem | null;
+  boothName?: string | null;
+  campaignId?: string;
 }
 
-export function ReviewPanel({ submission, location, checklistItem }: ReviewPanelProps) {
+export function ReviewPanel({ submission, location, checklistItem, boothName, campaignId }: ReviewPanelProps) {
+  const router = useRouter();
   const [activePhoto, setActivePhoto] = useState<string | null>(null);
   const [revisionNotes, setRevisionNotes] = useState('');
   const [isProcessing, setIsProcessing] = useState(false);
@@ -36,7 +40,8 @@ export function ReviewPanel({ submission, location, checklistItem }: ReviewPanel
     const res = await reviewSubmissionAction(
       submission.id,
       action,
-      action === ApprovalAction.REQUEST_REVISION ? revisionNotes : 'Đã kiểm tra đạt yêu cầu.'
+      action === ApprovalAction.REQUEST_REVISION ? revisionNotes : 'Đã kiểm tra đạt yêu cầu.',
+      campaignId
     );
 
     setIsProcessing(false);
@@ -50,6 +55,7 @@ export function ReviewPanel({ submission, location, checklistItem }: ReviewPanel
           : 'Đã gửi yêu cầu chỉnh sửa đến giám sát viên.'
       );
       setRevisionNotes('');
+      router.refresh();
     }
   };
 
@@ -76,10 +82,16 @@ export function ReviewPanel({ submission, location, checklistItem }: ReviewPanel
       <Card className="border-slate-200 shadow-sm">
         <CardHeader className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 pb-4 border-b border-slate-100">
           <div>
-            <div className="flex items-center gap-2 mb-1">
-              <span className="text-xs font-semibold text-blue-600 bg-blue-50 px-2 py-0.5 rounded">
-                {location?.name || 'Gian hàng sự kiện'}
+            <div className="flex items-center gap-2 mb-1 flex-wrap">
+              <span className="text-xs font-semibold text-blue-600 bg-blue-50 px-2 py-0.5 rounded flex items-center gap-1">
+                <Store className="h-3 w-3" />
+                {boothName || location?.name || 'Gian hàng sự kiện'}
               </span>
+              {location && (
+                <span className="text-xs text-slate-500">
+                  tại {location.name} ({location.city})
+                </span>
+              )}
               <StatusBadge status={submission.status} />
             </div>
             <CardTitle className="text-lg font-bold text-slate-900">
@@ -147,47 +159,49 @@ export function ReviewPanel({ submission, location, checklistItem }: ReviewPanel
           )}
 
           {/* Review Actions Panel */}
-          <div className="rounded-xl border border-slate-200 bg-slate-50/50 p-4 space-y-3">
-            <h4 className="text-xs font-bold uppercase text-slate-800">
-              Quyết định kiểm duyệt
-            </h4>
+          {submission.status !== 'APPROVED' && (
+            <div className="rounded-xl border border-slate-200 bg-slate-50/50 p-4 space-y-3">
+              <h4 className="text-xs font-bold uppercase text-slate-800">
+                Quyết định kiểm duyệt
+              </h4>
 
-            <div className="space-y-1.5">
-              <label className="text-xs font-medium text-slate-600">
-                Ghi chú phê duyệt / Lý do yêu cầu chỉnh sửa (Bắt buộc khi yêu cầu sửa):
-              </label>
-              <textarea
-                value={revisionNotes}
-                onChange={(e) => setRevisionNotes(e.target.value)}
-                rows={2}
-                placeholder="VD: Ảnh chụp logo bị lóa đèn sảnh, yêu cầu chụp lại góc nghiêng 45 độ..."
-                className="flex w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-xs placeholder:text-slate-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600"
-              />
+              <div className="space-y-1.5">
+                <label className="text-xs font-medium text-slate-600">
+                  Ghi chú phê duyệt / Lý do yêu cầu chỉnh sửa (Bắt buộc khi yêu cầu sửa):
+                </label>
+                <textarea
+                  value={revisionNotes}
+                  onChange={(e) => setRevisionNotes(e.target.value)}
+                  rows={2}
+                  placeholder="VD: Ảnh chụp logo bị lóa đèn sảnh, yêu cầu chụp lại góc nghiêng 45 độ..."
+                  className="flex w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-xs placeholder:text-slate-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600"
+                />
+              </div>
+
+              <div className="flex flex-col sm:flex-row gap-3 pt-1">
+                <Button
+                  type="button"
+                  onClick={() => handleReview(ApprovalAction.APPROVE)}
+                  disabled={isProcessing}
+                  className="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white flex items-center justify-center gap-2 text-xs h-9"
+                >
+                  <CheckCircle2 className="h-4 w-4" />
+                  Duyệt Đạt (Approve)
+                </Button>
+
+                <Button
+                  type="button"
+                  variant="destructive"
+                  onClick={() => handleReview(ApprovalAction.REQUEST_REVISION)}
+                  disabled={isProcessing}
+                  className="flex-1 flex items-center justify-center gap-2 text-xs h-9"
+                >
+                  <AlertTriangle className="h-4 w-4" />
+                  Yêu Cầu Chụp Lại (Revision)
+                </Button>
+              </div>
             </div>
-
-            <div className="flex flex-col sm:flex-row gap-3 pt-1">
-              <Button
-                type="button"
-                onClick={() => handleReview(ApprovalAction.APPROVE)}
-                disabled={isProcessing}
-                className="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white flex items-center justify-center gap-2 text-xs h-9"
-              >
-                <CheckCircle2 className="h-4 w-4" />
-                Duyệt Đạt (Approve)
-              </Button>
-
-              <Button
-                type="button"
-                variant="destructive"
-                onClick={() => handleReview(ApprovalAction.REQUEST_REVISION)}
-                disabled={isProcessing}
-                className="flex-1 flex items-center justify-center gap-2 text-xs h-9"
-              >
-                <AlertTriangle className="h-4 w-4" />
-                Yêu Cầu Chụp Lại (Revision)
-              </Button>
-            </div>
-          </div>
+          )}
 
           {/* Immutable Audit History Timeline */}
           {submission.history && submission.history.length > 0 && (

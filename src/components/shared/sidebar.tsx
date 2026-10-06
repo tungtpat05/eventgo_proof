@@ -5,11 +5,9 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { cn } from '@/lib/utils';
 import {
-  LayoutDashboard,
-  Megaphone,
-  MapPin,
-  ClipboardCheck,
-  FileSpreadsheet,
+  FolderKanban,
+  ScanEye,
+  CheckCheck,
   UserCog,
   CheckCircle,
 } from 'lucide-react';
@@ -19,34 +17,28 @@ export function Sidebar() {
 
   const navigation = [
     {
-      name: 'Bảng điều khiển',
+      name: 'Tổng quan',
       href: '/dashboard',
-      icon: LayoutDashboard,
+      icon: CheckCircle,
       active: pathname === '/dashboard',
     },
     {
-      name: 'Chiến dịch',
+      name: 'Chiến dịch quản lý',
       href: '/campaigns',
-      icon: Megaphone,
-      active: pathname.startsWith('/campaigns'),
+      icon: FolderKanban,
+      active: pathname === '/campaigns' || pathname.startsWith('/campaigns/managed') || (pathname.startsWith('/campaigns/') && !pathname.startsWith('/campaigns/supervision') && !pathname.startsWith('/campaigns/approvals')),
     },
     {
-      name: 'Địa điểm',
-      href: '/locations',
-      icon: MapPin,
-      active: pathname.startsWith('/locations'),
+      name: 'Chiến dịch giám sát',
+      href: '/campaigns/supervision',
+      icon: ScanEye,
+      active: pathname.startsWith('/campaigns/supervision'),
     },
     {
-      name: 'Phê duyệt',
-      href: '/approvals',
-      icon: ClipboardCheck,
-      active: pathname.startsWith('/approvals'),
-    },
-    {
-      name: 'Báo cáo',
-      href: '/reports',
-      icon: FileSpreadsheet,
-      active: pathname.startsWith('/reports'),
+      name: 'Chiến dịch phê duyệt',
+      href: '/campaigns/approvals',
+      icon: CheckCheck,
+      active: pathname.startsWith('/campaigns/approvals'),
     },
     {
       name: 'Tài khoản',
@@ -72,7 +64,13 @@ export function Sidebar() {
           </div>
         </div>
 
-        <nav className="flex-1 space-y-1 px-3 py-4 overflow-y-auto">
+        <div className="px-4 pt-4 pb-1">
+          <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-400">
+            Không gian làm việc
+          </p>
+        </div>
+
+        <nav className="flex-1 space-y-1 px-3 py-1 overflow-y-auto">
           {navigation.map((item) => {
             const Icon = item.icon;
             return (
@@ -100,12 +98,12 @@ export function Sidebar() {
 
         <div className="p-4 border-t border-slate-100">
           <div className="rounded-lg bg-slate-50 p-3 text-xs text-slate-500 text-center">
-            Phiên bản <span className="font-semibold text-slate-700">MVP v1.0</span>
+            Phiên bản <span className="font-semibold text-slate-700">Booth Compliance v2.0</span>
           </div>
         </div>
       </aside>
 
-      {/* Mobile Bottom Navigation Bar (Optimized for Field Supervisors) */}
+      {/* Mobile Bottom Navigation Bar (Optimized for Field Staff) */}
       <div className="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-white border-t border-slate-200 shadow-lg px-2 py-1 flex justify-around">
         {navigation.map((item) => {
           const Icon = item.icon;

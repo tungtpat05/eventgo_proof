@@ -8,13 +8,14 @@ import { env } from '@/config/env';
 import { revalidatePath } from 'next/cache';
 
 export async function submitEvidenceAction(
-  locationId: string,
+  boothId: string,
   checklistItemId: string,
   notes: string,
-  photosJson: string
+  photosJson: string,
+  campaignId?: string
 ): Promise<{ success?: boolean; error?: string }> {
   try {
-    await requireAssignedSupervisor(locationId);
+    await requireAssignedSupervisor(boothId);
     const photos = JSON.parse(photosJson) as Array<{ dataUrl?: string }>;
     if (!Array.isArray(photos) || photos.length === 0 || photos.some((photo) => !photo.dataUrl)) {
       return { error: 'Vui lòng đính kèm ít nhất một hình ảnh bằng chứng nghiệm thu.' };
@@ -35,11 +36,14 @@ export async function submitEvidenceAction(
     }
 
     const repo = new SupabaseSubmissionRepository();
-    await repo.submit({ locationId, checklistItemId, notes, photos: uploadedPhotos });
-    revalidatePath(`/locations/${locationId}`);
-    revalidatePath(`/locations/${locationId}/submit`);
-    revalidatePath('/approvals');
-    revalidatePath('/dashboard');
+    await repo.submit({ boothId, checklistItemId, notes, photos: uploadedPhotos });
+
+    if (campaignId) {
+      revalidatePath(`/campaigns/supervision/${campaignId}`);
+      revalidatePath(`/campaigns/${campaignId}`);
+    }
+    revalidatePath('/campaigns/supervision');
+    revalidatePath('/campaigns/approvals');
     return { success: true };
   } catch (error: unknown) {
     return { error: error instanceof Error ? error.message : 'Lỗi khi nộp bằng chứng nghiệm thu.' };
@@ -49,7 +53,8 @@ export async function submitEvidenceAction(
 export async function reviewSubmissionAction(
   submissionId: string,
   action: ApprovalAction,
-  notes: string
+  notes: string,
+  campaignId?: string
 ): Promise<{ success?: boolean; error?: string }> {
   try {
     await requireAssignedApprover(submissionId);
@@ -59,8 +64,12 @@ export async function reviewSubmissionAction(
 
     const repo = new SupabaseSubmissionRepository();
     await repo.review({ submissionId, action, notes });
-    revalidatePath('/approvals');
-    revalidatePath('/dashboard');
+
+    if (campaignId) {
+      revalidatePath(`/campaigns/approvals/${campaignId}`);
+      revalidatePath(`/campaigns/${campaignId}`);
+    }
+    revalidatePath('/campaigns/approvals');
     return { success: true };
   } catch (error: unknown) {
     return { error: error instanceof Error ? error.message : 'Lỗi khi ghi nhận kết quả duyệt.' };

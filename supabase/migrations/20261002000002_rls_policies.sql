@@ -3,7 +3,24 @@
 -- Authorization is campaign membership + explicit booth/submission assignment.
 -- ============================================================================
 
--- Helper Functions
+-- 0. Drop old or conflicting functions before redefining (resolves PostgreSQL 42P13 error on parameter rename)
+DROP FUNCTION IF EXISTS public.submit_evidence(UUID, UUID, TEXT, JSONB) CASCADE;
+DROP FUNCTION IF EXISTS public.assign_location_personnel(UUID, UUID, UUID, TIMESTAMPTZ) CASCADE;
+DROP FUNCTION IF EXISTS public.assign_booth_personnel(UUID, UUID, UUID, TIMESTAMPTZ) CASCADE;
+DROP FUNCTION IF EXISTS public.is_location_supervisor(UUID) CASCADE;
+DROP FUNCTION IF EXISTS public.is_location_approver(UUID) CASCADE;
+DROP FUNCTION IF EXISTS public.is_booth_supervisor(UUID) CASCADE;
+DROP FUNCTION IF EXISTS public.is_booth_approver(UUID) CASCADE;
+DROP FUNCTION IF EXISTS public.is_submission_approver(UUID) CASCADE;
+DROP FUNCTION IF EXISTS public.can_access_campaign(UUID) CASCADE;
+DROP FUNCTION IF EXISTS public.can_access_location(UUID) CASCADE;
+DROP FUNCTION IF EXISTS public.can_access_booth(UUID) CASCADE;
+DROP FUNCTION IF EXISTS public.can_access_submission(UUID) CASCADE;
+DROP FUNCTION IF EXISTS public.check_campaign_activation_readiness(UUID) CASCADE;
+DROP FUNCTION IF EXISTS public.is_campaign_member(UUID) CASCADE;
+DROP FUNCTION IF EXISTS public.can_view_profile(UUID) CASCADE;
+
+-- 1. Helper Functions
 CREATE OR REPLACE FUNCTION public.is_campaign_manager(target_campaign_id UUID)
 RETURNS BOOLEAN
 LANGUAGE sql
@@ -17,6 +34,40 @@ AS $$
           AND user_id = auth.uid()
           AND role = 'MANAGER'
           AND status = 'ACTIVE'
+    );
+$$;
+
+CREATE OR REPLACE FUNCTION public.is_campaign_member(target_campaign_id UUID)
+RETURNS BOOLEAN
+LANGUAGE sql
+STABLE
+SECURITY DEFINER
+SET search_path = public
+AS $$
+    SELECT EXISTS (
+        SELECT 1 FROM campaign_members
+        WHERE campaign_id = target_campaign_id
+          AND user_id = auth.uid()
+          AND status = 'ACTIVE'
+    );
+$$;
+
+CREATE OR REPLACE FUNCTION public.can_view_profile(target_user_id UUID)
+RETURNS BOOLEAN
+LANGUAGE sql
+STABLE
+SECURITY DEFINER
+SET search_path = public
+AS $$
+    SELECT target_user_id = auth.uid()
+    OR EXISTS (
+        SELECT 1
+        FROM campaign_members my_membership
+        JOIN campaign_members target_membership
+          ON target_membership.campaign_id = my_membership.campaign_id
+        WHERE my_membership.user_id = auth.uid()
+          AND my_membership.status = 'ACTIVE'
+          AND target_membership.user_id = target_user_id
     );
 $$;
 
@@ -90,6 +141,7 @@ SECURITY DEFINER
 SET search_path = public
 AS $$
     SELECT public.is_campaign_manager(target_campaign_id)
+    OR public.is_campaign_member(target_campaign_id)
     OR EXISTS (
         SELECT 1
         FROM locations l
@@ -182,72 +234,68 @@ ALTER TABLE submissions ENABLE ROW LEVEL SECURITY;
 ALTER TABLE evidence ENABLE ROW LEVEL SECURITY;
 ALTER TABLE approval_history ENABLE ROW LEVEL SECURITY;
 
--- 1. Profiles Policies
+-- 2. Profiles Policies
+DROP POLICY IF EXISTS "Users can view profiles in their campaigns" ON profiles;
+DROP POLICY IF EXISTS "Users can view their profile and managers can view campaign members" ON profiles;
 CREATE POLICY "Users can view profiles in their campaigns"
 ON profiles FOR SELECT
-USING (
-    id = auth.uid()
-    OR EXISTS (
-        SELECT 1
-        FROM campaign_members my_membership
-        JOIN campaign_members target_membership
-          ON target_membership.campaign_id = my_membership.campaign_id
-        WHERE my_membership.user_id = auth.uid()
-          AND my_membership.status = 'ACTIVE'
-          AND target_membership.user_id = profiles.id
-    )
-);
+USING (public.can_view_profile(id));
 
+DROP POLICY IF EXISTS "Users can create their own profile" ON profiles;
 CREATE POLICY "Users can create their own profile"
 ON profiles FOR INSERT
 WITH CHECK (id = auth.uid());
 
+DROP POLICY IF EXISTS "Users can update their own profile" ON profiles;
 CREATE POLICY "Users can update their own profile"
 ON profiles FOR UPDATE
 USING (id = auth.uid())
 WITH CHECK (id = auth.uid());
 
--- 2. Campaigns Policies
+-- 3. Campaigns Policies
+DROP POLICY IF EXISTS "Assigned users can view campaigns" ON campaigns;
 CREATE POLICY "Assigned users can view campaigns"
 ON campaigns FOR SELECT
 USING (public.can_access_campaign(id));
 
+DROP POLICY IF EXISTS "Managers can update campaigns" ON campaigns;
 CREATE POLICY "Managers can update campaigns"
 ON campaigns FOR UPDATE
 USING (public.is_campaign_manager(id))
 WITH CHECK (public.is_campaign_manager(id));
 
+DROP POLICY IF EXISTS "Managers can delete campaigns" ON campaigns;
 CREATE POLICY "Managers can delete campaigns"
 ON campaigns FOR DELETE
 USING (public.is_campaign_manager(id));
 
--- 3. Campaign Members Policies
+-- 4. Campaign Members Policies
+DROP POLICY IF EXISTS "Users can view members of their campaigns" ON campaign_members;
+DROP POLICY IF EXISTS "Users can view own membership and managers can view campaign memberships" ON campaign_members;
 CREATE POLICY "Users can view members of their campaigns"
 ON campaign_members FOR SELECT
 USING (
     user_id = auth.uid()
-    OR public.is_campaign_manager(campaign_id)
-    OR EXISTS (
-        SELECT 1 FROM campaign_members cm
-        WHERE cm.campaign_id = campaign_members.campaign_id
-          AND cm.user_id = auth.uid()
-          AND cm.status = 'ACTIVE'
-    )
+    OR public.is_campaign_member(campaign_id)
 );
 
+DROP POLICY IF EXISTS "Managers can add campaign members" ON campaign_members;
 CREATE POLICY "Managers can add campaign members"
 ON campaign_members FOR INSERT
 WITH CHECK (public.is_campaign_manager(campaign_id));
 
+DROP POLICY IF EXISTS "Managers can update campaign members" ON campaign_members;
 CREATE POLICY "Managers can update campaign members"
 ON campaign_members FOR UPDATE
 USING (public.is_campaign_manager(campaign_id))
 WITH CHECK (public.is_campaign_manager(campaign_id));
 
+DROP POLICY IF EXISTS "Managers can view member history" ON campaign_member_history;
 CREATE POLICY "Managers can view member history"
 ON campaign_member_history FOR SELECT
 USING (public.is_campaign_manager(campaign_id));
 
+DROP POLICY IF EXISTS "Managers and invitees can view invitations" ON campaign_invites;
 CREATE POLICY "Managers and invitees can view invitations"
 ON campaign_invites FOR SELECT
 USING (
@@ -255,53 +303,46 @@ USING (
     OR LOWER(email) = LOWER(COALESCE(auth.jwt() ->> 'email', ''))
 );
 
+DROP POLICY IF EXISTS "Managers can create invitations" ON campaign_invites;
 CREATE POLICY "Managers can create invitations"
 ON campaign_invites FOR INSERT
 WITH CHECK (public.is_campaign_manager(campaign_id) AND invited_by = auth.uid());
 
+DROP POLICY IF EXISTS "Managers can update invitations" ON campaign_invites;
 CREATE POLICY "Managers can update invitations"
 ON campaign_invites FOR UPDATE
 USING (public.is_campaign_manager(campaign_id))
 WITH CHECK (public.is_campaign_manager(campaign_id));
 
--- 4. Locations Policies
+-- 5. Locations Policies
+DROP POLICY IF EXISTS "Assigned users can view locations" ON locations;
 CREATE POLICY "Assigned users can view locations"
 ON locations FOR SELECT
-USING (
-    public.is_campaign_manager(campaign_id)
-    OR EXISTS (
-        SELECT 1 FROM booths b
-        WHERE b.location_id = locations.id
-          AND (public.is_booth_supervisor(b.id) OR public.is_booth_approver(b.id))
-    )
-);
+USING (public.can_access_location(id));
 
+DROP POLICY IF EXISTS "Managers can create locations" ON locations;
 CREATE POLICY "Managers can create locations"
 ON locations FOR INSERT
 WITH CHECK (public.is_campaign_manager(campaign_id));
 
+DROP POLICY IF EXISTS "Managers can update locations" ON locations;
 CREATE POLICY "Managers can update locations"
 ON locations FOR UPDATE
 USING (public.is_campaign_manager(campaign_id))
 WITH CHECK (public.is_campaign_manager(campaign_id));
 
+DROP POLICY IF EXISTS "Managers can delete locations" ON locations;
 CREATE POLICY "Managers can delete locations"
 ON locations FOR DELETE
 USING (public.is_campaign_manager(campaign_id));
 
--- 5. Booths Policies
+-- 6. Booths Policies
+DROP POLICY IF EXISTS "Assigned users can view booths" ON booths;
 CREATE POLICY "Assigned users can view booths"
 ON booths FOR SELECT
-USING (
-    EXISTS (
-        SELECT 1 FROM locations l
-        WHERE l.id = booths.location_id
-          AND public.is_campaign_manager(l.campaign_id)
-    )
-    OR public.is_booth_supervisor(id)
-    OR public.is_booth_approver(id)
-);
+USING (public.can_access_booth(id));
 
+DROP POLICY IF EXISTS "Managers can create booths" ON booths;
 CREATE POLICY "Managers can create booths"
 ON booths FOR INSERT
 WITH CHECK (
@@ -312,6 +353,7 @@ WITH CHECK (
     )
 );
 
+DROP POLICY IF EXISTS "Managers can update booths" ON booths;
 CREATE POLICY "Managers can update booths"
 ON booths FOR UPDATE
 USING (
@@ -329,6 +371,7 @@ WITH CHECK (
     )
 );
 
+DROP POLICY IF EXISTS "Managers can delete booths" ON booths;
 CREATE POLICY "Managers can delete booths"
 ON booths FOR DELETE
 USING (
@@ -339,7 +382,8 @@ USING (
     )
 );
 
--- 6. Booth Assignments Policies
+-- 7. Booth Assignments Policies
+DROP POLICY IF EXISTS "Managers and assigned supervisors can view supervisor assignments" ON booth_supervisor_assignments;
 CREATE POLICY "Managers and assigned supervisors can view supervisor assignments"
 ON booth_supervisor_assignments FOR SELECT
 USING (
@@ -351,6 +395,7 @@ USING (
     OR public.is_booth_supervisor(booth_id)
 );
 
+DROP POLICY IF EXISTS "Managers can manage supervisor assignments" ON booth_supervisor_assignments;
 CREATE POLICY "Managers can manage supervisor assignments"
 ON booth_supervisor_assignments FOR ALL
 USING (
@@ -368,6 +413,7 @@ WITH CHECK (
     )
 );
 
+DROP POLICY IF EXISTS "Managers and assigned approvers can view approver assignments" ON booth_approver_assignments;
 CREATE POLICY "Managers and assigned approvers can view approver assignments"
 ON booth_approver_assignments FOR SELECT
 USING (
@@ -379,6 +425,7 @@ USING (
     OR public.is_booth_approver(booth_id)
 );
 
+DROP POLICY IF EXISTS "Managers can manage approver assignments" ON booth_approver_assignments;
 CREATE POLICY "Managers can manage approver assignments"
 ON booth_approver_assignments FOR ALL
 USING (
@@ -396,11 +443,13 @@ WITH CHECK (
     )
 );
 
--- 7. Checklist Items Policies
+-- 8. Checklist Items Policies
+DROP POLICY IF EXISTS "Assigned users can view checklist items" ON checklist_items;
 CREATE POLICY "Assigned users can view checklist items"
 ON checklist_items FOR SELECT
 USING (public.can_access_booth(booth_id));
 
+DROP POLICY IF EXISTS "Managers can manage checklist items" ON checklist_items;
 CREATE POLICY "Managers can manage checklist items"
 ON checklist_items FOR ALL
 USING (
@@ -420,15 +469,18 @@ WITH CHECK (
     )
 );
 
--- 8. Submissions, Evidence, Approval History Policies
+-- 9. Submissions, Evidence, Approval History Policies
+DROP POLICY IF EXISTS "Assigned users can view submissions" ON submissions;
 CREATE POLICY "Assigned users can view submissions"
 ON submissions FOR SELECT
 USING (public.can_access_submission(id));
 
+DROP POLICY IF EXISTS "Assigned users can view evidence" ON evidence;
 CREATE POLICY "Assigned users can view evidence"
 ON evidence FOR SELECT
 USING (public.can_access_submission(submission_id));
 
+DROP POLICY IF EXISTS "Assigned users can view approval history" ON approval_history;
 CREATE POLICY "Assigned users can view approval history"
 ON approval_history FOR SELECT
 USING (public.can_access_submission(submission_id));
@@ -927,6 +979,8 @@ GRANT EXECUTE ON FUNCTION public.review_submission(UUID, approval_action, TEXT) 
 GRANT EXECUTE ON FUNCTION public.check_campaign_activation_readiness(UUID) TO authenticated;
 
 GRANT EXECUTE ON FUNCTION public.is_campaign_manager(UUID) TO authenticated, service_role;
+GRANT EXECUTE ON FUNCTION public.is_campaign_member(UUID) TO authenticated, service_role;
+GRANT EXECUTE ON FUNCTION public.can_view_profile(UUID) TO authenticated, service_role;
 GRANT EXECUTE ON FUNCTION public.is_booth_supervisor(UUID) TO authenticated, service_role;
 GRANT EXECUTE ON FUNCTION public.is_booth_approver(UUID) TO authenticated, service_role;
 GRANT EXECUTE ON FUNCTION public.is_submission_approver(UUID) TO authenticated, service_role;

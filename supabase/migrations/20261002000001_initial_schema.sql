@@ -488,48 +488,75 @@ END;
 $$;
 
 -- Apply Triggers
+DROP TRIGGER IF EXISTS trg_profiles_updated_at ON profiles;
 CREATE TRIGGER trg_profiles_updated_at BEFORE UPDATE ON profiles
 FOR EACH ROW EXECUTE FUNCTION public.update_updated_at_column();
+
+DROP TRIGGER IF EXISTS trg_profile_identity_immutable ON profiles;
 CREATE TRIGGER trg_profile_identity_immutable BEFORE UPDATE ON profiles
 FOR EACH ROW EXECUTE FUNCTION public.protect_profile_identity();
 
+DROP TRIGGER IF EXISTS trg_campaigns_updated_at ON campaigns;
 CREATE TRIGGER trg_campaigns_updated_at BEFORE UPDATE ON campaigns
 FOR EACH ROW EXECUTE FUNCTION public.update_updated_at_column();
+
+DROP TRIGGER IF EXISTS trg_campaign_created_by_immutable ON campaigns;
 CREATE TRIGGER trg_campaign_created_by_immutable BEFORE UPDATE ON campaigns
 FOR EACH ROW EXECUTE FUNCTION public.prevent_created_by_change();
+
+DROP TRIGGER IF EXISTS trg_validate_campaign_activation ON campaigns;
 CREATE TRIGGER trg_validate_campaign_activation BEFORE UPDATE OF status ON campaigns
 FOR EACH ROW EXECUTE FUNCTION public.validate_campaign_activation();
 
+DROP TRIGGER IF EXISTS trg_campaign_members_updated_at ON campaign_members;
 CREATE TRIGGER trg_campaign_members_updated_at BEFORE UPDATE ON campaign_members
 FOR EACH ROW EXECUTE FUNCTION public.update_updated_at_column();
+
+DROP TRIGGER IF EXISTS trg_protect_last_manager ON campaign_members;
 CREATE TRIGGER trg_protect_last_manager BEFORE UPDATE OR DELETE ON campaign_members
 FOR EACH ROW EXECUTE FUNCTION public.protect_last_campaign_manager();
+
+DROP TRIGGER IF EXISTS trg_campaign_member_history ON campaign_members;
 CREATE TRIGGER trg_campaign_member_history AFTER INSERT OR UPDATE ON campaign_members
 FOR EACH ROW EXECUTE FUNCTION public.record_campaign_member_history();
 
+DROP TRIGGER IF EXISTS trg_campaign_invites_updated_at ON campaign_invites;
 CREATE TRIGGER trg_campaign_invites_updated_at BEFORE UPDATE ON campaign_invites
 FOR EACH ROW EXECUTE FUNCTION public.update_updated_at_column();
 
+DROP TRIGGER IF EXISTS trg_locations_updated_at ON locations;
 CREATE TRIGGER trg_locations_updated_at BEFORE UPDATE ON locations
 FOR EACH ROW EXECUTE FUNCTION public.update_updated_at_column();
 
+DROP TRIGGER IF EXISTS trg_booths_updated_at ON booths;
 CREATE TRIGGER trg_booths_updated_at BEFORE UPDATE ON booths
 FOR EACH ROW EXECUTE FUNCTION public.update_updated_at_column();
 
+DROP TRIGGER IF EXISTS trg_booth_supervisor_assignments_updated_at ON booth_supervisor_assignments;
 CREATE TRIGGER trg_booth_supervisor_assignments_updated_at BEFORE UPDATE ON booth_supervisor_assignments
 FOR EACH ROW EXECUTE FUNCTION public.update_updated_at_column();
+
+DROP TRIGGER IF EXISTS trg_validate_booth_supervisor ON booth_supervisor_assignments;
 CREATE TRIGGER trg_validate_booth_supervisor BEFORE INSERT OR UPDATE ON booth_supervisor_assignments
 FOR EACH ROW EXECUTE FUNCTION public.validate_booth_supervisor_assignment();
 
+DROP TRIGGER IF EXISTS trg_booth_approver_assignments_updated_at ON booth_approver_assignments;
 CREATE TRIGGER trg_booth_approver_assignments_updated_at BEFORE UPDATE ON booth_approver_assignments
 FOR EACH ROW EXECUTE FUNCTION public.update_updated_at_column();
+
+DROP TRIGGER IF EXISTS trg_validate_booth_approver ON booth_approver_assignments;
 CREATE TRIGGER trg_validate_booth_approver BEFORE INSERT OR UPDATE ON booth_approver_assignments
 FOR EACH ROW EXECUTE FUNCTION public.validate_booth_approver_assignment();
 
+DROP TRIGGER IF EXISTS trg_checklist_items_updated_at ON checklist_items;
 CREATE TRIGGER trg_checklist_items_updated_at BEFORE UPDATE ON checklist_items
 FOR EACH ROW EXECUTE FUNCTION public.update_updated_at_column();
 
+DROP TRIGGER IF EXISTS trg_submissions_updated_at ON submissions;
 CREATE TRIGGER trg_submissions_updated_at BEFORE UPDATE ON submissions
 FOR EACH ROW EXECUTE FUNCTION public.update_updated_at_column();
+
+DROP TRIGGER IF EXISTS trg_validate_submission_approver ON submissions;
 CREATE TRIGGER trg_validate_submission_approver BEFORE INSERT OR UPDATE OF assigned_approver_member_id, booth_id ON submissions
 FOR EACH ROW EXECUTE FUNCTION public.validate_submission_approver();
+

@@ -4,7 +4,7 @@ import { ApprovalHistory } from './approval-history';
 
 export interface Submission {
   id: string;
-  locationId: string;
+  boothId: string;
   checklistItemId: string;
   assignedApproverMemberId: string;
   status: SubmissionStatus;
