@@ -1,4 +1,4 @@
-import { createServerSupabaseClient } from '@/infrastructure/supabase/server';
+import { createAdminSupabaseClient } from '@/infrastructure/supabase/server';
 import { requireCampaignManager } from '@/application/authorization/campaign-access';
 import { getCampaignDetailsUseCase } from './get-campaign-details';
 import { validateCampaignActivationUseCase } from './validate-campaign-activation';
@@ -47,7 +47,7 @@ export async function getCampaignWizardDataUseCase(campaignId: string): Promise<
   const campaign = await getCampaignDetailsUseCase(campaignId);
   if (!campaign) return null;
 
-  const supabase = await createServerSupabaseClient();
+  const supabase = createAdminSupabaseClient();
 
   // 1. Fetch Locations
   const { data: locsData } = await supabase
