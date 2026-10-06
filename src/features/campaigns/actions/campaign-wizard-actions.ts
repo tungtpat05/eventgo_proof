@@ -1,6 +1,6 @@
 'use server';
 
-import { createServerSupabaseClient } from '@/infrastructure/supabase/server';
+import { createServerSupabaseClient, createAdminSupabaseClient } from '@/infrastructure/supabase/server';
 import { requireCampaignManager } from '@/application/authorization/campaign-access';
 import { revalidatePath } from 'next/cache';
 import { duplicateBoothUseCase, batchApplyChecklistUseCase, cascadeLocationSupervisorUseCase } from '@/application/use-cases/booths/wizard-booth-operations';
@@ -38,41 +38,27 @@ export async function createDraftCampaignAction(formData: FormData): Promise<Wiz
     const { data: userData } = await supabase.auth.getUser();
     if (!userData.user) return { success: false, error: 'Yêu cầu đăng nhập.' };
 
-    const { data: campaign, error } = await supabase
-      .from('campaigns')
-      .insert({
-        title,
-        company_name: companyName,
-        brand_name: brandName,
-        company_tax_code: companyTaxCode,
-        company_contact_name: companyContactName,
-        company_contact_email: companyContactEmail,
-        company_contact_phone: companyContactPhone,
-        company_address: companyAddress,
-        start_date: startDate,
-        end_date: endDate,
-        description,
-        status: CampaignStatus.DRAFT,
-        created_by: userData.user.id,
-      })
-      .select('id')
-      .single();
+    const { data: campaignId, error } = await supabase.rpc('create_campaign_with_manager', {
+      p_title: title,
+      p_brand_name: brandName,
+      p_description: description || '',
+      p_company_name: companyName,
+      p_company_tax_code: companyTaxCode || '',
+      p_company_address: companyAddress || '',
+      p_company_contact_name: companyContactName || '',
+      p_company_contact_email: companyContactEmail || '',
+      p_company_contact_phone: companyContactPhone || '',
+      p_start_date: startDate,
+      p_end_date: endDate,
+      p_status: CampaignStatus.DRAFT,
+    });
 
-    if (error || !campaign) {
+    if (error || !campaignId) {
       return { success: false, error: error?.message || 'Lỗi khi khởi tạo chiến dịch.' };
     }
 
-    // Assign Manager role
-    await supabase.from('campaign_members').insert({
-      campaign_id: campaign.id,
-      user_id: userData.user.id,
-      role: CampaignRole.MANAGER,
-      status: CampaignMemberStatus.ACTIVE,
-      assigned_by: userData.user.id,
-    });
-
     revalidatePath('/campaigns');
-    return { success: true, data: { id: campaign.id } };
+    return { success: true, data: { id: campaignId } };
   } catch (err: any) {
     return { success: false, error: err.message || 'Lỗi hệ thống.' };
   }
@@ -143,7 +129,7 @@ export async function addLocationInWizardAction(
 ): Promise<WizardActionResult<{ id: string }>> {
   try {
     await requireCampaignManager(campaignId);
-    const supabase = await createServerSupabaseClient();
+    const supabase = createAdminSupabaseClient();
 
     const name = (formData.get('name') as string)?.trim();
     const address = (formData.get('address') as string)?.trim() || 'Chưa cập nhật địa chỉ';
@@ -182,7 +168,7 @@ export async function deleteLocationInWizardAction(
 ): Promise<WizardActionResult> {
   try {
     await requireCampaignManager(campaignId);
-    const supabase = await createServerSupabaseClient();
+    const supabase = createAdminSupabaseClient();
 
     const { error } = await supabase
       .from('locations')
@@ -209,7 +195,7 @@ export async function createBoothInWizardAction(
 ): Promise<WizardActionResult<{ id: string }>> {
   try {
     await requireCampaignManager(campaignId);
-    const supabase = await createServerSupabaseClient();
+    const supabase = createAdminSupabaseClient();
 
     const name = (formData.get('name') as string)?.trim();
     const code = (formData.get('code') as string)?.trim() || null;
@@ -249,7 +235,7 @@ export async function updateBoothInWizardAction(
 ): Promise<WizardActionResult> {
   try {
     await requireCampaignManager(campaignId);
-    const supabase = await createServerSupabaseClient();
+    const supabase = createAdminSupabaseClient();
 
     const name = (formData.get('name') as string)?.trim();
     const code = (formData.get('code') as string)?.trim() || null;
@@ -287,7 +273,7 @@ export async function deleteBoothInWizardAction(
 ): Promise<WizardActionResult> {
   try {
     await requireCampaignManager(campaignId);
-    const supabase = await createServerSupabaseClient();
+    const supabase = createAdminSupabaseClient();
 
     const { error } = await supabase.from('booths').delete().eq('id', boothId);
     if (error) {

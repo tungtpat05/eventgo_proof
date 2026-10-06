@@ -1,4 +1,4 @@
-import { createServerSupabaseClient } from '@/infrastructure/supabase/server';
+import { createServerSupabaseClient, createAdminSupabaseClient } from '@/infrastructure/supabase/server';
 import { requireCampaignManager } from '@/application/authorization/campaign-access';
 import { ChecklistItem } from '@/domain/entities';
 
@@ -29,13 +29,14 @@ export async function duplicateBoothUseCase(input: DuplicateBoothInput): Promise
   }
 
   await requireCampaignManager(campaignId);
+  const adminClient = createAdminSupabaseClient();
 
   const targetLocationId = input.targetLocationId || sourceBooth.location_id;
   const newName = input.newName || `${sourceBooth.name} (Bản sao)`;
   const newCode = input.newCode !== undefined ? input.newCode : sourceBooth.code ? `${sourceBooth.code}-COPY` : null;
 
   // 2. Insert new booth
-  const { data: newBooth, error: insertError } = await supabase
+  const { data: newBooth, error: insertError } = await adminClient
     .from('booths')
     .insert({
       location_id: targetLocationId,
@@ -68,7 +69,7 @@ export async function duplicateBoothUseCase(input: DuplicateBoothInput): Promise
       order_index: item.order_index,
     }));
 
-    await supabase.from('checklist_items').insert(itemsToInsert);
+    await adminClient.from('checklist_items').insert(itemsToInsert);
   }
 
   return newBooth.id;
