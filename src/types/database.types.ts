@@ -62,6 +62,7 @@ export interface Database {
           start_date: string;
           end_date: string;
           status: CampaignStatus;
+          wizard_step: number;
           created_by: string;
           created_at: string;
           updated_at: string;
@@ -80,6 +81,7 @@ export interface Database {
           start_date: string;
           end_date: string;
           status?: CampaignStatus;
+          wizard_step?: number;
           created_by: string;
           created_at?: string;
           updated_at?: string;
@@ -97,6 +99,7 @@ export interface Database {
           start_date?: string;
           end_date?: string;
           status?: CampaignStatus;
+          wizard_step?: number;
           updated_at?: string;
         }
       >;
@@ -187,6 +190,7 @@ export interface Database {
           address: string;
           city: string;
           deadline: string | null;
+          default_supervisor_member_id: string | null;
           created_at: string;
           updated_at: string;
         },
@@ -197,6 +201,7 @@ export interface Database {
           address: string;
           city: string;
           deadline?: string | null;
+          default_supervisor_member_id?: string | null;
           created_at?: string;
           updated_at?: string;
         },
@@ -205,6 +210,7 @@ export interface Database {
           address?: string;
           city?: string;
           deadline?: string | null;
+          default_supervisor_member_id?: string | null;
           updated_at?: string;
         }
       >;

@@ -8,7 +8,6 @@ import {
   FolderKanban,
   ScanEye,
   CheckCheck,
-  UserCog,
   CheckCircle,
 } from 'lucide-react';
 
@@ -39,12 +38,6 @@ export function Sidebar() {
       href: '/campaigns/approvals',
       icon: CheckCheck,
       active: pathname.startsWith('/campaigns/approvals'),
-    },
-    {
-      name: 'Tài khoản',
-      href: '/account',
-      icon: UserCog,
-      active: pathname.startsWith('/account'),
     },
   ];
 
@@ -98,7 +91,7 @@ export function Sidebar() {
 
         <div className="p-4 border-t border-slate-100">
           <div className="rounded-lg bg-slate-50 p-3 text-xs text-slate-500 text-center">
-            Phiên bản <span className="font-semibold text-slate-700">Booth Compliance v2.0</span>
+            Phiên bản <span className="font-semibold text-slate-700">v1.0</span>
           </div>
         </div>
       </aside>

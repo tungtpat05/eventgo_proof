@@ -14,6 +14,7 @@ export interface Campaign {
   startDate: Date;
   endDate: Date;
   status: CampaignStatus;
+  wizardStep?: number;
   createdBy: string;
   currentUserRole: CampaignRole;
   createdAt: Date;

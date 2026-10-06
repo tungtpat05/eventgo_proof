@@ -1,6 +1,9 @@
 import { getCurrentUserSession } from '@/application/use-cases/auth/get-current-user';
 import { Badge } from '@/components/ui/badge';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { signOutAction } from '@/features/auth/actions/auth-actions';
+import { LogOut } from 'lucide-react';
 import { Metadata } from 'next';
 
 export const metadata: Metadata = { title: 'Tài khoản — EventGo Proof' };
@@ -21,6 +24,15 @@ export default async function AccountPage() {
           <div><span className="text-slate-500">Email đã xác minh</span><p className="font-semibold text-slate-900">{user.email}</p></div>
           <Badge variant="default">Google OAuth</Badge>
         </CardContent>
+        <CardFooter className="border-t border-slate-100 pt-4 flex justify-between items-center">
+          <span></span>
+          <form action={signOutAction}>
+            <Button type="submit" variant="outline" className="gap-2 text-rose-600 border-rose-200 hover:bg-rose-50 hover:text-rose-700">
+              <LogOut className="h-4 w-4" />
+              Đăng xuất
+            </Button>
+          </form>
+        </CardFooter>
       </Card>
     </div>
   );

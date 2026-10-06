@@ -1,5 +1,5 @@
 import React from 'react';
-import { CampaignForm } from '@/features/campaigns/components/campaign-form';
+import { NewCampaignStep1 } from '@/features/campaigns/components/wizard/new-campaign-step1';
 import { Metadata } from 'next';
 
 export const metadata: Metadata = {
@@ -7,5 +7,5 @@ export const metadata: Metadata = {
 };
 
 export default function NewCampaignPage() {
-  return <CampaignForm />;
+  return <NewCampaignStep1 />;
 }
