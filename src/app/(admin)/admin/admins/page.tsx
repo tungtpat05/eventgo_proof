@@ -202,12 +202,12 @@ export default function AdminMembersPage() {
                 <div className="flex items-center gap-3">
                   <AdminAvatar fullName={admin.fullName} avatarUrl={admin.avatarUrl} />
                   <div>
-                    <p className="text-sm font-semibold text-slate-900 flex items-center gap-2">
+                    <div className="text-sm font-semibold text-slate-900 flex items-center gap-2">
                       {admin.fullName}
                       <Badge className="bg-blue-50 text-blue-700 border-blue-200 text-[10px]">
                         System Admin
                       </Badge>
-                    </p>
+                    </div>
                     <p className="text-xs text-slate-500">{admin.email}</p>
                   </div>
                 </div>
