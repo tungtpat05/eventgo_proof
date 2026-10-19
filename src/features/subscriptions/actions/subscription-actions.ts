@@ -3,7 +3,7 @@
 import { getCurrentUserSession } from '@/application/use-cases/auth/get-current-user';
 import { SupabaseSubscriptionRepository } from '@/infrastructure/repositories/supabase-subscription-repository';
 import { SupabaseTransactionRepository } from '@/infrastructure/repositories/supabase-transaction-repository';
-import { createPayOSPaymentLink } from '@/infrastructure/payos/payos-client';
+import { createPayOSPaymentLink, getPayOSPaymentLinkInformation } from '@/infrastructure/payos/payos-client';
 import {
   SubscriptionPlanTier,
   SubscriptionStatus,
@@ -145,7 +145,7 @@ export async function createSubscriptionPaymentAction(targetPlan: SubscriptionPl
       paymentUrl: paymentLink.checkoutUrl,
       qrCodeUrl: paymentLink.qrCode,
       gatewayTransactionId: numericOrderCode.toString(),
-      notes: 'Demo mode transaction',
+      notes: 'PayOS VietQR transaction',
       paidAt: null,
       createdAt: new Date(),
       updatedAt: new Date(),
@@ -158,7 +158,93 @@ export async function createSubscriptionPaymentAction(targetPlan: SubscriptionPl
     qrCode: paymentLink.qrCode,
     amount: planConfig.priceMonthlyVnd,
     orderCode: numericOrderCode,
+    accountNumber: paymentLink.accountNumber,
+    accountName: paymentLink.accountName,
+    bin: paymentLink.bin,
+    bankName: paymentLink.bankName,
+    description: paymentLink.description,
   };
+}
+
+export async function checkSubscriptionPaymentStatusAction(
+  orderCode: number,
+  transactionCode: string
+) {
+  const session = await getCurrentUserSession();
+  const currentUserId = session.user.id;
+
+  // 1. Check in Database first (may have been updated by Webhook)
+  const txn = await txnRepo.getByCode(transactionCode).catch(() => null);
+  if (txn && txn.status === TransactionStatus.SUCCESS) {
+    return {
+      isPaid: true,
+      status: 'PAID',
+      message: 'Giao dịch đã hoàn tất và kích hoạt thành công!',
+    };
+  }
+
+  // 2. Query PayOS directly
+  const payosInfo = await getPayOSPaymentLinkInformation(orderCode);
+  if (!payosInfo) {
+    return { isPaid: false, status: 'PENDING' };
+  }
+
+  if (payosInfo.status === 'PAID') {
+    const targetPlan = txn?.plan || (transactionCode.includes('PRO')
+      ? SubscriptionPlanTier.PRO
+      : transactionCode.includes('STARTER')
+      ? SubscriptionPlanTier.STARTER
+      : SubscriptionPlanTier.FREE);
+
+    const targetUserId = txn?.userId || currentUserId;
+
+    // A. Update transaction in DB
+    if (txn) {
+      await txnRepo.updateStatus(txn.id, TransactionStatus.SUCCESS, {
+        paidAt: new Date(),
+        notes: `PayOS VietQR: Đã chuyển khoản MB Bank thành công (Tự động đối soát)`,
+      }).catch((err) => console.error('Failed to update txn status in DB:', err));
+    }
+
+    // B. Calculate cumulative expiration (+30 days)
+    const currentSub = await subRepo.getByUserId(targetUserId).catch(() => null);
+    let newExpiresAt: Date;
+
+    if (
+      currentSub &&
+      currentSub.plan === targetPlan &&
+      currentSub.expiresAt &&
+      currentSub.expiresAt > new Date()
+    ) {
+      newExpiresAt = new Date(currentSub.expiresAt.getTime() + 30 * 24 * 60 * 60 * 1000);
+    } else {
+      newExpiresAt = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
+    }
+
+    // C. Upsert subscription in DB
+    await subRepo.upsert({
+      userId: targetUserId,
+      plan: targetPlan,
+      status: SubscriptionStatus.ACTIVE,
+      expiresAt: newExpiresAt,
+    }).catch((err) => console.error('Failed to upsert subscription in DB:', err));
+
+    revalidatePath('/settings/billing');
+    revalidatePath('/campaigns');
+    revalidatePath('/admin');
+
+    return {
+      isPaid: true,
+      status: 'PAID',
+      message: `Đã kích hoạt thành công ${PLAN_CONFIGS[targetPlan].name} đến ${newExpiresAt.toLocaleDateString('vi-VN')}!`,
+    };
+  }
+
+  if (payosInfo.status === 'CANCELLED' || payosInfo.status === 'EXPIRED') {
+    return { isPaid: false, status: payosInfo.status };
+  }
+
+  return { isPaid: false, status: 'PENDING' };
 }
 
 export async function simulatePaymentSuccessAction(transactionCode: string) {

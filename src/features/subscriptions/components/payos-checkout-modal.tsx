@@ -12,8 +12,20 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { SubscriptionPlanTier } from '@/domain/enums';
 import { PLAN_CONFIGS } from '@/domain/entities';
-import { simulatePaymentSuccessAction } from '../actions/subscription-actions';
-import { QrCode, CheckCircle2, Copy, Check, Clock, Loader2, Sparkles } from 'lucide-react';
+import { checkSubscriptionPaymentStatusAction } from '../actions/subscription-actions';
+import {
+  QrCode,
+  CheckCircle2,
+  Copy,
+  Check,
+  Clock,
+  Loader2,
+  ExternalLink,
+  Building2,
+  User,
+  Hash,
+  ShieldCheck,
+} from 'lucide-react';
 
 interface PayOSCheckoutModalProps {
   isOpen: boolean;
@@ -24,6 +36,12 @@ interface PayOSCheckoutModalProps {
   orderCode: number;
   amount: number;
   transactionCode: string;
+  accountNumber?: string;
+  accountName?: string;
+  bankName?: string;
+  bin?: string;
+  checkoutUrl?: string;
+  description?: string;
   onSuccess: () => void;
 }
 
@@ -36,16 +54,21 @@ export function PayOSCheckoutModal({
   orderCode,
   amount,
   transactionCode,
+  accountNumber = '011120057777',
+  accountName = 'NGUYEN THANH TUNG',
+  bankName = 'MB Bank (Ngân hàng TMCP Quân Đội)',
+  checkoutUrl,
+  description,
   onSuccess,
 }: PayOSCheckoutModalProps) {
-  const [copied, setCopied] = useState(false);
-  const [isSimulating, setIsSimulating] = useState(false);
+  const [copiedKey, setCopiedKey] = useState<string | null>(null);
   const [isSuccess, setIsSuccess] = useState(false);
   const [timeLeft, setTimeLeft] = useState(900); // 15 minutes
 
   const displayName = planName || PLAN_CONFIGS[targetPlan]?.name || 'Gói Dịch Vụ';
+  const transferContent = description || `EVENTGO ${orderCode}`;
 
-
+  // Countdown timer
   useEffect(() => {
     if (!isOpen) return;
     const timer = setInterval(() => {
@@ -54,122 +77,218 @@ export function PayOSCheckoutModal({
     return () => clearInterval(timer);
   }, [isOpen]);
 
+  // Polling transaction status with PayOS / Database
+  useEffect(() => {
+    if (!isOpen || isSuccess) return;
+
+    let isCancelled = false;
+
+    const pollStatus = async () => {
+      try {
+        const res = await checkSubscriptionPaymentStatusAction(orderCode, transactionCode);
+        if (!isCancelled && res.isPaid) {
+          setIsSuccess(true);
+          setTimeout(() => {
+            onSuccess();
+            onClose();
+          }, 2000);
+        }
+      } catch (err) {
+        console.error('Error polling payment status:', err);
+      }
+    };
+
+    // Run poll every 2.5s
+    const interval = setInterval(pollStatus, 2500);
+    // Also poll immediately on mount
+    pollStatus();
+
+    return () => {
+      isCancelled = true;
+      clearInterval(interval);
+    };
+  }, [isOpen, isSuccess, orderCode, transactionCode, onSuccess, onClose]);
+
   const minutes = Math.floor(timeLeft / 60);
   const seconds = timeLeft % 60;
 
-  const handleCopyCode = () => {
-    navigator.clipboard.writeText(`EVENTGO ${orderCode}`);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
-  };
-
-  const handleSimulatePayment = async () => {
-    setIsSimulating(true);
-    try {
-      await simulatePaymentSuccessAction(transactionCode);
-      setIsSuccess(true);
-      setTimeout(() => {
-        onSuccess();
-        onClose();
-      }, 2000);
-    } catch (err: any) {
-      alert(err.message || 'Lỗi giả lập thanh toán');
-    } finally {
-      setIsSimulating(false);
-    }
+  const handleCopy = (key: string, textToCopy: string) => {
+    navigator.clipboard.writeText(textToCopy);
+    setCopiedKey(key);
+    setTimeout(() => setCopiedKey(null), 2000);
   };
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-md p-6 bg-white rounded-2xl shadow-2xl border-slate-200">
-        <DialogHeader className="text-center sm:text-center">
+      <DialogContent className="sm:max-w-lg p-6 bg-white rounded-2xl shadow-2xl border-slate-200 max-h-[92vh] overflow-y-auto">
+        <DialogHeader className="text-center sm:text-center pb-1">
           <DialogTitle className="text-xl font-bold text-slate-900 flex items-center justify-center gap-2">
             <QrCode className="h-5 w-5 text-blue-600" />
             Thanh toán {displayName}
           </DialogTitle>
           <DialogDescription className="text-sm text-slate-500">
-            Quét mã VietQR bằng ứng dụng ngân hàng bất kỳ để tự động nâng gói
+            Quét mã VietQR bằng app ngân hàng MB Bank hoặc bất kỳ ngân hàng nào
           </DialogDescription>
         </DialogHeader>
 
         {isSuccess ? (
-          <div className="py-8 flex flex-col items-center justify-center text-center space-y-3">
+          <div className="py-8 flex flex-col items-center justify-center text-center space-y-4">
             <div className="h-16 w-16 bg-emerald-50 text-emerald-600 rounded-full flex items-center justify-center border border-emerald-200 animate-bounce">
               <CheckCircle2 className="h-10 w-10" />
             </div>
-            <h3 className="text-lg font-bold text-slate-900">Thanh toán thành công!</h3>
-            <p className="text-sm text-slate-600">
-              Gói <span className="font-semibold text-blue-600">{displayName}</span> của bạn đã được kích hoạt thành công trong 30 ngày.
+            <h3 className="text-xl font-bold text-slate-900">Thanh toán thành công!</h3>
+            <p className="text-sm text-slate-600 max-w-sm">
+              Hệ thống đã xác nhận thanh toán thành công. Gói{' '}
+              <span className="font-semibold text-blue-600">{displayName}</span> của bạn đã được kích hoạt trong 30 ngày.
             </p>
+            <Badge className="bg-emerald-50 text-emerald-700 border-emerald-200">
+              Đang tải lại giao diện...
+            </Badge>
           </div>
         ) : (
-          <div className="space-y-4 pt-2">
+          <div className="space-y-4 pt-1">
             {/* Amount & Time banner */}
-            <div className="bg-blue-50/70 border border-blue-200 rounded-xl p-3.5 flex items-center justify-between">
+            <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-xl p-3.5 flex items-center justify-between">
               <div>
-                <p className="text-xs text-blue-600 font-medium">Số tiền thanh toán</p>
-                <p className="text-xl font-bold text-blue-700">
-                  {amount.toLocaleString('vi-VN')} đ
+                <p className="text-xs text-blue-600 font-semibold uppercase tracking-wider">
+                  Số tiền thanh toán
                 </p>
+                <div className="flex items-center gap-2 mt-0.5">
+                  <p className="text-2xl font-bold text-blue-700">
+                    {amount.toLocaleString('vi-VN')} đ
+                  </p>
+                  <button
+                    type="button"
+                    onClick={() => handleCopy('amount', amount.toString())}
+                    className="text-blue-500 hover:text-blue-700 p-1"
+                    title="Sao chép số tiền"
+                  >
+                    {copiedKey === 'amount' ? (
+                      <Check className="h-4 w-4 text-emerald-600" />
+                    ) : (
+                      <Copy className="h-4 w-4" />
+                    )}
+                  </button>
+                </div>
               </div>
               <div className="text-right">
                 <Badge variant="outline" className="bg-white text-slate-700 border-slate-300 gap-1 text-xs">
-                  <Clock className="h-3 w-3 text-amber-500" />
+                  <Clock className="h-3.5 w-3.5 text-amber-500" />
                   {minutes}:{seconds < 10 ? `0${seconds}` : seconds}
                 </Badge>
-                <p className="text-[11px] text-slate-500 mt-1">Hết hạn sau</p>
+                <p className="text-[11px] text-slate-500 mt-1">Hết hạn thanh toán</p>
               </div>
             </div>
 
             {/* QR Code Container */}
             <div className="flex flex-col items-center justify-center p-4 bg-slate-50 rounded-xl border border-slate-200">
-              <div className="bg-white p-2.5 rounded-lg shadow-sm border border-slate-200">
+              <div className="bg-white p-3 rounded-xl shadow-sm border border-slate-200">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
                   src={qrCodeUrl}
-                  alt="VietQR PayOS"
-                  className="w-48 h-48 object-contain"
+                  alt="VietQR PayOS MB Bank"
+                  className="w-52 h-52 object-contain rounded-lg"
                 />
               </div>
 
-              {/* Order code & copy */}
-              <div className="mt-3 flex items-center gap-2 bg-white px-3 py-1.5 rounded-lg border border-slate-200 text-xs text-slate-700">
-                <span>Nội dung: <strong>EVENTGO {orderCode}</strong></span>
-                <button
-                  type="button"
-                  onClick={handleCopyCode}
-                  className="text-blue-600 hover:text-blue-700 font-medium ml-1 flex items-center gap-0.5"
-                  title="Sao chép cú pháp"
-                >
-                  {copied ? <Check className="h-3.5 w-3.5 text-emerald-600" /> : <Copy className="h-3.5 w-3.5" />}
-                  <span>{copied ? 'Đã chép' : 'Chép'}</span>
-                </button>
+              <div className="flex items-center gap-1.5 text-xs text-slate-600 mt-3 font-medium">
+                <ShieldCheck className="h-4 w-4 text-emerald-600" />
+                <span>VietQR Napas247 • Tự động kích hoạt sau khi quét</span>
               </div>
             </div>
 
-            {/* Realtime listener status */}
-            <div className="flex items-center justify-center gap-2 text-xs text-slate-500">
-              <Loader2 className="h-3.5 w-3.5 animate-spin text-blue-600" />
-              <span>Hệ thống đang tự động lắng nghe giao dịch chuyển khoản...</span>
+            {/* Beneficiary Bank Account Details Card */}
+            <div className="bg-slate-50 rounded-xl p-3.5 border border-slate-200 space-y-2.5 text-xs">
+              <div className="flex items-center justify-between pb-2 border-b border-slate-200/60 font-semibold text-slate-700">
+                <span className="flex items-center gap-1.5">
+                  <Building2 className="h-4 w-4 text-blue-600" />
+                  Thông tin chuyển khoản thủ công
+                </span>
+                <span className="text-[11px] font-normal text-slate-500">24/7 Napas</span>
+              </div>
+
+              <div className="flex items-center justify-between">
+                <span className="text-slate-500">Ngân hàng:</span>
+                <span className="font-semibold text-slate-800">{bankName}</span>
+              </div>
+
+              <div className="flex items-center justify-between">
+                <span className="text-slate-500 flex items-center gap-1">
+                  <User className="h-3.5 w-3.5 text-slate-400" />
+                  Chủ tài khoản:
+                </span>
+                <span className="font-semibold text-slate-900">{accountName}</span>
+              </div>
+
+              <div className="flex items-center justify-between">
+                <span className="text-slate-500 flex items-center gap-1">
+                  <Hash className="h-3.5 w-3.5 text-slate-400" />
+                  Số tài khoản:
+                </span>
+                <div className="flex items-center gap-1.5">
+                  <span className="font-mono font-bold text-slate-900 text-sm">
+                    {accountNumber}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => handleCopy('stk', accountNumber)}
+                    className="text-blue-600 hover:text-blue-700 flex items-center gap-0.5 font-medium"
+                    title="Sao chép số tài khoản"
+                  >
+                    {copiedKey === 'stk' ? (
+                      <Check className="h-3.5 w-3.5 text-emerald-600" />
+                    ) : (
+                      <Copy className="h-3.5 w-3.5" />
+                    )}
+                    <span>{copiedKey === 'stk' ? 'Đã chép' : 'Chép'}</span>
+                  </button>
+                </div>
+              </div>
+
+              <div className="flex items-center justify-between bg-blue-50/70 p-2 rounded-lg border border-blue-200/60">
+                <span className="text-blue-900 font-medium">Nội dung chuyển:</span>
+                <div className="flex items-center gap-1.5">
+                  <span className="font-mono font-bold text-blue-700">
+                    {transferContent}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => handleCopy('content', transferContent)}
+                    className="text-blue-600 hover:text-blue-800 flex items-center gap-0.5 font-semibold"
+                    title="Sao chép nội dung chuyển khoản"
+                  >
+                    {copiedKey === 'content' ? (
+                      <Check className="h-3.5 w-3.5 text-emerald-600" />
+                    ) : (
+                      <Copy className="h-3.5 w-3.5" />
+                    )}
+                    <span>{copiedKey === 'content' ? 'Đã chép' : 'Chép'}</span>
+                  </button>
+                </div>
+              </div>
             </div>
 
-            {/* Testing / Sandbox Simulation Button */}
-            <div className="pt-2 border-t border-slate-100 flex flex-col gap-2">
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                onClick={handleSimulatePayment}
-                disabled={isSimulating}
-                className="w-full text-xs gap-1.5 border-dashed border-blue-400 text-blue-700 bg-blue-50/50 hover:bg-blue-100/60"
-              >
-                {isSimulating ? (
-                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                ) : (
-                  <Sparkles className="h-3.5 w-3.5 text-blue-600" />
-                )}
-                <span>[Test / Demo] Giả lập quét chuyển khoản thành công</span>
-              </Button>
+            {/* Realtime listener status indicator */}
+            <div className="flex items-center justify-center gap-2 py-1 text-xs text-blue-700 bg-blue-50/50 rounded-lg border border-blue-100">
+              <Loader2 className="h-3.5 w-3.5 animate-spin text-blue-600" />
+              <span>Đang chờ chuyển khoản... Hệ thống tự động kích hoạt ngay khi nhận tiền</span>
+            </div>
+
+            {/* Action buttons */}
+            <div className="pt-2 border-t border-slate-100 flex items-center justify-between gap-3">
+              {checkoutUrl && checkoutUrl.startsWith('http') ? (
+                <a
+                  href={checkoutUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1 text-xs text-blue-600 hover:text-blue-800 font-medium"
+                >
+                  <ExternalLink className="h-3.5 w-3.5" />
+                  Mở trang thanh toán PayOS
+                </a>
+              ) : (
+                <span className="text-[11px] text-slate-400">MB Bank Napas247</span>
+              )}
 
               <Button
                 type="button"

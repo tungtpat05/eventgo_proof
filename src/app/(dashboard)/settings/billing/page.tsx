@@ -42,6 +42,12 @@ export default function BillingPage() {
     orderCode: number;
     amount: number;
     transactionCode: string;
+    accountNumber?: string;
+    accountName?: string;
+    bankName?: string;
+    bin?: string;
+    checkoutUrl?: string;
+    description?: string;
   } | null>(null);
 
   const loadData = async () => {
@@ -93,6 +99,12 @@ export default function BillingPage() {
           orderCode: result.orderCode,
           amount: result.amount,
           transactionCode: result.transaction.transactionCode,
+          accountNumber: result.accountNumber,
+          accountName: result.accountName,
+          bankName: result.bankName,
+          bin: result.bin,
+          checkoutUrl: result.checkoutUrl,
+          description: result.description,
         });
         setIsModalOpen(true);
       } catch (err: any) {
@@ -526,6 +538,12 @@ export default function BillingPage() {
           orderCode={modalData.orderCode}
           amount={modalData.amount}
           transactionCode={modalData.transactionCode}
+          accountNumber={modalData.accountNumber}
+          accountName={modalData.accountName}
+          bankName={modalData.bankName}
+          bin={modalData.bin}
+          checkoutUrl={modalData.checkoutUrl}
+          description={modalData.description}
           onSuccess={loadData}
         />
       )}
