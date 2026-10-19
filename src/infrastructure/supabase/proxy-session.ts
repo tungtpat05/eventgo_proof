@@ -38,5 +38,22 @@ export async function updateSession(request: NextRequest) {
   if (user && pathname === '/login') {
     return NextResponse.redirect(new URL('/dashboard', request.url));
   }
+
+  // Protect /admin routes: only users with is_system_admin = true can enter
+  if (user && pathname.startsWith('/admin')) {
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('is_system_admin')
+      .eq('id', user.id)
+      .maybeSingle();
+
+    if (!profile?.is_system_admin) {
+      return NextResponse.redirect(
+        new URL('/campaigns?error=Truy cập bị từ chối: Yêu cầu quyền Quản trị viên hệ thống.', request.url)
+      );
+    }
+  }
+
   return response;
 }
+

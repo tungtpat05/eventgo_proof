@@ -55,3 +55,35 @@ export enum ChecklistCategory {
   CONDITION = 'CONDITION',
   OTHER = 'OTHER',
 }
+
+export enum SubscriptionPlanTier {
+  FREE = 'FREE',
+  STARTER = 'STARTER',
+  PRO = 'PRO',
+}
+
+export enum SubscriptionStatus {
+  ACTIVE = 'ACTIVE',
+  PAST_DUE = 'PAST_DUE',
+  CANCELED = 'CANCELED',
+  EXPIRED = 'EXPIRED',
+}
+
+export enum TransactionStatus {
+  PENDING = 'PENDING',
+  SUCCESS = 'SUCCESS',
+  FAILED = 'FAILED',
+  CANCELLED = 'CANCELLED',
+  REFUNDED = 'REFUNDED',
+}
+
+export enum PaymentGatewayProvider {
+  PAYOS_VIETQR = 'PAYOS_VIETQR',
+  MANUAL_BANK_TRANSFER = 'MANUAL_BANK_TRANSFER',
+}
+
+export enum SystemAdminInviteStatus {
+  PENDING = 'PENDING',
+  ACCEPTED = 'ACCEPTED',
+  REVOKED = 'REVOKED',
+}

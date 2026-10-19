@@ -16,6 +16,7 @@ import {
   ArrowRight,
 } from 'lucide-react';
 import { Campaign, Location, Booth, ChecklistItem } from '@/domain/entities';
+import { SubscriptionQuota } from '@/application/use-cases/campaigns/get-campaign-wizard-data';
 import { WizardFooter } from './wizard-footer';
 import { activateCampaignInWizardAction } from '../../actions/campaign-wizard-actions';
 import { useRouter } from 'next/navigation';
@@ -46,6 +47,7 @@ interface Step5ReviewProps {
       boothsFullyStaffed: number;
     };
   };
+  subscriptionQuota?: SubscriptionQuota;
   onBack: () => void;
   onGoToStep: (step: number) => void;
 }
@@ -55,6 +57,7 @@ export function Step5Review({
   locations,
   allBooths,
   readiness,
+  subscriptionQuota,
   onBack,
   onGoToStep,
 }: Step5ReviewProps) {
@@ -328,8 +331,62 @@ export function Step5Review({
               </div>
             </div>
 
-            {/* Readiness Final Banner */}
-            {readiness.canActivate ? (
+            {/* Error Message Display */}
+            {errorMessage && (
+              <div className="rounded-xl bg-red-50 border border-red-200 p-4 flex items-start gap-3 text-red-800 text-xs">
+                <AlertCircle className="h-5 w-5 text-red-600 shrink-0 mt-0.5" />
+                <div className="space-y-1">
+                  <span className="font-bold block text-red-900">Không thể kích hoạt chiến dịch</span>
+                  <p className="text-red-700 whitespace-pre-line leading-relaxed">{errorMessage}</p>
+                </div>
+              </div>
+            )}
+
+            {/* Quota Soft-Lock Upgrade Paywall Banner */}
+            {subscriptionQuota?.isAtQuotaLimit ? (
+              <div className="rounded-xl border-2 border-amber-300 bg-linear-to-r from-amber-50 to-orange-50 p-5 space-y-3">
+                <div className="flex items-start gap-3.5">
+                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-amber-500 text-white font-bold shadow-xs">
+                    <Sparkles className="h-5 w-5" />
+                  </div>
+                  <div className="space-y-1">
+                    <div className="flex items-center gap-2">
+                      <h4 className="text-sm font-bold text-amber-950">
+                        Đã chạm giới hạn gói dịch vụ {subscriptionQuota.planName}
+                      </h4>
+                      <span className="rounded-full bg-amber-200/80 px-2.5 py-0.5 text-[11px] font-bold text-amber-900">
+                        {subscriptionQuota.activeCampaignCount} / {subscriptionQuota.maxActiveCampaigns} chiến dịch
+                      </span>
+                    </div>
+                    <p className="text-xs text-amber-900/90 leading-relaxed">
+                      Gói <strong>{subscriptionQuota.planName}</strong> cho phép tối đa{' '}
+                      <strong>{subscriptionQuota.maxActiveCampaigns} chiến dịch đang hoạt động</strong> cùng một lúc.
+                      Để kích hoạt chiến dịch này, vui lòng nâng cấp gói dịch vụ (Starter hoặc Pro) hoặc chuyển bớt các chiến dịch đang chạy sang trạng thái Hoàn thành.
+                    </p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2.5 pt-1 pl-13">
+                  <Button
+                    type="button"
+                    size="sm"
+                    onClick={() => router.push('/settings/billing')}
+                    className="bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold h-8 px-4 shadow-xs"
+                  >
+                    <Sparkles className="h-3.5 w-3.5 mr-1.5" />
+                    Nâng cấp gói ngay
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={handleSaveDraftAndExit}
+                    className="border-amber-300 bg-white text-amber-900 hover:bg-amber-100 text-xs h-8"
+                  >
+                    Lưu bản nháp & Xem danh sách
+                  </Button>
+                </div>
+              </div>
+            ) : readiness.canActivate ? (
               <div className="rounded-xl bg-emerald-50 border border-emerald-200 p-4 flex items-center gap-3 text-emerald-800 text-xs">
                 <CheckCircle2 className="h-5 w-5 text-emerald-600 shrink-0" />
                 <div>
@@ -360,7 +417,11 @@ export function Step5Review({
       <WizardFooter
         currentStep={5}
         onBack={onBack}
-        onNext={readiness.canActivate ? handleActivate : undefined}
+        onNext={
+          readiness.canActivate && !subscriptionQuota?.isAtQuotaLimit
+            ? handleActivate
+            : undefined
+        }
         nextText="Kích hoạt chiến dịch"
         isNextLoading={isActivating}
         showSaveDraft={true}

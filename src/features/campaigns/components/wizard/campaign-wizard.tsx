@@ -107,6 +107,7 @@ export function CampaignWizard({ initialData, initialStep = 1 }: CampaignWizardP
           locations={initialData.locations}
           allBooths={initialData.allBooths}
           readiness={initialData.readiness}
+          subscriptionQuota={initialData.subscriptionQuota}
           onBack={() => setStep(4)}
           onGoToStep={(step) => setStep(step)}
         />

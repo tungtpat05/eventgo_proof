@@ -3,8 +3,18 @@ import { requireCampaignManager } from '@/application/authorization/campaign-acc
 import { getCampaignDetailsUseCase } from './get-campaign-details';
 import { validateCampaignActivationUseCase } from './validate-campaign-activation';
 import { CHECKLIST_TEMPLATE_PRESETS, ChecklistTemplatePreset } from '@/domain/constants/checklist-templates';
-import { Campaign, Location, Booth, ChecklistItem, CampaignMember } from '@/domain/entities';
-import { CampaignRole } from '@/domain/enums';
+import { Campaign, Location, Booth, ChecklistItem, CampaignMember, PLAN_CONFIGS } from '@/domain/entities';
+import { CampaignRole, CampaignStatus, SubscriptionPlanTier } from '@/domain/enums';
+import { SupabaseSubscriptionRepository } from '@/infrastructure/repositories/supabase-subscription-repository';
+
+export interface SubscriptionQuota {
+  tier: SubscriptionPlanTier;
+  planName: string;
+  maxActiveCampaigns: number;
+  activeCampaignCount: number;
+  remainingSlots: number;
+  isAtQuotaLimit: boolean;
+}
 
 export interface CampaignWizardData {
   campaign: Campaign;
@@ -39,6 +49,7 @@ export interface CampaignWizardData {
       boothsFullyStaffed: number;
     };
   };
+  subscriptionQuota: SubscriptionQuota;
 }
 
 export async function getCampaignWizardDataUseCase(campaignId: string): Promise<CampaignWizardData | null> {
@@ -266,6 +277,47 @@ export async function getCampaignWizardDataUseCase(campaignId: string): Promise<
     if (b.supervisorName && b.approverName) boothsFullyStaffed++;
   });
 
+  // 8. Subscription Quota Calculation
+  let subscriptionQuota: SubscriptionQuota = {
+    tier: SubscriptionPlanTier.FREE,
+    planName: 'Free',
+    maxActiveCampaigns: 2,
+    activeCampaignCount: 0,
+    remainingSlots: 2,
+    isAtQuotaLimit: false,
+  };
+
+  try {
+    const ownerId = campaign.createdBy;
+    if (ownerId) {
+      const subRepo = new SupabaseSubscriptionRepository();
+      const sub = await subRepo.getByUserId(ownerId);
+      const planTier = sub?.plan || SubscriptionPlanTier.FREE;
+      const planConfig = PLAN_CONFIGS[planTier];
+
+      const { count: activeCount } = await supabase
+        .from('campaigns')
+        .select('*', { count: 'exact', head: true })
+        .eq('created_by', ownerId)
+        .eq('status', CampaignStatus.ACTIVE);
+
+      const activeNum = activeCount || 0;
+      const isAlreadyActive = campaign.status === CampaignStatus.ACTIVE;
+      const isAtQuota = !isAlreadyActive && activeNum >= planConfig.maxActiveCampaigns;
+
+      subscriptionQuota = {
+        tier: planTier,
+        planName: planConfig.name,
+        maxActiveCampaigns: planConfig.maxActiveCampaigns,
+        activeCampaignCount: activeNum,
+        remainingSlots: Math.max(0, planConfig.maxActiveCampaigns - activeNum),
+        isAtQuotaLimit: isAtQuota,
+      };
+    }
+  } catch (err) {
+    // Non-blocking fallback
+  }
+
   return {
     campaign,
     locations: structuredLocations,
@@ -285,5 +337,6 @@ export async function getCampaignWizardDataUseCase(campaignId: string): Promise<
         boothsFullyStaffed,
       },
     },
+    subscriptionQuota,
   };
 }

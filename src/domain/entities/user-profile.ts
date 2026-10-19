@@ -4,6 +4,8 @@ export interface UserProfile {
   fullName: string;
   avatarUrl?: string | null;
   phone?: string | null;
+  isSystemAdmin?: boolean;
   createdAt: Date;
   updatedAt: Date;
 }
+

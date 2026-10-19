@@ -1,5 +1,6 @@
 import { createServerSupabaseClient } from '@/infrastructure/supabase/server';
 import { NextRequest, NextResponse } from 'next/server';
+import { SubscriptionPlanTier, SubscriptionStatus } from '@/domain/enums';
 
 export async function GET(request: NextRequest) {
   const code = request.nextUrl.searchParams.get('code');
@@ -36,6 +37,23 @@ export async function GET(request: NextRequest) {
     return NextResponse.redirect(new URL('/login?error=Không thể khởi tạo hồ sơ người dùng.', request.url));
   }
 
-  await supabase.rpc('accept_pending_campaign_invites');
+  // Accept pending invites (campaign and admin)
+  await Promise.allSettled([
+    supabase.rpc('accept_pending_campaign_invites'),
+    supabase.rpc('accept_pending_admin_invites'),
+  ]);
+
+  // Ensure user has at least a FREE subscription row
+  await supabase.from('subscriptions').upsert(
+    {
+      user_id: data.user.id,
+      plan: SubscriptionPlanTier.FREE,
+      status: SubscriptionStatus.ACTIVE,
+      started_at: new Date().toISOString(),
+    },
+    { onConflict: 'user_id', ignoreDuplicates: true }
+  );
+
   return NextResponse.redirect(new URL(safeNext, request.url));
 }
+

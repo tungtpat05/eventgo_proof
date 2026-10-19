@@ -6,6 +6,11 @@ import {
   CampaignStatus,
   ChecklistCategory,
   SubmissionStatus,
+  SubscriptionPlanTier,
+  SubscriptionStatus,
+  TransactionStatus,
+  PaymentGatewayProvider,
+  SystemAdminInviteStatus,
 } from '@/domain/enums';
 
 export type Json = string | number | boolean | null | { [key: string]: Json | undefined } | Json[];
@@ -27,6 +32,7 @@ export interface Database {
           full_name: string;
           avatar_url: string | null;
           phone: string | null;
+          is_system_admin: boolean;
           created_at: string;
           updated_at: string;
         },
@@ -36,6 +42,7 @@ export interface Database {
           full_name: string;
           avatar_url?: string | null;
           phone?: string | null;
+          is_system_admin?: boolean;
           created_at?: string;
           updated_at?: string;
         },
@@ -44,9 +51,11 @@ export interface Database {
           full_name?: string;
           avatar_url?: string | null;
           phone?: string | null;
+          is_system_admin?: boolean;
           updated_at?: string;
         }
       >;
+
       campaigns: TableDefinition<
         {
           id: string;
@@ -377,13 +386,177 @@ export interface Database {
         Record<string, never>,
         Record<string, never>
       >;
+      subscriptions: TableDefinition<
+        {
+          id: string;
+          user_id: string;
+          plan: SubscriptionPlanTier;
+          status: SubscriptionStatus;
+          started_at: string;
+          expires_at: string | null;
+          created_at: string;
+          updated_at: string;
+        },
+        {
+          id?: string;
+          user_id: string;
+          plan?: SubscriptionPlanTier;
+          status?: SubscriptionStatus;
+          started_at?: string;
+          expires_at?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        },
+        {
+          plan?: SubscriptionPlanTier;
+          status?: SubscriptionStatus;
+          started_at?: string;
+          expires_at?: string | null;
+          updated_at?: string;
+        }
+      >;
+      system_admin_invites: TableDefinition<
+        {
+          id: string;
+          email: string;
+          invited_by: string;
+          status: SystemAdminInviteStatus;
+          accepted_at: string | null;
+          created_at: string;
+          updated_at: string;
+        },
+        {
+          id?: string;
+          email: string;
+          invited_by: string;
+          status?: SystemAdminInviteStatus;
+          accepted_at?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        },
+        {
+          status?: SystemAdminInviteStatus;
+          accepted_at?: string | null;
+          updated_at?: string;
+        }
+      >;
+      transactions: TableDefinition<
+        {
+          id: string;
+          transaction_code: string;
+          user_id: string;
+          plan: SubscriptionPlanTier;
+          amount: number;
+          currency: string;
+          provider: PaymentGatewayProvider;
+          status: TransactionStatus;
+          payment_url: string | null;
+          qr_code_url: string | null;
+          gateway_transaction_id: string | null;
+          notes: string | null;
+          paid_at: string | null;
+          created_at: string;
+          updated_at: string;
+        },
+        {
+          id?: string;
+          transaction_code: string;
+          user_id: string;
+          plan: SubscriptionPlanTier;
+          amount: number;
+          currency?: string;
+          provider?: PaymentGatewayProvider;
+          status?: TransactionStatus;
+          payment_url?: string | null;
+          qr_code_url?: string | null;
+          gateway_transaction_id?: string | null;
+          notes?: string | null;
+          paid_at?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        },
+        {
+          status?: TransactionStatus;
+          payment_url?: string | null;
+          qr_code_url?: string | null;
+          gateway_transaction_id?: string | null;
+          notes?: string | null;
+          paid_at?: string | null;
+          updated_at?: string;
+        }
+      >;
+      checklist_templates: TableDefinition<
+        {
+          id: string;
+          name: string;
+          code: string;
+          description: string | null;
+          category: ChecklistCategory;
+          is_active: boolean;
+          created_at: string;
+          updated_at: string;
+        },
+        {
+          id?: string;
+          name: string;
+          code: string;
+          description?: string | null;
+          category?: ChecklistCategory;
+          is_active?: boolean;
+          created_at?: string;
+          updated_at?: string;
+        },
+        {
+          name?: string;
+          code?: string;
+          description?: string | null;
+          category?: ChecklistCategory;
+          is_active?: boolean;
+          updated_at?: string;
+        }
+      >;
+      checklist_template_items: TableDefinition<
+        {
+          id: string;
+          template_id: string;
+          title: string;
+          description: string | null;
+          category: ChecklistCategory;
+          is_required: boolean;
+          order_index: number;
+          created_at: string;
+        },
+        {
+          id?: string;
+          template_id: string;
+          title: string;
+          description?: string | null;
+          category?: ChecklistCategory;
+          is_required?: boolean;
+          order_index?: number;
+          created_at?: string;
+        },
+        {
+          template_id?: string;
+          title?: string;
+          description?: string | null;
+          category?: ChecklistCategory;
+          is_required?: boolean;
+          order_index?: number;
+        }
+      >;
     };
     Views: Record<string, never>;
     Functions: {
+      accept_pending_admin_invites: {
+        Args: Record<string, never>;
+        Returns: undefined;
+      };
       accept_pending_campaign_invites: {
         Args: Record<string, never>;
         Returns: number;
       };
+
       create_campaign_with_manager: {
         Args: {
           p_title: string;

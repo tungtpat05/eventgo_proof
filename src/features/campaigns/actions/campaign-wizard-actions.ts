@@ -6,8 +6,10 @@ import { revalidatePath } from 'next/cache';
 import { duplicateBoothUseCase, batchApplyChecklistUseCase, cascadeLocationSupervisorUseCase } from '@/application/use-cases/booths/wizard-booth-operations';
 import { assignBoothPersonnelUseCase } from '@/application/use-cases/booths/manage-booth';
 import { CHECKLIST_TEMPLATE_PRESETS } from '@/domain/constants/checklist-templates';
-import { ChecklistCategory, CampaignStatus, CampaignRole, CampaignMemberStatus } from '@/domain/enums';
+import { ChecklistCategory, CampaignStatus, CampaignRole, CampaignMemberStatus, SubscriptionPlanTier } from '@/domain/enums';
 import { validateCampaignActivationUseCase } from '@/application/use-cases/campaigns/validate-campaign-activation';
+import { PLAN_CONFIGS } from '@/domain/entities';
+import { SupabaseSubscriptionRepository } from '@/infrastructure/repositories/supabase-subscription-repository';
 
 export interface WizardActionResult<T = any> {
   success: boolean;
@@ -400,6 +402,23 @@ export async function batchApplyChecklistInWizardAction(
       const preset = CHECKLIST_TEMPLATE_PRESETS.find((t) => t.code === params.templateCode);
       if (preset) {
         templateItems = preset.items;
+      } else {
+        const adminClient = createAdminSupabaseClient();
+        const { data: dbTpl } = await adminClient
+          .from('checklist_templates')
+          .select('*, items:checklist_template_items(*)')
+          .or(`code.eq.${params.templateCode},id.eq.${params.templateCode}`)
+          .maybeSingle();
+
+        if (dbTpl && (dbTpl as any).items) {
+          templateItems = (dbTpl as any).items.map((it: any) => ({
+            title: it.title,
+            description: it.description || '',
+            category: it.category,
+            isRequired: it.is_required,
+            orderIndex: it.order_index,
+          }));
+        }
       }
     }
 
@@ -477,6 +496,37 @@ export async function activateCampaignInWizardAction(campaignId: string): Promis
     }
 
     const supabase = await createServerSupabaseClient();
+
+    // Enforce subscription quota limit
+    const { data: campaignData } = await supabase
+      .from('campaigns')
+      .select('id, created_by, status')
+      .eq('id', campaignId)
+      .single();
+
+    if (campaignData && campaignData.status !== CampaignStatus.ACTIVE) {
+      const ownerId = campaignData.created_by;
+      if (ownerId) {
+        const subRepo = new SupabaseSubscriptionRepository();
+        const sub = await subRepo.getByUserId(ownerId);
+        const planTier = sub?.plan || SubscriptionPlanTier.FREE;
+        const planConfig = PLAN_CONFIGS[planTier];
+
+        const { count: activeCount } = await supabase
+          .from('campaigns')
+          .select('*', { count: 'exact', head: true })
+          .eq('created_by', ownerId)
+          .eq('status', CampaignStatus.ACTIVE);
+
+        if ((activeCount || 0) >= planConfig.maxActiveCampaigns) {
+          return {
+            success: false,
+            error: `Tài khoản của bạn đã đạt giới hạn ${planConfig.maxActiveCampaigns} chiến dịch đang hoạt động của gói ${planConfig.name}. Vui lòng nâng cấp gói đăng ký hoặc chuyển các chiến dịch cũ sang trạng thái Hoàn thành trước khi kích hoạt.`,
+          };
+        }
+      }
+    }
+
     const { error } = await supabase
       .from('campaigns')
       .update({
