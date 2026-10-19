@@ -14,6 +14,8 @@ import {
 } from '@/domain/enums';
 import { PlanConfig } from '@/domain/entities';
 import { revalidatePath } from 'next/cache';
+import { sendAdminInviteEmail, isMailConfigured } from '@/infrastructure/services/email-service';
+import { env } from '@/config/env';
 
 const adminRepo = new SupabaseSystemAdminRepository();
 const subRepo = new SupabaseSubscriptionRepository();
@@ -82,9 +84,53 @@ export async function getAdminsAction() {
 
 export async function inviteAdminAction(email: string) {
   const currentUser = await assertSystemAdmin();
-  const result = await adminRepo.createInvite(email, currentUser.id);
+  const invite = await adminRepo.createInvite(email, currentUser.id);
+
+  const inviteLink = `${env.NEXT_PUBLIC_APP_URL}/auth/invite?email=${encodeURIComponent(invite.email)}&type=admin`;
+  let emailSent = false;
+  let emailError: string | null = null;
+
+  try {
+    if (isMailConfigured()) {
+      await sendAdminInviteEmail({
+        to: invite.email,
+        inviterName: currentUser.fullName || currentUser.email || 'Quản trị viên',
+        inviteLink,
+      });
+      emailSent = true;
+    } else {
+      emailError = 'Chưa cấu hình SMTP_USER và SMTP_PASSWORD trong file .env.local';
+    }
+  } catch (err: any) {
+    console.error('Lỗi gửi email mời admin:', err);
+    emailError = err.message || 'Không thể kết nối đến máy chủ gửi email Google SMTP.';
+  }
+
   revalidatePath('/admin/admins');
-  return result;
+  return {
+    ...invite,
+    inviteLink,
+    emailSent,
+    emailError,
+  };
+}
+
+export async function resendAdminInviteEmailAction(inviteId: string) {
+  const currentUser = await assertSystemAdmin();
+  const invites = await adminRepo.getInvites();
+  const invite = invites.find((i) => i.id === inviteId);
+  if (!invite) {
+    throw new Error('Không tìm thấy thông tin lời mời.');
+  }
+
+  const inviteLink = `${env.NEXT_PUBLIC_APP_URL}/auth/invite?email=${encodeURIComponent(invite.email)}&type=admin`;
+  await sendAdminInviteEmail({
+    to: invite.email,
+    inviterName: currentUser.fullName || currentUser.email || 'Quản trị viên',
+    inviteLink,
+  });
+
+  return { success: true, inviteLink };
 }
 
 export async function revokeAdminAction(userId: string) {

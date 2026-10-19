@@ -53,7 +53,7 @@ export class SupabaseSystemAdminRepository implements SystemAdminRepository {
   }
 
   async getInvites(status?: SystemAdminInviteStatus): Promise<SystemAdminInvite[]> {
-    const supabase = await createServerSupabaseClient();
+    const supabase = await this.getClient();
     let query = supabase.from('system_admin_invites').select('*');
     if (status) query = query.eq('status', status);
     query = query.order('created_at', { ascending: false });
@@ -64,7 +64,7 @@ export class SupabaseSystemAdminRepository implements SystemAdminRepository {
   }
 
   async createInvite(email: string, invitedBy: string): Promise<SystemAdminInvite> {
-    const supabase = await createServerSupabaseClient();
+    const supabase = await this.getClient();
     const normalizedEmail = email.toLowerCase().trim();
 
     // Check if user is already an admin
@@ -79,26 +79,56 @@ export class SupabaseSystemAdminRepository implements SystemAdminRepository {
       throw new Error('Tài khoản này đã là Quản trị viên hệ thống.');
     }
 
-    const { data, error } = await supabase
+    // Check if an invite already exists
+    const { data: existingInvite } = await supabase
       .from('system_admin_invites')
-      .upsert(
-        {
+      .select('*')
+      .eq('email', normalizedEmail)
+      .maybeSingle();
+
+    let inviteRow: InviteRow;
+
+    if (existingInvite) {
+      if (existingInvite.status === SystemAdminInviteStatus.PENDING) {
+        throw new Error('Email này đã có một lời mời đang chờ người dùng đăng nhập để kích hoạt.');
+      }
+
+      // Re-activate a previously revoked or accepted invite
+      const { data, error } = await supabase
+        .from('system_admin_invites')
+        .update({
+          invited_by: invitedBy,
+          status: SystemAdminInviteStatus.PENDING,
+          accepted_at: null,
+          updated_at: new Date().toISOString(),
+        })
+        .eq('id', existingInvite.id)
+        .select('*')
+        .single();
+
+      if (error) throw new Error(error.message);
+      inviteRow = data;
+    } else {
+      const { data, error } = await supabase
+        .from('system_admin_invites')
+        .insert({
           email: normalizedEmail,
           invited_by: invitedBy,
           status: SystemAdminInviteStatus.PENDING,
           updated_at: new Date().toISOString(),
-        },
-        { onConflict: 'email' }
-      )
-      .select('*')
-      .single();
+        })
+        .select('*')
+        .single();
 
-    if (error) throw new Error(error.message);
-    return mapInvite(data);
+      if (error) throw new Error(error.message);
+      inviteRow = data;
+    }
+
+    return mapInvite(inviteRow);
   }
 
   async revokeInvite(inviteId: string): Promise<void> {
-    const supabase = await createServerSupabaseClient();
+    const supabase = await this.getClient();
     const { error } = await supabase
       .from('system_admin_invites')
       .update({
@@ -111,7 +141,7 @@ export class SupabaseSystemAdminRepository implements SystemAdminRepository {
   }
 
   async revokeAdminRole(userId: string): Promise<void> {
-    const supabase = await createServerSupabaseClient();
+    const supabase = await this.getClient();
 
     // Check last admin standing rule
     const { count } = await supabase
@@ -135,7 +165,7 @@ export class SupabaseSystemAdminRepository implements SystemAdminRepository {
   }
 
   async isSystemAdmin(userId: string): Promise<boolean> {
-    const supabase = await createServerSupabaseClient();
+    const supabase = await this.getClient();
     const { data, error } = await supabase
       .from('profiles')
       .select('is_system_admin')

@@ -54,6 +54,30 @@ export const env = {
     return process.env.CLOUDINARY_API_SECRET || '';
   },
 
+  get SMTP_HOST(): string {
+    return process.env.SMTP_HOST || 'smtp.gmail.com';
+  },
+
+  get SMTP_PORT(): number {
+    return Number(process.env.SMTP_PORT || '465');
+  },
+
+  get SMTP_SECURE(): boolean {
+    return process.env.SMTP_SECURE ? process.env.SMTP_SECURE === 'true' : true;
+  },
+
+  get SMTP_USER(): string {
+    return process.env.SMTP_USER || '';
+  },
+
+  get SMTP_PASSWORD(): string {
+    return process.env.SMTP_PASSWORD || '';
+  },
+
+  get SMTP_FROM(): string {
+    return process.env.SMTP_FROM || (process.env.SMTP_USER ? `"EventGo Proof" <${process.env.SMTP_USER}>` : '"EventGo Proof" <noreply@eventgo.com>');
+  },
+
   /**
    * Validate that all critical environment variables are present.
    * Useful during startup or before running server workflows.

@@ -6,6 +6,7 @@ import {
   inviteAdminAction,
   revokeAdminAction,
   revokeInviteAction,
+  resendAdminInviteEmailAction,
 } from '@/features/admin/actions/admin-actions';
 import { UserProfile, SystemAdminInvite } from '@/domain/entities';
 import { Button } from '@/components/ui/button';
@@ -20,6 +21,9 @@ import {
   Clock,
   Loader2,
   CheckCircle2,
+  Send,
+  Copy,
+  Check,
 } from 'lucide-react';
 
 export default function AdminMembersPage() {
@@ -28,6 +32,8 @@ export default function AdminMembersPage() {
   const [emailInput, setEmailInput] = useState('');
   const [isLoading, setIsLoading] = useState(true);
   const [isPending, startTransition] = useTransition();
+
+  const [copiedEmail, setCopiedEmail] = useState<string | null>(null);
 
   const loadData = async () => {
     try {
@@ -45,16 +51,40 @@ export default function AdminMembersPage() {
     loadData();
   }, []);
 
+  const handleCopyInviteLink = (email: string) => {
+    const link = `${window.location.origin}/auth/invite?email=${encodeURIComponent(email)}&type=admin`;
+    navigator.clipboard.writeText(link);
+    setCopiedEmail(email);
+    setTimeout(() => setCopiedEmail(null), 2500);
+  };
+
+  const handleResendEmail = (inviteId: string) => {
+    startTransition(async () => {
+      try {
+        await resendAdminInviteEmailAction(inviteId);
+        alert('Đã gửi lại email lời mời thành công!');
+      } catch (err: any) {
+        alert(err.message || 'Lỗi gửi lại email');
+      }
+    });
+  };
+
   const handleInvite = (e: React.FormEvent) => {
     e.preventDefault();
     if (!emailInput.trim()) return;
 
     startTransition(async () => {
       try {
-        await inviteAdminAction(emailInput.trim());
+        const res = await inviteAdminAction(emailInput.trim());
         setEmailInput('');
         await loadData();
-        alert('Đã gửi lời mời Quản trị viên thành công!');
+        if (res.emailSent) {
+          alert(`Đã gửi email mời Quản trị viên thành công đến ${res.email}!`);
+        } else {
+          alert(
+            `Đã tạo lời mời cho ${res.email} thành công!\n\n⚠️ Lưu ý: ${res.emailError || 'Chưa gửi được email do thiếu cấu hình SMTP'}.\nBạn có thể nhấn nút "Chép link" để gửi trực tiếp cho người nhận.`
+          );
+        }
       } catch (err: any) {
         alert(err.message || 'Lỗi gửi lời mời');
       }
@@ -195,20 +225,52 @@ export default function AdminMembersPage() {
                   </p>
                 </div>
 
-                <div className="flex items-center gap-3">
+                <div className="flex items-center gap-2">
                   {invite.status === 'PENDING' ? (
                     <>
-                      <Badge className="bg-amber-50 text-amber-700 border-amber-200 text-xs gap-1">
+                      <Badge className="bg-amber-50 text-amber-700 border-amber-200 text-xs gap-1 mr-1">
                         <Clock className="h-3 w-3" />
-                        Chờ đăng nhập
+                        Chờ kích hoạt
                       </Badge>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => handleCopyInviteLink(invite.email)}
+                        className="text-xs h-7 px-2 gap-1 border-slate-200 text-slate-700 hover:text-blue-600 hover:border-blue-200 cursor-pointer"
+                        title="Sao chép link kích hoạt"
+                      >
+                        {copiedEmail === invite.email ? (
+                          <>
+                            <Check className="h-3.5 w-3.5 text-emerald-600" />
+                            <span className="text-emerald-600 font-medium">Đã chép</span>
+                          </>
+                        ) : (
+                          <>
+                            <Copy className="h-3.5 w-3.5 text-slate-500" />
+                            <span>Chép link</span>
+                          </>
+                        )}
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => handleResendEmail(invite.id)}
+                        disabled={isPending}
+                        className="text-xs h-7 px-2 gap-1 border-slate-200 text-slate-700 hover:text-blue-600 hover:border-blue-200 cursor-pointer"
+                        title="Gửi lại email lời mời"
+                      >
+                        <Send className="h-3 w-3 text-slate-500" />
+                        <span>Gửi lại mail</span>
+                      </Button>
                       <Button
                         size="sm"
                         variant="ghost"
                         onClick={() => handleRevokeInvite(invite.id)}
                         disabled={isPending}
-                        className="text-xs text-slate-500 hover:text-rose-600"
+                        className="text-xs h-7 px-2 text-slate-400 hover:text-rose-600 hover:bg-rose-50 cursor-pointer"
+                        title="Thu hồi lời mời này"
                       >
+                        <Trash2 className="h-3 w-3 mr-0.5" />
                         Hủy
                       </Button>
                     </>

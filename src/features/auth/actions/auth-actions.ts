@@ -4,14 +4,30 @@ import { env } from '@/config/env';
 import { createServerSupabaseClient } from '@/infrastructure/supabase/server';
 import { redirect } from 'next/navigation';
 
-export async function signInWithGoogleAction(): Promise<void> {
+export async function signInWithGoogleAction(formData?: FormData): Promise<void> {
   const supabase = await createServerSupabaseClient();
-  const callbackUrl = new URL('/auth/callback', env.NEXT_PUBLIC_APP_URL).toString();
+  const loginHint = formData?.get('login_hint')?.toString();
+  const next = formData?.get('next')?.toString() || '/dashboard';
+
+  const callbackUrl = new URL(
+    `/auth/callback?next=${encodeURIComponent(next)}`,
+    env.NEXT_PUBLIC_APP_URL
+  ).toString();
+
+  const queryParams: Record<string, string> = {
+    access_type: 'offline',
+    prompt: 'select_account',
+  };
+
+  if (loginHint) {
+    queryParams.login_hint = loginHint;
+  }
+
   const { data, error } = await supabase.auth.signInWithOAuth({
     provider: 'google',
     options: {
       redirectTo: callbackUrl,
-      queryParams: { access_type: 'offline', prompt: 'select_account' },
+      queryParams,
     },
   });
 

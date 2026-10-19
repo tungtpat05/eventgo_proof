@@ -435,6 +435,8 @@ export interface Database {
           updated_at?: string;
         },
         {
+          email?: string;
+          invited_by?: string;
           status?: SystemAdminInviteStatus;
           accepted_at?: string | null;
           updated_at?: string;
