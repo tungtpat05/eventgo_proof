@@ -3,17 +3,42 @@
 import { useState, useRef, useEffect } from 'react';
 import Link from 'next/link';
 import { UserProfile } from '@/domain/entities';
+import { SubscriptionPlanTier } from '@/domain/enums';
 import { signOutAction } from '@/features/auth/actions/auth-actions';
 import { User, LogOut, ChevronDown, UserCircle, CreditCard, ShieldCheck } from 'lucide-react';
+import { cn } from '@/lib/utils';
 
 interface HeaderProps {
   user?: UserProfile;
+}
+
+function getPlanBadgeInfo(plan?: string) {
+  switch (plan) {
+    case 'PRO':
+    case SubscriptionPlanTier.PRO:
+      return {
+        label: 'Pro',
+        className: 'bg-purple-100 text-purple-700 border-purple-200',
+      };
+    case 'STARTER':
+    case SubscriptionPlanTier.STARTER:
+      return {
+        label: 'Starter',
+        className: 'bg-blue-100 text-blue-700 border-blue-200',
+      };
+    default:
+      return {
+        label: 'Free',
+        className: 'bg-slate-100 text-slate-700 border-slate-200',
+      };
+  }
 }
 
 export function Header({ user }: HeaderProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [imgError, setImgError] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const planInfo = getPlanBadgeInfo(user?.plan);
 
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
@@ -53,14 +78,24 @@ export function Header({ user }: HeaderProps) {
           <button
             type="button"
             onClick={() => setIsOpen((prev) => !prev)}
-            className="flex items-center gap-2 rounded-full py-1 px-2.5 text-slate-700 hover:bg-slate-100 hover:text-slate-900 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+            className="flex items-center gap-2.5 rounded-full py-1 px-2.5 text-slate-700 hover:bg-slate-100 hover:text-slate-900 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500/20"
             aria-expanded={isOpen}
             aria-haspopup="true"
           >
             {user?.fullName && (
-              <span className="text-sm font-medium text-slate-700 hidden sm:inline">
-                {user.fullName}
-              </span>
+              <div className="hidden sm:flex flex-col items-end text-right">
+                <span className="text-sm font-semibold text-slate-800 leading-tight">
+                  {user.fullName}
+                </span>
+                <span
+                  className={cn(
+                    'inline-flex items-center text-[10px] font-semibold px-1.5 py-0.5 rounded leading-none border mt-0.5',
+                    planInfo.className
+                  )}
+                >
+                  {planInfo.label}
+                </span>
+              </div>
             )}
             <div className="flex h-9 w-9 items-center justify-center rounded-full bg-slate-100 text-slate-600 border border-slate-200 font-bold overflow-hidden">
               {user?.avatarUrl && !imgError ? (
@@ -82,11 +117,21 @@ export function Header({ user }: HeaderProps) {
             <div className="absolute right-0 mt-2 w-64 rounded-xl bg-white p-1.5 shadow-lg ring-1 ring-slate-950/5 focus:outline-none z-50 divide-y divide-slate-100">
               {/* User profile summary */}
               <div className="px-3 py-2.5">
-                <p className="text-xs font-semibold text-slate-900 truncate">
-                  {user?.fullName || 'Người dùng'}
-                </p>
+                <div className="flex items-center justify-between gap-2">
+                  <p className="text-xs font-semibold text-slate-900 truncate">
+                    {user?.fullName || 'Người dùng'}
+                  </p>
+                  <span
+                    className={cn(
+                      'inline-flex items-center text-[10px] font-semibold px-1.5 py-0.5 rounded leading-none border',
+                      planInfo.className
+                    )}
+                  >
+                    Gói {planInfo.label}
+                  </span>
+                </div>
                 {user?.email && (
-                  <p className="text-[11px] text-slate-500 truncate">{user.email}</p>
+                  <p className="text-[11px] text-slate-500 truncate mt-1">{user.email}</p>
                 )}
               </div>
 

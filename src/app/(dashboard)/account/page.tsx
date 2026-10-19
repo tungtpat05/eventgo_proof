@@ -6,10 +6,20 @@ import { signOutAction } from '@/features/auth/actions/auth-actions';
 import { LogOut } from 'lucide-react';
 import { Metadata } from 'next';
 
+import { cn } from '@/lib/utils';
+
 export const metadata: Metadata = { title: 'Tài khoản — EventGo Proof' };
 
 export default async function AccountPage() {
   const { user } = await getCurrentUserSession();
+
+  const planLabel = user.plan === 'PRO' ? 'Pro' : user.plan === 'STARTER' ? 'Starter' : 'Free';
+  const planClass =
+    user.plan === 'PRO'
+      ? 'bg-purple-100 text-purple-700 border-purple-200'
+      : user.plan === 'STARTER'
+      ? 'bg-blue-100 text-blue-700 border-blue-200'
+      : 'bg-slate-100 text-slate-700 border-slate-200';
 
   return (
     <div className="mx-auto max-w-3xl space-y-6">
@@ -36,7 +46,12 @@ export default async function AccountPage() {
               )}
             </div>
             <div>
-              <p className="font-semibold text-base text-slate-900">{user.fullName}</p>
+              <div className="flex items-center gap-2">
+                <p className="font-semibold text-base text-slate-900">{user.fullName}</p>
+                <span className={cn('inline-flex items-center text-xs font-semibold px-2 py-0.5 rounded-full border', planClass)}>
+                  Gói {planLabel}
+                </span>
+              </div>
               <p className="text-sm text-slate-500">{user.email}</p>
             </div>
           </div>

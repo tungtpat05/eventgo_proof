@@ -1,5 +1,6 @@
 import { createServerSupabaseClient } from '@/infrastructure/supabase/server';
 import { UserProfile } from '@/domain/entities';
+import { SubscriptionPlanTier } from '@/domain/enums';
 import { env } from '@/config/env';
 import { Database } from '@/types/database.types';
 
@@ -19,17 +20,32 @@ export async function getCurrentUserSession(): Promise<CurrentUserSession> {
       const { data: { user } } = await supabase.auth.getUser();
 
       if (user) {
-        const { data } = await supabase
-          .from('profiles')
-          .select('*')
-          .eq('id', user.id)
-          .single();
+        const [{ data: profileData }, { data: subData }] = await Promise.all([
+          supabase
+            .from('profiles')
+            .select('*')
+            .eq('id', user.id)
+            .single(),
+          supabase
+            .from('subscriptions')
+            .select('plan, status, expires_at')
+            .eq('user_id', user.id)
+            .maybeSingle(),
+        ]);
 
-        const profile = data as (Database['public']['Tables']['profiles']['Row']) | null;
+        const profile = profileData as (Database['public']['Tables']['profiles']['Row']) | null;
         const meta = user.user_metadata || {};
         const fallbackAvatar = meta.avatar_url || meta.picture || null;
         const fallbackName = meta.full_name || meta.name || user.email?.split('@')[0] || 'Người dùng';
         const effectiveAvatar = profile?.avatar_url || fallbackAvatar;
+
+        let userPlan = SubscriptionPlanTier.FREE;
+        if (subData) {
+          const isExpired = subData.expires_at && new Date(subData.expires_at) < new Date();
+          if (!isExpired && subData.plan) {
+            userPlan = subData.plan as SubscriptionPlanTier;
+          }
+        }
 
         if (profile) {
           // If avatar was missing in DB profile but exists in OAuth metadata, asynchronously persist it
@@ -48,6 +64,7 @@ export async function getCurrentUserSession(): Promise<CurrentUserSession> {
               avatarUrl: effectiveAvatar,
               phone: profile.phone,
               isSystemAdmin: profile.is_system_admin ?? false,
+              plan: userPlan,
               createdAt: new Date(profile.created_at),
               updatedAt: new Date(profile.updated_at),
             },
@@ -62,6 +79,7 @@ export async function getCurrentUserSession(): Promise<CurrentUserSession> {
               avatarUrl: fallbackAvatar,
               phone: user.phone || null,
               isSystemAdmin: false,
+              plan: userPlan,
               createdAt: new Date(user.created_at),
               updatedAt: new Date(),
             },
@@ -83,6 +101,7 @@ export async function getCurrentUserSession(): Promise<CurrentUserSession> {
       avatarUrl: null,
       phone: null,
       isSystemAdmin: true,
+      plan: SubscriptionPlanTier.PRO,
       createdAt: new Date(),
       updatedAt: new Date(),
     },
