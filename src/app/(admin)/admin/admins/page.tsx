@@ -11,7 +11,7 @@ import {
 import { UserProfile, SystemAdminInvite } from '@/domain/entities';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { formatDate } from '@/lib/utils';
+import { formatDate, formatDateTime } from '@/lib/utils';
 import {
   UserCheck,
   UserPlus,
@@ -25,6 +25,30 @@ import {
   Copy,
   Check,
 } from 'lucide-react';
+
+function AdminAvatar({ fullName, avatarUrl }: { fullName: string; avatarUrl?: string | null }) {
+  const [imgError, setImgError] = useState(false);
+
+  useEffect(() => {
+    setImgError(false);
+  }, [avatarUrl]);
+
+  return (
+    <div className="h-10 w-10 rounded-full bg-blue-50 text-blue-700 border border-blue-200 flex items-center justify-center font-bold text-sm overflow-hidden shrink-0 shadow-xs">
+      {avatarUrl && !imgError ? (
+        <img
+          src={avatarUrl}
+          alt={fullName || 'Admin avatar'}
+          referrerPolicy="no-referrer"
+          onError={() => setImgError(true)}
+          className="h-full w-full object-cover"
+        />
+      ) : (
+        <span>{fullName ? fullName.charAt(0).toUpperCase() : 'A'}</span>
+      )}
+    </div>
+  );
+}
 
 export default function AdminMembersPage() {
   const [admins, setAdmins] = useState<UserProfile[]>([]);
@@ -176,9 +200,7 @@ export default function AdminMembersPage() {
             {admins.map((admin) => (
               <div key={admin.id} className="p-4 flex items-center justify-between hover:bg-slate-50/50 transition-colors">
                 <div className="flex items-center gap-3">
-                  <div className="h-10 w-10 rounded-full bg-blue-50 text-blue-700 border border-blue-200 flex items-center justify-center font-bold text-sm">
-                    {admin.fullName.charAt(0).toUpperCase()}
-                  </div>
+                  <AdminAvatar fullName={admin.fullName} avatarUrl={admin.avatarUrl} />
                   <div>
                     <p className="text-sm font-semibold text-slate-900 flex items-center gap-2">
                       {admin.fullName}
@@ -220,9 +242,17 @@ export default function AdminMembersPage() {
               <div key={invite.id} className="p-4 flex items-center justify-between text-xs">
                 <div>
                   <p className="font-semibold text-slate-800">{invite.email}</p>
-                  <p className="text-slate-400 text-[11px] mt-0.5">
-                    Gửi lúc {formatDate(invite.createdAt)}
-                  </p>
+                  <div className="text-slate-400 text-[11px] mt-0.5 flex flex-wrap items-center gap-x-1.5 gap-y-0.5">
+                    <span>Gửi lúc {formatDateTime(invite.createdAt)}</span>
+                    {invite.status === 'ACCEPTED' && invite.acceptedAt && (
+                      <>
+                        <span className="text-slate-300">•</span>
+                        <span className="text-emerald-600 font-medium">
+                          Kích hoạt lúc {formatDateTime(invite.acceptedAt)}
+                        </span>
+                      </>
+                    )}
+                  </div>
                 </div>
 
                 <div className="flex items-center gap-2">
