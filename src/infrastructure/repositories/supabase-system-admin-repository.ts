@@ -1,6 +1,6 @@
 import { SystemAdminInvite, SystemAdminInviteStatus, UserProfile } from '@/domain/entities';
 import { SystemAdminRepository } from '@/domain/repositories/system-admin-repository';
-import { createServerSupabaseClient } from '@/infrastructure/supabase/server';
+import { createServerSupabaseClient, createAdminSupabaseClient } from '@/infrastructure/supabase/server';
 import { Database } from '@/types/database.types';
 
 type InviteRow = Database['public']['Tables']['system_admin_invites']['Row'];
@@ -32,8 +32,16 @@ function mapProfile(row: ProfileRow): UserProfile {
 }
 
 export class SupabaseSystemAdminRepository implements SystemAdminRepository {
+  private async getClient() {
+    try {
+      return createAdminSupabaseClient();
+    } catch {
+      return await createServerSupabaseClient();
+    }
+  }
+
   async getAdmins(): Promise<UserProfile[]> {
-    const supabase = await createServerSupabaseClient();
+    const supabase = await this.getClient();
     const { data, error } = await supabase
       .from('profiles')
       .select('*')

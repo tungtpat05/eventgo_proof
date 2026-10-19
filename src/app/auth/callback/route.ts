@@ -1,6 +1,7 @@
-import { createServerSupabaseClient } from '@/infrastructure/supabase/server';
+import { createServerSupabaseClient, createAdminSupabaseClient } from '@/infrastructure/supabase/server';
 import { NextRequest, NextResponse } from 'next/server';
 import { SubscriptionPlanTier, SubscriptionStatus } from '@/domain/enums';
+import { env } from '@/config/env';
 
 export async function GET(request: NextRequest) {
   const code = request.nextUrl.searchParams.get('code');
@@ -25,7 +26,9 @@ export async function GET(request: NextRequest) {
   }
 
   const metadata = data.user.user_metadata;
-  const { error: profileError } = await supabase.from('profiles').upsert({
+  const dbClient = env.SUPABASE_SERVICE_ROLE_KEY ? createAdminSupabaseClient() : supabase;
+
+  const { error: profileError } = await dbClient.from('profiles').upsert({
     id: data.user.id,
     email: data.user.email.toLowerCase(),
     full_name: String(metadata.full_name || metadata.name || data.user.email),
@@ -43,8 +46,8 @@ export async function GET(request: NextRequest) {
     supabase.rpc('accept_pending_admin_invites'),
   ]);
 
-  // Check if user is a System Admin
-  const { data: profile } = await supabase
+  // Check if user is a System Admin using admin client to prevent any RLS policy failures
+  const { data: profile } = await dbClient
     .from('profiles')
     .select('is_system_admin')
     .eq('id', data.user.id)
@@ -58,7 +61,7 @@ export async function GET(request: NextRequest) {
   }
 
   // Ensure regular client user has at least a FREE subscription row
-  await supabase.from('subscriptions').upsert(
+  await dbClient.from('subscriptions').upsert(
     {
       user_id: data.user.id,
       plan: SubscriptionPlanTier.FREE,

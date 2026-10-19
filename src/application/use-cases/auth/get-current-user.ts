@@ -1,4 +1,4 @@
-import { createServerSupabaseClient } from '@/infrastructure/supabase/server';
+import { createServerSupabaseClient, createAdminSupabaseClient } from '@/infrastructure/supabase/server';
 import { UserProfile } from '@/domain/entities';
 import { SubscriptionPlanTier } from '@/domain/enums';
 import { env } from '@/config/env';
@@ -20,13 +20,16 @@ export async function getCurrentUserSession(): Promise<CurrentUserSession> {
       const { data: { user } } = await supabase.auth.getUser();
 
       if (user) {
+        // Use admin client if available to ensure session resolution is never
+        // blocked by client-side RLS policies or recursive triggers.
+        const dbClient = env.SUPABASE_SERVICE_ROLE_KEY ? createAdminSupabaseClient() : supabase;
         const [{ data: profileData }, { data: subData }] = await Promise.all([
-          supabase
+          dbClient
             .from('profiles')
             .select('*')
             .eq('id', user.id)
             .single(),
-          supabase
+          dbClient
             .from('subscriptions')
             .select('plan, status, expires_at')
             .eq('user_id', user.id)

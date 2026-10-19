@@ -4,7 +4,7 @@ import { getCurrentUserSession } from '@/application/use-cases/auth/get-current-
 import { SupabaseSystemAdminRepository } from '@/infrastructure/repositories/supabase-system-admin-repository';
 import { SupabaseSubscriptionRepository } from '@/infrastructure/repositories/supabase-subscription-repository';
 import { SupabaseTransactionRepository } from '@/infrastructure/repositories/supabase-transaction-repository';
-import { createServerSupabaseClient } from '@/infrastructure/supabase/server';
+import { createServerSupabaseClient, createAdminSupabaseClient } from '@/infrastructure/supabase/server';
 import {
   SubscriptionPlanTier,
   SubscriptionStatus,
@@ -19,6 +19,14 @@ const adminRepo = new SupabaseSystemAdminRepository();
 const subRepo = new SupabaseSubscriptionRepository();
 const txnRepo = new SupabaseTransactionRepository();
 
+async function getAdminClient() {
+  try {
+    return createAdminSupabaseClient();
+  } catch {
+    return await createServerSupabaseClient();
+  }
+}
+
 async function assertSystemAdmin() {
   const session = await getCurrentUserSession();
   const isAdmin = await adminRepo.isSystemAdmin(session.user.id);
@@ -31,7 +39,7 @@ async function assertSystemAdmin() {
 // 1. Dashboard Overview
 export async function getAdminOverviewAction() {
   await assertSystemAdmin();
-  const supabase = await createServerSupabaseClient();
+  const supabase = await getAdminClient();
 
   const [
     { count: totalUsers },
@@ -99,7 +107,7 @@ export async function revokeInviteAction(inviteId: string) {
 // 3. Subscriptions Management
 export async function getAdminSubscriptionsAction() {
   await assertSystemAdmin();
-  const supabase = await createServerSupabaseClient();
+  const supabase = await getAdminClient();
 
   const [{ data: profiles }, { subscriptions }] = await Promise.all([
     supabase.from('profiles').select('id, full_name, email, created_at'),
@@ -108,17 +116,25 @@ export async function getAdminSubscriptionsAction() {
 
   // Join profiles with subscriptions
   const subMap = new Map(subscriptions.map((s) => [s.userId, s]));
+  const profileMap = new Map((profiles || []).map((p) => [p.id, p]));
 
-  const usersWithSubs = (profiles || []).map((p) => {
-    const sub = subMap.get(p.id);
+  // Merge all unique user IDs from both profiles and subscriptions
+  const allUserIds = new Set([
+    ...(profiles || []).map((p) => p.id),
+    ...subscriptions.map((s) => s.userId),
+  ]);
+
+  const usersWithSubs = Array.from(allUserIds).map((userId) => {
+    const profile = profileMap.get(userId);
+    const sub = subMap.get(userId);
     return {
-      userId: p.id,
-      fullName: p.full_name,
-      email: p.email,
+      userId,
+      fullName: profile?.full_name || 'Khách hàng',
+      email: profile?.email || 'Chưa rõ email',
       plan: sub?.plan || SubscriptionPlanTier.FREE,
       status: sub?.status || SubscriptionStatus.ACTIVE,
       expiresAt: sub?.expiresAt || null,
-      createdAt: p.created_at,
+      createdAt: profile?.created_at || new Date().toISOString(),
     };
   });
 
@@ -151,7 +167,7 @@ export async function manualUpdateSubscriptionAction(
 // 4. Transactions Management
 export async function getAdminTransactionsAction() {
   await assertSystemAdmin();
-  const supabase = await createServerSupabaseClient();
+  const supabase = await getAdminClient();
   const [{ transactions }, { data: profiles }] = await Promise.all([
     txnRepo.getAll(),
     supabase.from('profiles').select('id, full_name, email'),

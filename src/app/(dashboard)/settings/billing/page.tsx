@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useTransition } from 'react';
+import { useRouter } from 'next/navigation';
 import {
   getUserSubscriptionSummaryAction,
   getSubscriptionPlanConfigsAction,
@@ -27,6 +28,7 @@ import {
 } from 'lucide-react';
 
 export default function BillingPage() {
+  const router = useRouter();
   const [summary, setSummary] = useState<UserSubscriptionSummary | null>(null);
   const [planConfigs, setPlanConfigs] = useState<PlanConfig[]>([]);
   const [transactions, setTransactions] = useState<Transaction[]>([]);
@@ -544,7 +546,10 @@ export default function BillingPage() {
           bin={modalData.bin}
           checkoutUrl={modalData.checkoutUrl}
           description={modalData.description}
-          onSuccess={loadData}
+          onSuccess={() => {
+            loadData();
+            router.refresh();
+          }}
         />
       )}
     </div>
