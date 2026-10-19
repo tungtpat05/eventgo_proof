@@ -55,8 +55,8 @@ export default function AdminSubscriptionsPage() {
   // Modal 1: Edit Plan Configuration
   const [editingPlan, setEditingPlan] = useState<PlanConfig | null>(null);
   const [formName, setFormName] = useState('');
-  const [formPrice, setFormPrice] = useState<number>(0);
-  const [formMaxCampaigns, setFormMaxCampaigns] = useState<number>(2);
+  const [formPrice, setFormPrice] = useState<number | ''>(0);
+  const [formMaxCampaigns, setFormMaxCampaigns] = useState<number | ''>(2);
   const [formDescription, setFormDescription] = useState('');
   const [formFeatures, setFormFeatures] = useState('');
   const [formIsPopular, setFormIsPopular] = useState(false);
@@ -65,7 +65,7 @@ export default function AdminSubscriptionsPage() {
   // Modal 2: Edit User Subscription
   const [selectedUser, setSelectedUser] = useState<UserSubItem | null>(null);
   const [editPlan, setEditPlan] = useState<SubscriptionPlanTier>(SubscriptionPlanTier.FREE);
-  const [daysValid, setDaysValid] = useState<number>(30);
+  const [daysValid, setDaysValid] = useState<number | ''>(30);
 
   const loadData = async () => {
     try {
@@ -144,7 +144,11 @@ export default function AdminSubscriptionsPage() {
     if (!selectedUser) return;
     startTransition(async () => {
       try {
-        await manualUpdateSubscriptionAction(selectedUser.userId, editPlan, daysValid);
+        await manualUpdateSubscriptionAction(
+          selectedUser.userId,
+          editPlan,
+          Number(daysValid) || 30
+        );
         setSelectedUser(null);
         await loadData();
       } catch (err: any) {
@@ -463,11 +467,16 @@ export default function AdminSubscriptionsPage() {
                     min={0}
                     step={1000}
                     value={formPrice}
-                    onChange={(e) => setFormPrice(Math.max(0, parseInt(e.target.value, 10) || 0))}
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      setFormPrice(val === '' ? '' : Math.max(0, parseInt(val, 10) || 0));
+                    }}
                     className="w-full px-3 py-2 text-sm rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
                   />
                   <p className="text-[11px] text-slate-400 mt-0.5">
-                    {formPrice === 0 ? 'Miễn phí' : `${formPrice.toLocaleString('vi-VN')} đ`}
+                    {formPrice === '' || formPrice === 0
+                      ? 'Miễn phí'
+                      : `${Number(formPrice).toLocaleString('vi-VN')} đ`}
                   </p>
                 </div>
 
@@ -480,7 +489,10 @@ export default function AdminSubscriptionsPage() {
                     min={1}
                     max={100}
                     value={formMaxCampaigns}
-                    onChange={(e) => setFormMaxCampaigns(Math.max(1, parseInt(e.target.value, 10) || 1))}
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      setFormMaxCampaigns(val === '' ? '' : Math.max(1, parseInt(val, 10) || 1));
+                    }}
                     className="w-full px-3 py-2 text-sm rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
                   />
                   <p className="text-[11px] text-slate-400 mt-0.5">Số chiến dịch tối đa</p>
@@ -620,11 +632,14 @@ export default function AdminSubscriptionsPage() {
                     min={1}
                     max={365}
                     value={daysValid}
-                    onChange={(e) => setDaysValid(parseInt(e.target.value, 10) || 30)}
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      setDaysValid(val === '' ? '' : parseInt(val, 10));
+                    }}
                     className="w-full px-3 py-2 text-sm rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
                   />
                   <p className="text-[11px] text-slate-400 mt-1">
-                    Gói sẽ hết hạn sau {daysValid} ngày kể từ thời điểm này.
+                    Gói sẽ hết hạn sau {daysValid || 0} ngày kể từ thời điểm này.
                   </p>
                 </div>
               )}
