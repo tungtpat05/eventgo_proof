@@ -43,7 +43,21 @@ export async function GET(request: NextRequest) {
     supabase.rpc('accept_pending_admin_invites'),
   ]);
 
-  // Ensure user has at least a FREE subscription row
+  // Check if user is a System Admin
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('is_system_admin')
+    .eq('id', data.user.id)
+    .single();
+
+  const isSystemAdmin = Boolean(profile?.is_system_admin);
+
+  // System Admin is redirected directly to /admin console
+  if (isSystemAdmin) {
+    return NextResponse.redirect(new URL('/admin', request.url));
+  }
+
+  // Ensure regular client user has at least a FREE subscription row
   await supabase.from('subscriptions').upsert(
     {
       user_id: data.user.id,

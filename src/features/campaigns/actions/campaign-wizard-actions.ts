@@ -40,6 +40,19 @@ export async function createDraftCampaignAction(formData: FormData): Promise<Wiz
     const { data: userData } = await supabase.auth.getUser();
     if (!userData.user) return { success: false, error: 'Yêu cầu đăng nhập.' };
 
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('is_system_admin')
+      .eq('id', userData.user.id)
+      .maybeSingle();
+
+    if (profile?.is_system_admin) {
+      return {
+        success: false,
+        error: 'Tài khoản Quản trị viên hệ thống (System Admin) không được tạo chiến dịch để đảm bảo toàn vẹn dữ liệu và phân tách vai trò. Vui lòng đăng nhập bằng tài khoản Khách hàng/Agency để tạo chiến dịch.',
+      };
+    }
+
     const { data: campaignId, error } = await supabase.rpc('create_campaign_with_manager', {
       p_title: title,
       p_brand_name: brandName,

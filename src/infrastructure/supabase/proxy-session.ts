@@ -36,6 +36,15 @@ export async function updateSession(request: NextRequest) {
     return NextResponse.redirect(new URL('/login', request.url));
   }
   if (user && pathname === '/login') {
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('is_system_admin')
+      .eq('id', user.id)
+      .maybeSingle();
+
+    if (profile?.is_system_admin) {
+      return NextResponse.redirect(new URL('/admin', request.url));
+    }
     return NextResponse.redirect(new URL('/dashboard', request.url));
   }
 
