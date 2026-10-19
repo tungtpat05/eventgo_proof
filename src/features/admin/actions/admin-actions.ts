@@ -221,28 +221,6 @@ export async function manualApproveTransactionAction(transactionId: string) {
   return { success: true };
 }
 
-export async function refundTransactionAction(transactionId: string) {
-  await assertSystemAdmin();
-  const txn = await txnRepo.getById(transactionId);
-  if (!txn) throw new Error('Không tìm thấy giao dịch.');
-
-  await txnRepo.updateStatus(transactionId, TransactionStatus.REFUNDED, {
-    notes: 'Quản trị viên hoàn tiền và hạ gói về Free',
-  });
-
-  // Downgrade to FREE
-  await subRepo.upsert({
-    userId: txn.userId,
-    plan: SubscriptionPlanTier.FREE,
-    status: SubscriptionStatus.ACTIVE,
-    expiresAt: null,
-  });
-
-  revalidatePath('/admin/transactions');
-  revalidatePath('/admin/subscriptions');
-  revalidatePath('/settings/billing');
-  return { success: true };
-}
 
 // 5. Checklist Templates
 export async function getChecklistTemplatesAction() {

@@ -22,10 +22,10 @@ export function formatDate(date: string | Date | null | undefined): string {
   }).format(d);
 }
 
-/**
- * Format datetime to Vietnamese locale standard.
- */
-export function formatDateTime(date: string | Date | null | undefined): string {
+export function formatDateTime(
+  date: string | Date | null | undefined,
+  includeSeconds = false
+): string {
   if (!date) return '—';
   const d = typeof date === 'string' ? new Date(date) : date;
   if (isNaN(d.getTime())) return '—';
@@ -35,5 +35,8 @@ export function formatDateTime(date: string | Date | null | undefined): string {
     year: 'numeric',
     hour: '2-digit',
     minute: '2-digit',
+    hour12: false,
+    ...(includeSeconds ? { second: '2-digit' } : {}),
   }).format(d);
 }
+

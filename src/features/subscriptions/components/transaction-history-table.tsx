@@ -3,7 +3,7 @@
 import React from 'react';
 import { Transaction, TransactionStatus } from '@/domain/entities';
 import { Badge } from '@/components/ui/badge';
-import { formatDate } from '@/lib/utils';
+import { formatDateTime } from '@/lib/utils';
 import { CreditCard, CheckCircle2, Clock, XCircle, AlertCircle } from 'lucide-react';
 
 interface TransactionHistoryTableProps {
@@ -96,7 +96,12 @@ export function TransactionHistoryTable({ transactions }: TransactionHistoryTabl
                   {getStatusBadge(t.status)}
                 </td>
                 <td className="py-3 px-4 text-slate-500">
-                  {formatDate(t.createdAt)}
+                  <p className="font-medium text-slate-700">{formatDateTime(t.createdAt)}</p>
+                  {t.paidAt && (
+                    <p className="text-[11px] text-emerald-600 font-medium">
+                      Đã trả: {formatDateTime(t.paidAt)}
+                    </p>
+                  )}
                 </td>
               </tr>
             ))}

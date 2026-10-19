@@ -5,12 +5,11 @@ import * as XLSX from 'xlsx';
 import {
   getAdminTransactionsAction,
   manualApproveTransactionAction,
-  refundTransactionAction,
 } from '@/features/admin/actions/admin-actions';
 import { Transaction, TransactionStatus } from '@/domain/entities';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { formatDate } from '@/lib/utils';
+import { formatDateTime } from '@/lib/utils';
 import {
   Receipt,
   Download,
@@ -62,18 +61,6 @@ export default function AdminTransactionsPage() {
     });
   };
 
-  const handleRefund = (id: string) => {
-    if (!confirm('Bạn có chắc muốn hoàn tiền đơn này? Gói của người dùng sẽ bị hạ về Free.')) return;
-    startTransition(async () => {
-      try {
-        await refundTransactionAction(id);
-        await loadData();
-      } catch (err: any) {
-        alert(err.message || 'Lỗi hoàn tiền');
-      }
-    });
-  };
-
   const handleExportExcel = () => {
     const data = transactions.map((t, idx) => ({
       STT: idx + 1,
@@ -84,8 +71,8 @@ export default function AdminTransactionsPage() {
       'Số Tiền (VND)': t.amount,
       'Phương Thức': t.provider,
       'Trạng Thái': t.status,
-      'Ngày Tạo': formatDate(t.createdAt),
-      'Ngày Thanh Toán': t.paidAt ? formatDate(t.paidAt) : 'Chưa thanh toán',
+      'Thời Gian Tạo': formatDateTime(t.createdAt),
+      'Thời Gian Thanh Toán': t.paidAt ? formatDateTime(t.paidAt) : 'Chưa thanh toán',
       'Ghi Chú': t.notes || '',
     }));
 
@@ -118,6 +105,13 @@ export default function AdminTransactionsPage() {
           <Badge className="bg-amber-50 text-amber-700 border-amber-200 gap-1 text-xs">
             <Clock className="h-3 w-3 text-amber-600" />
             Chờ thanh toán
+          </Badge>
+        );
+      case TransactionStatus.CANCELLED:
+        return (
+          <Badge className="bg-slate-100 text-slate-600 border-slate-200 gap-1 text-xs">
+            <XCircle className="h-3 w-3 text-slate-500" />
+            Đã hủy
           </Badge>
         );
       case TransactionStatus.REFUNDED:
@@ -180,7 +174,7 @@ export default function AdminTransactionsPage() {
             { key: 'ALL', label: 'Tất cả' },
             { key: TransactionStatus.PENDING, label: 'Chờ thanh toán' },
             { key: TransactionStatus.SUCCESS, label: 'Thành công' },
-            { key: TransactionStatus.REFUNDED, label: 'Đã hoàn tiền' },
+            { key: TransactionStatus.CANCELLED, label: 'Đã hủy' },
           ].map((tab) => (
             <button
               key={tab.key}
@@ -253,13 +247,13 @@ export default function AdminTransactionsPage() {
                     </td>
                     <td className="py-3 px-4">{getStatusBadge(t.status)}</td>
                     <td className="py-3 px-4 text-slate-500">
-                      <p>{formatDate(t.createdAt)}</p>
+                      <p className="font-medium text-slate-700">{formatDateTime(t.createdAt)}</p>
                       {t.paidAt && (
-                        <p className="text-[11px] text-emerald-600">Đã trả: {formatDate(t.paidAt)}</p>
+                        <p className="text-[11px] text-emerald-600 font-medium">Đã trả: {formatDateTime(t.paidAt)}</p>
                       )}
                     </td>
                     <td className="py-3 px-4 text-right">
-                      {t.status === TransactionStatus.PENDING && (
+                      {t.status === TransactionStatus.PENDING ? (
                         <Button
                           size="sm"
                           onClick={() => handleApprove(t.id)}
@@ -268,17 +262,8 @@ export default function AdminTransactionsPage() {
                         >
                           Duyệt thanh toán
                         </Button>
-                      )}
-                      {t.status === TransactionStatus.SUCCESS && (
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() => handleRefund(t.id)}
-                          disabled={isPending}
-                          className="text-xs text-rose-600 border-rose-200 hover:bg-rose-50 h-8"
-                        >
-                          Hoàn tiền
-                        </Button>
+                      ) : (
+                        <span className="text-xs text-slate-400">—</span>
                       )}
                     </td>
                   </tr>
