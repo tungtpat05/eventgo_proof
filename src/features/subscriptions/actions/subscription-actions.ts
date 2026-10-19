@@ -198,12 +198,31 @@ export async function checkSubscriptionPaymentStatusAction(
 
     const targetUserId = txn?.userId || currentUserId;
 
-    // A. Update transaction in DB
+    // A. Update or Create transaction in DB
     if (txn) {
       await txnRepo.updateStatus(txn.id, TransactionStatus.SUCCESS, {
         paidAt: new Date(),
         notes: `PayOS VietQR: Đã chuyển khoản MB Bank thành công (Tự động đối soát)`,
       }).catch((err) => console.error('Failed to update txn status in DB:', err));
+    } else {
+      try {
+        const createdTxn = await txnRepo.create({
+          transactionCode,
+          userId: targetUserId,
+          plan: targetPlan,
+          amount: payosInfo.amount || 2000,
+          currency: 'VND',
+          provider: PaymentGatewayProvider.PAYOS_VIETQR,
+          gatewayTransactionId: orderCode.toString(),
+          notes: 'PayOS VietQR: Đã chuyển khoản MB Bank thành công (Đối soát tự động)',
+        });
+        await txnRepo.updateStatus(createdTxn.id, TransactionStatus.SUCCESS, {
+          paidAt: new Date(),
+          notes: 'PayOS VietQR: Đã chuyển khoản MB Bank thành công (Đối soát tự động)',
+        });
+      } catch (err) {
+        console.error('Failed to create fallback txn in DB:', err);
+      }
     }
 
     // B. Calculate cumulative expiration (+30 days)

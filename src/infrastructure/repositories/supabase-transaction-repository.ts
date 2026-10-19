@@ -1,6 +1,6 @@
 import { Transaction, TransactionStatus, SubscriptionPlanTier, PaymentGatewayProvider } from '@/domain/entities';
 import { CreateTransactionParams, TransactionRepository } from '@/domain/repositories/transaction-repository';
-import { createServerSupabaseClient } from '@/infrastructure/supabase/server';
+import { createServerSupabaseClient, createAdminSupabaseClient } from '@/infrastructure/supabase/server';
 import { Database } from '@/types/database.types';
 
 type TransactionRow = Database['public']['Tables']['transactions']['Row'];
@@ -26,8 +26,16 @@ function mapTransaction(row: TransactionRow): Transaction {
 }
 
 export class SupabaseTransactionRepository implements TransactionRepository {
+  private async getClient() {
+    try {
+      return createAdminSupabaseClient();
+    } catch {
+      return await createServerSupabaseClient();
+    }
+  }
+
   async create(params: CreateTransactionParams): Promise<Transaction> {
-    const supabase = await createServerSupabaseClient();
+    const supabase = await this.getClient();
     const { data, error } = await supabase
       .from('transactions')
       .insert({
@@ -51,7 +59,7 @@ export class SupabaseTransactionRepository implements TransactionRepository {
   }
 
   async getById(id: string): Promise<Transaction | null> {
-    const supabase = await createServerSupabaseClient();
+    const supabase = await this.getClient();
     const { data, error } = await supabase
       .from('transactions')
       .select('*')
@@ -63,7 +71,7 @@ export class SupabaseTransactionRepository implements TransactionRepository {
   }
 
   async getByCode(code: string): Promise<Transaction | null> {
-    const supabase = await createServerSupabaseClient();
+    const supabase = await this.getClient();
     const { data, error } = await supabase
       .from('transactions')
       .select('*')
@@ -75,7 +83,7 @@ export class SupabaseTransactionRepository implements TransactionRepository {
   }
 
   async getByUserId(userId: string): Promise<Transaction[]> {
-    const supabase = await createServerSupabaseClient();
+    const supabase = await this.getClient();
     const { data, error } = await supabase
       .from('transactions')
       .select('*')
@@ -95,7 +103,7 @@ export class SupabaseTransactionRepository implements TransactionRepository {
     limit?: number;
     offset?: number;
   }): Promise<{ transactions: Transaction[]; total: number }> {
-    const supabase = await createServerSupabaseClient();
+    const supabase = await this.getClient();
     let query = supabase.from('transactions').select('*', { count: 'exact' });
 
     if (params?.status) query = query.eq('status', params.status);
@@ -122,7 +130,7 @@ export class SupabaseTransactionRepository implements TransactionRepository {
     status: TransactionStatus,
     extra?: { paidAt?: Date; gatewayTransactionId?: string; notes?: string }
   ): Promise<Transaction> {
-    const supabase = await createServerSupabaseClient();
+    const supabase = await this.getClient();
     const updates: Database['public']['Tables']['transactions']['Update'] = {
       status,
       updated_at: new Date().toISOString(),

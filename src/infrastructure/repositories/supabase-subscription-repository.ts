@@ -1,6 +1,6 @@
 import { Subscription, SubscriptionPlanTier, SubscriptionStatus, PlanConfig, PLAN_CONFIGS } from '@/domain/entities';
 import { SubscriptionRepository } from '@/domain/repositories/subscription-repository';
-import { createServerSupabaseClient } from '@/infrastructure/supabase/server';
+import { createServerSupabaseClient, createAdminSupabaseClient } from '@/infrastructure/supabase/server';
 import { Database } from '@/types/database.types';
 
 type SubscriptionRow = Database['public']['Tables']['subscriptions']['Row'];
@@ -46,8 +46,16 @@ function mapPlanConfig(row: PlanConfigRow): PlanConfig {
 }
 
 export class SupabaseSubscriptionRepository implements SubscriptionRepository {
+  private async getClient() {
+    try {
+      return createAdminSupabaseClient();
+    } catch {
+      return await createServerSupabaseClient();
+    }
+  }
+
   async getByUserId(userId: string): Promise<Subscription | null> {
-    const supabase = await createServerSupabaseClient();
+    const supabase = await this.getClient();
     const { data, error } = await supabase
       .from('subscriptions')
       .select('*')
@@ -85,7 +93,7 @@ export class SupabaseSubscriptionRepository implements SubscriptionRepository {
     status: SubscriptionStatus;
     expiresAt?: Date | null;
   }): Promise<Subscription> {
-    const supabase = await createServerSupabaseClient();
+    const supabase = await this.getClient();
     const { data, error } = await supabase
       .from('subscriptions')
       .upsert(
@@ -111,7 +119,7 @@ export class SupabaseSubscriptionRepository implements SubscriptionRepository {
     limit?: number;
     offset?: number;
   }): Promise<{ subscriptions: Subscription[]; total: number }> {
-    const supabase = await createServerSupabaseClient();
+    const supabase = await this.getClient();
     let query = supabase.from('subscriptions').select('*', { count: 'exact' });
 
     if (params?.plan) query = query.eq('plan', params.plan);
