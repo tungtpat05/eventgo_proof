@@ -1,4 +1,4 @@
-import { Subscription, SubscriptionPlanTier, SubscriptionStatus } from '../entities';
+import { Subscription, SubscriptionPlanTier, SubscriptionStatus, PlanConfig } from '../entities';
 
 export interface SubscriptionRepository {
   getByUserId(userId: string): Promise<Subscription | null>;
@@ -14,4 +14,8 @@ export interface SubscriptionRepository {
     limit?: number;
     offset?: number;
   }): Promise<{ subscriptions: Subscription[]; total: number }>;
+  getPlanConfigs(): Promise<PlanConfig[]>;
+  getPlanConfigByTier(tier: SubscriptionPlanTier): Promise<PlanConfig>;
+  updatePlanConfig(tier: SubscriptionPlanTier, data: Partial<PlanConfig>): Promise<PlanConfig>;
 }
+

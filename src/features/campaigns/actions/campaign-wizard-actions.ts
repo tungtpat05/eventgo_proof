@@ -523,7 +523,7 @@ export async function activateCampaignInWizardAction(campaignId: string): Promis
         const subRepo = new SupabaseSubscriptionRepository();
         const sub = await subRepo.getByUserId(ownerId);
         const planTier = sub?.plan || SubscriptionPlanTier.FREE;
-        const planConfig = PLAN_CONFIGS[planTier];
+        const planConfig = await subRepo.getPlanConfigByTier(planTier);
 
         const { count: activeCount } = await supabase
           .from('campaigns')

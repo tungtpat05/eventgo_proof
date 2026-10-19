@@ -545,7 +545,50 @@ export interface Database {
           order_index?: number;
         }
       >;
+      subscription_plan_configs: TableDefinition<
+        {
+          tier: SubscriptionPlanTier;
+          name: string;
+          price_monthly_vnd: number;
+          max_active_campaigns: number;
+          max_booths: number | null;
+          max_participants: number | null;
+          description: string;
+          features: Json;
+          is_popular: boolean;
+          is_active: boolean;
+          created_at: string;
+          updated_at: string;
+        },
+        {
+          tier: SubscriptionPlanTier;
+          name: string;
+          price_monthly_vnd?: number;
+          max_active_campaigns?: number;
+          max_booths?: number | null;
+          max_participants?: number | null;
+          description?: string;
+          features?: Json;
+          is_popular?: boolean;
+          is_active?: boolean;
+          created_at?: string;
+          updated_at?: string;
+        },
+        {
+          name?: string;
+          price_monthly_vnd?: number;
+          max_active_campaigns?: number;
+          max_booths?: number | null;
+          max_participants?: number | null;
+          description?: string;
+          features?: Json;
+          is_popular?: boolean;
+          is_active?: boolean;
+          updated_at?: string;
+        }
+      >;
     };
+
     Views: Record<string, never>;
     Functions: {
       accept_pending_admin_invites: {

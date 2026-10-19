@@ -12,6 +12,7 @@ import {
   ChecklistCategory,
   CampaignStatus,
 } from '@/domain/enums';
+import { PlanConfig } from '@/domain/entities';
 import { revalidatePath } from 'next/cache';
 
 const adminRepo = new SupabaseSystemAdminRepository();
@@ -305,4 +306,41 @@ export async function deleteChecklistTemplateAction(templateId: string) {
   if (error) throw new Error(error.message);
   revalidatePath('/admin/templates');
   return { success: true };
+}
+
+// 6. Plan Configurations Management
+export async function getAdminPlanConfigsAction(): Promise<PlanConfig[]> {
+  await assertSystemAdmin();
+  return subRepo.getPlanConfigs();
+}
+
+export async function updateAdminPlanConfigAction(
+  tier: SubscriptionPlanTier,
+  data: {
+    name?: string;
+    priceMonthlyVnd?: number;
+    maxActiveCampaigns?: number;
+    description?: string;
+    features?: string[];
+    isPopular?: boolean;
+    isActive?: boolean;
+  }
+): Promise<PlanConfig> {
+  await assertSystemAdmin();
+
+  if (data.priceMonthlyVnd !== undefined && data.priceMonthlyVnd < 0) {
+    throw new Error('Giá niêm yết không được âm.');
+  }
+
+  if (data.maxActiveCampaigns !== undefined && data.maxActiveCampaigns < 1) {
+    throw new Error('Hạn mức chiến dịch tối thiểu là 1.');
+  }
+
+  const updated = await subRepo.updatePlanConfig(tier, data);
+
+  revalidatePath('/admin/subscriptions');
+  revalidatePath('/settings/billing');
+  revalidatePath('/campaigns/new');
+
+  return updated;
 }

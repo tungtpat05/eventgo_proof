@@ -1,9 +1,10 @@
-import { Subscription, SubscriptionPlanTier, SubscriptionStatus } from '@/domain/entities';
+import { Subscription, SubscriptionPlanTier, SubscriptionStatus, PlanConfig, PLAN_CONFIGS } from '@/domain/entities';
 import { SubscriptionRepository } from '@/domain/repositories/subscription-repository';
 import { createServerSupabaseClient } from '@/infrastructure/supabase/server';
 import { Database } from '@/types/database.types';
 
 type SubscriptionRow = Database['public']['Tables']['subscriptions']['Row'];
+type PlanConfigRow = Database['public']['Tables']['subscription_plan_configs']['Row'];
 
 function mapSubscription(row: SubscriptionRow): Subscription {
   return {
@@ -15,6 +16,32 @@ function mapSubscription(row: SubscriptionRow): Subscription {
     expiresAt: row.expires_at ? new Date(row.expires_at) : null,
     createdAt: new Date(row.created_at),
     updatedAt: new Date(row.updated_at),
+  };
+}
+
+function mapPlanConfig(row: PlanConfigRow): PlanConfig {
+  let features: string[] = [];
+  if (Array.isArray(row.features)) {
+    features = row.features as string[];
+  } else if (typeof row.features === 'string') {
+    try {
+      features = JSON.parse(row.features);
+    } catch {
+      features = [];
+    }
+  }
+
+  return {
+    tier: row.tier as SubscriptionPlanTier,
+    name: row.name,
+    priceMonthlyVnd: Number(row.price_monthly_vnd),
+    maxActiveCampaigns: row.max_active_campaigns,
+    maxBooths: row.max_booths,
+    maxParticipants: row.max_participants,
+    description: row.description,
+    features,
+    isPopular: row.is_popular,
+    isActive: row.is_active,
   };
 }
 
@@ -102,4 +129,89 @@ export class SupabaseSubscriptionRepository implements SubscriptionRepository {
       total: count || 0,
     };
   }
+
+  async getPlanConfigs(): Promise<PlanConfig[]> {
+    try {
+      const supabase = await createServerSupabaseClient();
+      const { data, error } = await supabase
+        .from('subscription_plan_configs')
+        .select('*')
+        .order('price_monthly_vnd', { ascending: true });
+
+      if (error || !data || data.length === 0) {
+        if (error) {
+          console.warn('subscription_plan_configs query warning, falling back to static config:', error.message);
+        }
+        return [
+          PLAN_CONFIGS[SubscriptionPlanTier.FREE],
+          PLAN_CONFIGS[SubscriptionPlanTier.STARTER],
+          PLAN_CONFIGS[SubscriptionPlanTier.PRO],
+        ];
+      }
+
+      return data.map(mapPlanConfig);
+    } catch (err) {
+      console.warn('Error fetching plan configs, using fallback:', err);
+      return [
+        PLAN_CONFIGS[SubscriptionPlanTier.FREE],
+        PLAN_CONFIGS[SubscriptionPlanTier.STARTER],
+        PLAN_CONFIGS[SubscriptionPlanTier.PRO],
+      ];
+    }
+  }
+
+  async getPlanConfigByTier(tier: SubscriptionPlanTier): Promise<PlanConfig> {
+    try {
+      const supabase = await createServerSupabaseClient();
+      const { data, error } = await supabase
+        .from('subscription_plan_configs')
+        .select('*')
+        .eq('tier', tier)
+        .maybeSingle();
+
+      if (error || !data) {
+        return PLAN_CONFIGS[tier];
+      }
+
+      return mapPlanConfig(data);
+    } catch (err) {
+      console.warn(`Error fetching plan config for ${tier}, using fallback:`, err);
+      return PLAN_CONFIGS[tier];
+    }
+  }
+
+  async updatePlanConfig(
+    tier: SubscriptionPlanTier,
+    data: Partial<PlanConfig>
+  ): Promise<PlanConfig> {
+    const supabase = await createServerSupabaseClient();
+
+    const updatePayload: Database['public']['Tables']['subscription_plan_configs']['Update'] = {
+      updated_at: new Date().toISOString(),
+    };
+
+    if (data.name !== undefined) updatePayload.name = data.name;
+    if (data.priceMonthlyVnd !== undefined) updatePayload.price_monthly_vnd = data.priceMonthlyVnd;
+    if (data.maxActiveCampaigns !== undefined) updatePayload.max_active_campaigns = data.maxActiveCampaigns;
+    if (data.maxBooths !== undefined) updatePayload.max_booths = data.maxBooths;
+    if (data.maxParticipants !== undefined) updatePayload.max_participants = data.maxParticipants;
+    if (data.description !== undefined) updatePayload.description = data.description;
+    if (data.features !== undefined) updatePayload.features = data.features;
+    if (data.isPopular !== undefined) updatePayload.is_popular = data.isPopular;
+    if (data.isActive !== undefined) updatePayload.is_active = data.isActive;
+
+    const { data: updated, error } = await supabase
+      .from('subscription_plan_configs')
+      .update(updatePayload)
+      .eq('tier', tier)
+      .select('*')
+      .single();
+
+    if (error) {
+      throw new Error(`Lỗi cập nhật cấu hình gói: ${error.message}`);
+    }
+
+    return mapPlanConfig(updated);
+  }
 }
+

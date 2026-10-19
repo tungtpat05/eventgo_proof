@@ -11,7 +11,7 @@ import {
   PaymentGatewayProvider,
   CampaignStatus,
 } from '@/domain/enums';
-import { PLAN_CONFIGS, Subscription } from '@/domain/entities';
+import { PLAN_CONFIGS, PlanConfig, Subscription } from '@/domain/entities';
 import { createServerSupabaseClient } from '@/infrastructure/supabase/server';
 import { revalidatePath } from 'next/cache';
 
@@ -20,13 +20,17 @@ const txnRepo = new SupabaseTransactionRepository();
 
 export interface UserSubscriptionSummary {
   subscription: Subscription | null;
-  planConfig: typeof PLAN_CONFIGS[SubscriptionPlanTier];
+  planConfig: PlanConfig;
   activeCampaignCount: number;
   remainingCampaignSlots: number;
   daysRemaining: number | null;
   isExpiringSoon: boolean;
   isExpired: boolean;
   canCreateCampaign: boolean;
+}
+
+export async function getSubscriptionPlanConfigsAction(): Promise<PlanConfig[]> {
+  return subRepo.getPlanConfigs();
 }
 
 export async function getUserSubscriptionSummaryAction(): Promise<UserSubscriptionSummary> {
@@ -46,7 +50,7 @@ export async function getUserSubscriptionSummaryAction(): Promise<UserSubscripti
     .eq('status', CampaignStatus.ACTIVE);
 
   const planTier = sub?.plan || SubscriptionPlanTier.FREE;
-  const planConfig = PLAN_CONFIGS[planTier];
+  const planConfig = await subRepo.getPlanConfigByTier(planTier);
   const activeCampaignCount = activeCount || 0;
   const remainingCampaignSlots = Math.max(0, planConfig.maxActiveCampaigns - activeCampaignCount);
 
@@ -83,7 +87,7 @@ export async function createSubscriptionPaymentAction(targetPlan: SubscriptionPl
 
   const session = await getCurrentUserSession();
   const user = session.user;
-  const planConfig = PLAN_CONFIGS[targetPlan];
+  const planConfig = await subRepo.getPlanConfigByTier(targetPlan);
 
   // Generate unique order code (numeric for PayOS)
   const timestampPart = Date.now().toString().slice(-6);
@@ -111,6 +115,7 @@ export async function createSubscriptionPaymentAction(targetPlan: SubscriptionPl
       },
     ],
   });
+
 
   // Save transaction to DB with fallback
   let transaction: any;

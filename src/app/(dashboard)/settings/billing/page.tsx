@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useTransition } from 'react';
 import {
   getUserSubscriptionSummaryAction,
+  getSubscriptionPlanConfigsAction,
   createSubscriptionPaymentAction,
   getUserTransactionsAction,
   UserSubscriptionSummary,
@@ -10,7 +11,7 @@ import {
 import { TransactionHistoryTable } from '@/features/subscriptions/components/transaction-history-table';
 import { PayOSCheckoutModal } from '@/features/subscriptions/components/payos-checkout-modal';
 import { ExpirationWarningBanner } from '@/features/subscriptions/components/expiration-warning-banner';
-import { SubscriptionPlanTier, Transaction, PLAN_CONFIGS } from '@/domain/entities';
+import { SubscriptionPlanTier, Transaction, PLAN_CONFIGS, PlanConfig } from '@/domain/entities';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
@@ -27,6 +28,7 @@ import {
 
 export default function BillingPage() {
   const [summary, setSummary] = useState<UserSubscriptionSummary | null>(null);
+  const [planConfigs, setPlanConfigs] = useState<PlanConfig[]>([]);
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isPending, startTransition] = useTransition();
@@ -35,6 +37,7 @@ export default function BillingPage() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [modalData, setModalData] = useState<{
     targetPlan: SubscriptionPlanTier;
+    planName?: string;
     qrCodeUrl: string;
     orderCode: number;
     amount: number;
@@ -43,11 +46,13 @@ export default function BillingPage() {
 
   const loadData = async () => {
     try {
-      const [sum, txns] = await Promise.all([
+      const [sum, configs, txns] = await Promise.all([
         getUserSubscriptionSummaryAction(),
+        getSubscriptionPlanConfigsAction(),
         getUserTransactionsAction(),
       ]);
       setSummary(sum);
+      setPlanConfigs(configs);
       setTransactions(txns);
     } catch (err: any) {
       console.error('Failed to load billing summary:', err);
@@ -62,6 +67,11 @@ export default function BillingPage() {
         isExpired: false,
         canCreateCampaign: true,
       });
+      setPlanConfigs([
+        PLAN_CONFIGS[SubscriptionPlanTier.FREE],
+        PLAN_CONFIGS[SubscriptionPlanTier.STARTER],
+        PLAN_CONFIGS[SubscriptionPlanTier.PRO],
+      ]);
       setTransactions([]);
     } finally {
       setIsLoading(false);
@@ -72,12 +82,13 @@ export default function BillingPage() {
     loadData();
   }, []);
 
-  const handleOpenCheckout = (planTier: SubscriptionPlanTier) => {
+  const handleOpenCheckout = (planTier: SubscriptionPlanTier, planName?: string) => {
     startTransition(async () => {
       try {
         const result = await createSubscriptionPaymentAction(planTier);
         setModalData({
           targetPlan: planTier,
+          planName,
           qrCodeUrl: result.qrCode,
           orderCode: result.orderCode,
           amount: result.amount,
@@ -103,6 +114,16 @@ export default function BillingPage() {
   const activeCount = summary.activeCampaignCount;
   const maxAllowed = summary.planConfig.maxActiveCampaigns;
   const percentUsed = Math.min(100, Math.round((activeCount / maxAllowed) * 100));
+
+  const freeConfig =
+    planConfigs.find((p) => p.tier === SubscriptionPlanTier.FREE) ||
+    PLAN_CONFIGS[SubscriptionPlanTier.FREE];
+  const starterConfig =
+    planConfigs.find((p) => p.tier === SubscriptionPlanTier.STARTER) ||
+    PLAN_CONFIGS[SubscriptionPlanTier.STARTER];
+  const proConfig =
+    planConfigs.find((p) => p.tier === SubscriptionPlanTier.PRO) ||
+    PLAN_CONFIGS[SubscriptionPlanTier.PRO];
 
   return (
     <div className="space-y-8 max-w-6xl mx-auto pb-12">
@@ -161,7 +182,7 @@ export default function BillingPage() {
             {currentTier !== SubscriptionPlanTier.FREE && (
               <Button
                 size="sm"
-                onClick={() => handleOpenCheckout(currentTier)}
+                onClick={() => handleOpenCheckout(currentTier, summary.planConfig.name)}
                 disabled={isPending}
                 className="bg-blue-600 hover:bg-blue-700 text-white text-xs gap-1.5 shadow-sm"
               >
@@ -251,32 +272,47 @@ export default function BillingPage() {
           }`}>
             <div>
               <div className="flex justify-between items-center mb-2">
-                <h3 className="font-bold text-slate-900 text-lg">Gói Free</h3>
+                <h3 className="font-bold text-slate-900 text-lg">{freeConfig.name}</h3>
                 {currentTier === SubscriptionPlanTier.FREE && (
                   <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200 text-xs">
                     Đang dùng
                   </Badge>
                 )}
               </div>
-              <p className="text-xs text-slate-500 mb-4">Cá nhân hoặc chạy thử nghiệm</p>
+              <p className="text-xs text-slate-500 mb-4">{freeConfig.description}</p>
               <div className="mb-6">
-                <span className="text-3xl font-extrabold text-slate-900">0 đ</span>
+                <span className="text-3xl font-extrabold text-slate-900">
+                  {freeConfig.priceMonthlyVnd === 0
+                    ? '0 đ'
+                    : `${freeConfig.priceMonthlyVnd.toLocaleString('vi-VN')} đ`}
+                </span>
                 <span className="text-xs text-slate-500 ml-1">/ vĩnh viễn</span>
               </div>
 
               <div className="space-y-3 text-xs text-slate-600 border-t border-slate-100 pt-4">
-                <div className="flex items-center gap-2">
-                  <Check className="h-4 w-4 text-emerald-600 shrink-0" />
-                  <span><strong>2 Chiến dịch</strong> hoạt động cùng lúc</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <Check className="h-4 w-4 text-emerald-600 shrink-0" />
-                  <span>Không giới hạn Booths & Người tham gia</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <Check className="h-4 w-4 text-emerald-600 shrink-0" />
-                  <span>Bộ tiêu chí Checklist cơ bản</span>
-                </div>
+                {freeConfig.features && freeConfig.features.length > 0 ? (
+                  freeConfig.features.map((feature, idx) => (
+                    <div key={idx} className="flex items-center gap-2">
+                      <Check className="h-4 w-4 text-emerald-600 shrink-0" />
+                      <span>{feature}</span>
+                    </div>
+                  ))
+                ) : (
+                  <>
+                    <div className="flex items-center gap-2">
+                      <Check className="h-4 w-4 text-emerald-600 shrink-0" />
+                      <span><strong>{freeConfig.maxActiveCampaigns} Chiến dịch</strong> hoạt động cùng lúc</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Check className="h-4 w-4 text-emerald-600 shrink-0" />
+                      <span>Không giới hạn Booths & Người tham gia</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Check className="h-4 w-4 text-emerald-600 shrink-0" />
+                      <span>Bộ tiêu chí Checklist cơ bản</span>
+                    </div>
+                  </>
+                )}
               </div>
             </div>
 
@@ -297,17 +333,19 @@ export default function BillingPage() {
               ? 'border-blue-600 ring-2 ring-blue-500/20 bg-blue-50/20 shadow-md'
               : 'border-blue-200 bg-white hover:border-blue-400 shadow-sm'
           }`}>
-            <div className="absolute -top-3 left-1/2 -translate-x-1/2">
-              <span className="bg-blue-600 text-white text-[11px] font-bold px-3 py-0.5 rounded-full uppercase tracking-wider shadow-sm">
-                Phổ biến nhất
-              </span>
-            </div>
+            {starterConfig.isPopular && (
+              <div className="absolute -top-3 left-1/2 -translate-x-1/2">
+                <span className="bg-blue-600 text-white text-[11px] font-bold px-3 py-0.5 rounded-full uppercase tracking-wider shadow-sm">
+                  Phổ biến nhất
+                </span>
+              </div>
+            )}
 
             <div>
               <div className="flex justify-between items-center mb-2">
                 <h3 className="font-bold text-slate-900 text-lg flex items-center gap-1.5">
                   <Zap className="h-4 w-4 text-amber-500" />
-                  Gói Starter
+                  {starterConfig.name}
                 </h3>
                 {currentTier === SubscriptionPlanTier.STARTER && (
                   <Badge className="bg-blue-100 text-blue-700 border-blue-200 text-xs">
@@ -315,65 +353,86 @@ export default function BillingPage() {
                   </Badge>
                 )}
               </div>
-              <p className="text-xs text-slate-500 mb-4">Dành cho Agency sự kiện tầm trung</p>
+              <p className="text-xs text-slate-500 mb-4">{starterConfig.description}</p>
               <div className="mb-6">
-                <span className="text-3xl font-extrabold text-slate-900">2.000 đ</span>
-                <span className="text-xs text-slate-500 ml-1">/ tháng (demo)</span>
+                <span className="text-3xl font-extrabold text-slate-900">
+                  {starterConfig.priceMonthlyVnd.toLocaleString('vi-VN')} đ
+                </span>
+                <span className="text-xs text-slate-500 ml-1">/ tháng</span>
               </div>
 
               <div className="space-y-3 text-xs text-slate-600 border-t border-slate-100 pt-4">
-                <div className="flex items-center gap-2">
-                  <Check className="h-4 w-4 text-blue-600 shrink-0" />
-                  <span><strong>5 Chiến dịch</strong> hoạt động cùng lúc</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <Check className="h-4 w-4 text-blue-600 shrink-0" />
-                  <span>Không giới hạn Booths & Người tham gia</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <Check className="h-4 w-4 text-blue-600 shrink-0" />
-                  <span>Thư viện mẫu Checklist chuẩn hóa</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <Check className="h-4 w-4 text-blue-600 shrink-0" />
-                  <span>Cộng dồn thời gian khi thanh toán sớm</span>
-                </div>
+                {starterConfig.features && starterConfig.features.length > 0 ? (
+                  starterConfig.features.map((feature, idx) => (
+                    <div key={idx} className="flex items-center gap-2">
+                      <Check className="h-4 w-4 text-blue-600 shrink-0" />
+                      <span>{feature}</span>
+                    </div>
+                  ))
+                ) : (
+                  <>
+                    <div className="flex items-center gap-2">
+                      <Check className="h-4 w-4 text-blue-600 shrink-0" />
+                      <span><strong>{starterConfig.maxActiveCampaigns} Chiến dịch</strong> hoạt động cùng lúc</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Check className="h-4 w-4 text-blue-600 shrink-0" />
+                      <span>Không giới hạn Booths & Người tham gia</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Check className="h-4 w-4 text-blue-600 shrink-0" />
+                      <span>Thư viện mẫu Checklist chuẩn hóa</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Check className="h-4 w-4 text-blue-600 shrink-0" />
+                      <span>Cộng dồn thời gian khi thanh toán sớm</span>
+                    </div>
+                  </>
+                )}
               </div>
             </div>
 
             <div className="pt-6">
               {currentTier === SubscriptionPlanTier.STARTER ? (
                 <Button
-                  onClick={() => handleOpenCheckout(SubscriptionPlanTier.STARTER)}
+                  onClick={() => handleOpenCheckout(SubscriptionPlanTier.STARTER, starterConfig.name)}
                   disabled={isPending}
                   className="w-full text-xs bg-blue-600 hover:bg-blue-700 text-white"
                 >
-                  Gia hạn gói Starter
+                  Gia hạn {starterConfig.name}
                 </Button>
               ) : (
                 <Button
-                  onClick={() => handleOpenCheckout(SubscriptionPlanTier.STARTER)}
+                  onClick={() => handleOpenCheckout(SubscriptionPlanTier.STARTER, starterConfig.name)}
                   disabled={isPending}
                   className="w-full text-xs bg-blue-600 hover:bg-blue-700 text-white"
                 >
                   {isPending ? <Loader2 className="h-3.5 w-3.5 animate-spin mr-1" /> : null}
-                  Nâng cấp Starter (2k)
+                  Nâng cấp {starterConfig.name} ({starterConfig.priceMonthlyVnd.toLocaleString('vi-VN')} đ)
                 </Button>
               )}
             </div>
           </div>
 
           {/* TIER 3: PRO */}
-          <div className={`rounded-2xl border p-6 flex flex-col justify-between transition-all ${
+          <div className={`rounded-2xl border p-6 flex flex-col justify-between relative transition-all ${
             currentTier === SubscriptionPlanTier.PRO
               ? 'border-blue-600 ring-2 ring-blue-500/20 bg-blue-50/20 shadow-md'
               : 'border-slate-200 bg-white hover:border-slate-300'
           }`}>
+            {proConfig.isPopular && (
+              <div className="absolute -top-3 left-1/2 -translate-x-1/2">
+                <span className="bg-purple-600 text-white text-[11px] font-bold px-3 py-0.5 rounded-full uppercase tracking-wider shadow-sm">
+                  Phổ biến nhất
+                </span>
+              </div>
+            )}
+
             <div>
               <div className="flex justify-between items-center mb-2">
                 <h3 className="font-bold text-slate-900 text-lg flex items-center gap-1.5">
                   <ShieldCheck className="h-4 w-4 text-purple-600" />
-                  Gói Pro
+                  {proConfig.name}
                 </h3>
                 {currentTier === SubscriptionPlanTier.PRO && (
                   <Badge className="bg-purple-100 text-purple-700 border-purple-200 text-xs">
@@ -381,49 +440,62 @@ export default function BillingPage() {
                   </Badge>
                 )}
               </div>
-              <p className="text-xs text-slate-500 mb-4">Agency chuyên nghiệp & Nhãn hàng</p>
+              <p className="text-xs text-slate-500 mb-4">{proConfig.description}</p>
               <div className="mb-6">
-                <span className="text-3xl font-extrabold text-slate-900">5.000 đ</span>
-                <span className="text-xs text-slate-500 ml-1">/ tháng (demo)</span>
+                <span className="text-3xl font-extrabold text-slate-900">
+                  {proConfig.priceMonthlyVnd.toLocaleString('vi-VN')} đ
+                </span>
+                <span className="text-xs text-slate-500 ml-1">/ tháng</span>
               </div>
 
               <div className="space-y-3 text-xs text-slate-600 border-t border-slate-100 pt-4">
-                <div className="flex items-center gap-2">
-                  <Check className="h-4 w-4 text-purple-600 shrink-0" />
-                  <span><strong>20 Chiến dịch</strong> hoạt động cùng lúc</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <Check className="h-4 w-4 text-purple-600 shrink-0" />
-                  <span>Không giới hạn Booths & Người tham gia</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <Check className="h-4 w-4 text-purple-600 shrink-0" />
-                  <span>Ưu tiên tốc độ xử lý biên bản & đối soát</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <Check className="h-4 w-4 text-purple-600 shrink-0" />
-                  <span>Hỗ trợ kỹ thuật 24/7</span>
-                </div>
+                {proConfig.features && proConfig.features.length > 0 ? (
+                  proConfig.features.map((feature, idx) => (
+                    <div key={idx} className="flex items-center gap-2">
+                      <Check className="h-4 w-4 text-purple-600 shrink-0" />
+                      <span>{feature}</span>
+                    </div>
+                  ))
+                ) : (
+                  <>
+                    <div className="flex items-center gap-2">
+                      <Check className="h-4 w-4 text-purple-600 shrink-0" />
+                      <span><strong>{proConfig.maxActiveCampaigns} Chiến dịch</strong> hoạt động cùng lúc</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Check className="h-4 w-4 text-purple-600 shrink-0" />
+                      <span>Không giới hạn Booths & Người tham gia</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Check className="h-4 w-4 text-purple-600 shrink-0" />
+                      <span>Ưu tiên tốc độ xử lý biên bản & đối soát</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Check className="h-4 w-4 text-purple-600 shrink-0" />
+                      <span>Hỗ trợ kỹ thuật 24/7</span>
+                    </div>
+                  </>
+                )}
               </div>
             </div>
 
             <div className="pt-6">
               {currentTier === SubscriptionPlanTier.PRO ? (
                 <Button
-                  onClick={() => handleOpenCheckout(SubscriptionPlanTier.PRO)}
+                  onClick={() => handleOpenCheckout(SubscriptionPlanTier.PRO, proConfig.name)}
                   disabled={isPending}
                   className="w-full text-xs bg-slate-900 hover:bg-slate-800 text-white"
                 >
-                  Gia hạn gói Pro
+                  Gia hạn {proConfig.name}
                 </Button>
               ) : (
                 <Button
-                  onClick={() => handleOpenCheckout(SubscriptionPlanTier.PRO)}
+                  onClick={() => handleOpenCheckout(SubscriptionPlanTier.PRO, proConfig.name)}
                   disabled={isPending}
                   className="w-full text-xs bg-slate-900 hover:bg-slate-800 text-white"
                 >
                   {isPending ? <Loader2 className="h-3.5 w-3.5 animate-spin mr-1" /> : null}
-                  Nâng cấp Pro (5k)
+                  Nâng cấp {proConfig.name} ({proConfig.priceMonthlyVnd.toLocaleString('vi-VN')} đ)
                 </Button>
               )}
             </div>
@@ -449,6 +521,7 @@ export default function BillingPage() {
           isOpen={isModalOpen}
           onClose={() => setIsModalOpen(false)}
           targetPlan={modalData.targetPlan}
+          planName={modalData.planName}
           qrCodeUrl={modalData.qrCodeUrl}
           orderCode={modalData.orderCode}
           amount={modalData.amount}
@@ -459,3 +532,4 @@ export default function BillingPage() {
     </div>
   );
 }
+

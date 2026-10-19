@@ -19,6 +19,7 @@ interface PayOSCheckoutModalProps {
   isOpen: boolean;
   onClose: () => void;
   targetPlan: SubscriptionPlanTier;
+  planName?: string;
   qrCodeUrl: string;
   orderCode: number;
   amount: number;
@@ -30,6 +31,7 @@ export function PayOSCheckoutModal({
   isOpen,
   onClose,
   targetPlan,
+  planName,
   qrCodeUrl,
   orderCode,
   amount,
@@ -41,7 +43,8 @@ export function PayOSCheckoutModal({
   const [isSuccess, setIsSuccess] = useState(false);
   const [timeLeft, setTimeLeft] = useState(900); // 15 minutes
 
-  const planConfig = PLAN_CONFIGS[targetPlan];
+  const displayName = planName || PLAN_CONFIGS[targetPlan]?.name || 'Gói Dịch Vụ';
+
 
   useEffect(() => {
     if (!isOpen) return;
@@ -82,7 +85,7 @@ export function PayOSCheckoutModal({
         <DialogHeader className="text-center sm:text-center">
           <DialogTitle className="text-xl font-bold text-slate-900 flex items-center justify-center gap-2">
             <QrCode className="h-5 w-5 text-blue-600" />
-            Thanh toán {planConfig.name}
+            Thanh toán {displayName}
           </DialogTitle>
           <DialogDescription className="text-sm text-slate-500">
             Quét mã VietQR bằng ứng dụng ngân hàng bất kỳ để tự động nâng gói
@@ -96,7 +99,7 @@ export function PayOSCheckoutModal({
             </div>
             <h3 className="text-lg font-bold text-slate-900">Thanh toán thành công!</h3>
             <p className="text-sm text-slate-600">
-              Gói <span className="font-semibold text-blue-600">{planConfig.name}</span> của bạn đã được kích hoạt thành công trong 30 ngày.
+              Gói <span className="font-semibold text-blue-600">{displayName}</span> của bạn đã được kích hoạt thành công trong 30 ngày.
             </p>
           </div>
         ) : (

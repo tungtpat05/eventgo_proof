@@ -293,7 +293,7 @@ export async function getCampaignWizardDataUseCase(campaignId: string): Promise<
       const subRepo = new SupabaseSubscriptionRepository();
       const sub = await subRepo.getByUserId(ownerId);
       const planTier = sub?.plan || SubscriptionPlanTier.FREE;
-      const planConfig = PLAN_CONFIGS[planTier];
+      const planConfig = await subRepo.getPlanConfigByTier(planTier);
 
       const { count: activeCount } = await supabase
         .from('campaigns')
