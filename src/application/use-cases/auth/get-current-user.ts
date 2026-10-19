@@ -26,18 +26,44 @@ export async function getCurrentUserSession(): Promise<CurrentUserSession> {
           .single();
 
         const profile = data as (Database['public']['Tables']['profiles']['Row']) | null;
+        const meta = user.user_metadata || {};
+        const fallbackAvatar = meta.avatar_url || meta.picture || null;
+        const fallbackName = meta.full_name || meta.name || user.email?.split('@')[0] || 'Người dùng';
+        const effectiveAvatar = profile?.avatar_url || fallbackAvatar;
 
         if (profile) {
+          // If avatar was missing in DB profile but exists in OAuth metadata, asynchronously persist it
+          if (!profile.avatar_url && fallbackAvatar) {
+            void supabase
+              .from('profiles')
+              .update({ avatar_url: fallbackAvatar })
+              .eq('id', user.id);
+          }
+
           return {
             user: {
               id: profile.id,
               email: profile.email,
-              fullName: profile.full_name,
-              avatarUrl: profile.avatar_url,
+              fullName: profile.full_name || fallbackName,
+              avatarUrl: effectiveAvatar,
               phone: profile.phone,
               isSystemAdmin: profile.is_system_admin ?? false,
               createdAt: new Date(profile.created_at),
               updatedAt: new Date(profile.updated_at),
+            },
+            organizationName: 'EventGo Agency',
+          };
+        } else {
+          return {
+            user: {
+              id: user.id,
+              email: user.email || '',
+              fullName: fallbackName,
+              avatarUrl: fallbackAvatar,
+              phone: user.phone || null,
+              isSystemAdmin: false,
+              createdAt: new Date(user.created_at),
+              updatedAt: new Date(),
             },
             organizationName: 'EventGo Agency',
           };

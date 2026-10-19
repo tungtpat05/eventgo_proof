@@ -12,6 +12,7 @@ interface HeaderProps {
 
 export function Header({ user }: HeaderProps) {
   const [isOpen, setIsOpen] = useState(false);
+  const [imgError, setImgError] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -57,21 +58,41 @@ export function Header({ user }: HeaderProps) {
             aria-haspopup="true"
           >
             {user?.fullName && (
-              <span className="text-sm font-medium text-slate-700">
+              <span className="text-sm font-medium text-slate-700 hidden sm:inline">
                 {user.fullName}
               </span>
             )}
-            <div className="flex h-9 w-9 items-center justify-center rounded-full bg-slate-100 text-slate-600 border border-slate-200">
-              <User className="h-4.5 w-4.5" />
+            <div className="flex h-9 w-9 items-center justify-center rounded-full bg-slate-100 text-slate-600 border border-slate-200 font-bold overflow-hidden">
+              {user?.avatarUrl && !imgError ? (
+                <img
+                  src={user.avatarUrl}
+                  alt={user.fullName || 'User avatar'}
+                  referrerPolicy="no-referrer"
+                  onError={() => setImgError(true)}
+                  className="h-full w-full object-cover"
+                />
+              ) : (
+                <User className="h-4.5 w-4.5" />
+              )}
             </div>
             <ChevronDown className={`h-4 w-4 text-slate-400 transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`} />
           </button>
 
           {isOpen && (
-            <div className="absolute right-0 mt-2 w-60 rounded-xl bg-white p-1.5 shadow-lg ring-1 ring-slate-950/5 focus:outline-none z-50 divide-y divide-slate-100">
+            <div className="absolute right-0 mt-2 w-64 rounded-xl bg-white p-1.5 shadow-lg ring-1 ring-slate-950/5 focus:outline-none z-50 divide-y divide-slate-100">
+              {/* User profile summary */}
+              <div className="px-3 py-2.5">
+                <p className="text-xs font-semibold text-slate-900 truncate">
+                  {user?.fullName || 'Người dùng'}
+                </p>
+                {user?.email && (
+                  <p className="text-[11px] text-slate-500 truncate">{user.email}</p>
+                )}
+              </div>
+
               <div className="py-1">
                 <Link
-                  href="/profile"
+                  href="/account"
                   onClick={() => setIsOpen(false)}
                   className="flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-100 hover:text-slate-900 transition-colors"
                 >
@@ -99,7 +120,6 @@ export function Header({ user }: HeaderProps) {
                   </Link>
                 )}
               </div>
-
 
               <div className="py-1">
                 <form action={signOutAction}>

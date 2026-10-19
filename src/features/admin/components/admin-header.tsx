@@ -48,6 +48,7 @@ export function AdminHeader({ user }: AdminHeaderProps) {
                 <img
                   src={user.avatarUrl}
                   alt={user.fullName}
+                  referrerPolicy="no-referrer"
                   className="h-full w-full object-cover"
                 />
               ) : (

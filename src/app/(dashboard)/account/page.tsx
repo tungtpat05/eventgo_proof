@@ -20,6 +20,26 @@ export default async function AccountPage() {
       <Card>
         <CardHeader><CardTitle className="text-base">Thông tin cá nhân</CardTitle></CardHeader>
         <CardContent className="space-y-4 text-sm">
+          <div className="flex items-center gap-4 pb-2">
+            <div className="flex h-16 w-16 items-center justify-center rounded-full bg-slate-100 text-slate-600 border border-slate-200 overflow-hidden font-bold">
+              {user.avatarUrl ? (
+                <img
+                  src={user.avatarUrl}
+                  alt={user.fullName}
+                  referrerPolicy="no-referrer"
+                  className="h-full w-full object-cover"
+                />
+              ) : (
+                <span className="text-xl text-slate-400">
+                  {user.fullName?.charAt(0).toUpperCase() || 'U'}
+                </span>
+              )}
+            </div>
+            <div>
+              <p className="font-semibold text-base text-slate-900">{user.fullName}</p>
+              <p className="text-sm text-slate-500">{user.email}</p>
+            </div>
+          </div>
           <div><span className="text-slate-500">Họ tên</span><p className="font-semibold text-slate-900">{user.fullName}</p></div>
           <div><span className="text-slate-500">Email đã xác minh</span><p className="font-semibold text-slate-900">{user.email}</p></div>
           <Badge variant="default">Google OAuth</Badge>
