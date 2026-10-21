@@ -87,6 +87,31 @@ export async function createSubscriptionPaymentAction(targetPlan: SubscriptionPl
 
   const session = await getCurrentUserSession();
   const user = session.user;
+
+  // Active downgrade guard: prevent accidental loss of a higher tier plan
+  const currentSub = await subRepo.getByUserId(user.id);
+  const PLAN_TIER_LEVEL: Record<SubscriptionPlanTier, number> = {
+    [SubscriptionPlanTier.FREE]: 0,
+    [SubscriptionPlanTier.STARTER]: 1,
+    [SubscriptionPlanTier.PRO]: 2,
+  };
+  const isCurrentActive =
+    currentSub &&
+    currentSub.status === SubscriptionStatus.ACTIVE &&
+    currentSub.plan !== SubscriptionPlanTier.FREE &&
+    currentSub.expiresAt &&
+    new Date(currentSub.expiresAt).getTime() > Date.now();
+
+  if (isCurrentActive) {
+    const currentLevel = PLAN_TIER_LEVEL[currentSub.plan] ?? 0;
+    const targetLevel = PLAN_TIER_LEVEL[targetPlan] ?? 0;
+    if (targetLevel < currentLevel) {
+      throw new Error(
+        `Bạn đang sử dụng gói ${PLAN_CONFIGS[currentSub.plan]?.name || currentSub.plan} còn thời hạn. Vui lòng đợi gói hiện tại hết hạn trước khi đăng ký gói thấp hơn.`
+      );
+    }
+  }
+
   const planConfig = await subRepo.getPlanConfigByTier(targetPlan);
 
   // Generate unique order code (numeric for PayOS)

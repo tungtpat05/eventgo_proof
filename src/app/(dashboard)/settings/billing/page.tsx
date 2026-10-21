@@ -17,6 +17,14 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
 import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from '@/components/ui/dialog';
+import {
   CreditCard,
   CheckCircle2,
   Sparkles,
@@ -25,6 +33,9 @@ import {
   Check,
   Loader2,
   RefreshCw,
+  AlertTriangle,
+  ArrowUpRight,
+  Info,
 } from 'lucide-react';
 
 export default function BillingPage() {
@@ -50,6 +61,13 @@ export default function BillingPage() {
     bin?: string;
     checkoutUrl?: string;
     description?: string;
+  } | null>(null);
+
+  // Upgrade confirmation modal state
+  const [upgradeConfirmData, setUpgradeConfirmData] = useState<{
+    targetPlan: SubscriptionPlanTier;
+    planName: string;
+    price: number;
   } | null>(null);
 
   const loadData = async () => {
@@ -129,6 +147,43 @@ export default function BillingPage() {
   const maxAllowed = summary.planConfig.maxActiveCampaigns;
   const percentUsed = Math.min(100, Math.round((activeCount / maxAllowed) * 100));
 
+  const PLAN_TIER_LEVEL: Record<SubscriptionPlanTier, number> = {
+    [SubscriptionPlanTier.FREE]: 0,
+    [SubscriptionPlanTier.STARTER]: 1,
+    [SubscriptionPlanTier.PRO]: 2,
+  };
+
+  const isCurrentSubActive = !!(
+    summary.subscription &&
+    summary.subscription.plan !== SubscriptionPlanTier.FREE &&
+    summary.subscription.expiresAt &&
+    !summary.isExpired &&
+    (summary.daysRemaining === null || summary.daysRemaining > 0)
+  );
+  const currentTierLevel = isCurrentSubActive ? PLAN_TIER_LEVEL[currentTier] : 0;
+
+  const handlePlanAction = (targetPlan: SubscriptionPlanTier, planName: string, price: number) => {
+    const targetLevel = PLAN_TIER_LEVEL[targetPlan];
+
+    // Case 1: Downgrade from active higher tier -> blocked
+    if (isCurrentSubActive && targetLevel < currentTierLevel) {
+      return;
+    }
+
+    // Case 2: Upgrade from active lower tier (e.g. Starter -> Pro) -> confirmation dialog
+    if (isCurrentSubActive && targetLevel > currentTierLevel) {
+      setUpgradeConfirmData({
+        targetPlan,
+        planName,
+        price,
+      });
+      return;
+    }
+
+    // Case 3: Renewal (same tier) or purchase from Free/Expired
+    handleOpenCheckout(targetPlan, planName);
+  };
+
   const freeConfig =
     planConfigs.find((p) => p.tier === SubscriptionPlanTier.FREE) ||
     PLAN_CONFIGS[SubscriptionPlanTier.FREE];
@@ -201,7 +256,7 @@ export default function BillingPage() {
                 className="bg-blue-600 hover:bg-blue-700 text-white text-xs gap-1.5 shadow-sm"
               >
                 {isPending ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Sparkles className="h-3.5 w-3.5" />}
-                Gia hạn thêm 30 ngày
+                Gia hạn (+30 ngày cộng dồn)
               </Button>
             )}
           </div>
@@ -407,23 +462,47 @@ export default function BillingPage() {
             </div>
 
             <div className="pt-6">
-              {currentTier === SubscriptionPlanTier.STARTER ? (
-                <Button
-                  onClick={() => handleOpenCheckout(SubscriptionPlanTier.STARTER, starterConfig.name)}
-                  disabled={isPending}
-                  className="w-full text-xs bg-blue-600 hover:bg-blue-700 text-white"
-                >
-                  Gia hạn {starterConfig.name}
-                </Button>
+              {currentTier === SubscriptionPlanTier.STARTER && isCurrentSubActive ? (
+                <div className="space-y-1.5">
+                  <Button
+                    onClick={() => handlePlanAction(SubscriptionPlanTier.STARTER, starterConfig.name, starterConfig.priceMonthlyVnd)}
+                    disabled={isPending}
+                    className="w-full text-xs bg-blue-600 hover:bg-blue-700 text-white shadow-xs"
+                  >
+                    {isPending ? <Loader2 className="h-3.5 w-3.5 animate-spin mr-1" /> : <RefreshCw className="h-3.5 w-3.5 mr-1" />}
+                    Gia hạn {starterConfig.name} (+30 ngày)
+                  </Button>
+                  <p className="text-[11px] text-center text-blue-600 font-medium">
+                    Cộng dồn 30 ngày vào thời hạn hiện tại
+                  </p>
+                </div>
+              ) : currentTierLevel > PLAN_TIER_LEVEL[SubscriptionPlanTier.STARTER] && isCurrentSubActive ? (
+                <div className="space-y-1.5">
+                  <Button
+                    disabled={true}
+                    variant="outline"
+                    className="w-full text-xs border-slate-200 text-slate-400 bg-slate-50 cursor-not-allowed"
+                  >
+                    Đang dùng gói cao hơn
+                  </Button>
+                  <p className="text-[11px] text-center text-slate-500">
+                    Gói {summary.planConfig.name} còn {summary.daysRemaining} ngày. Có thể đăng ký lại khi hết hạn.
+                  </p>
+                </div>
               ) : (
-                <Button
-                  onClick={() => handleOpenCheckout(SubscriptionPlanTier.STARTER, starterConfig.name)}
-                  disabled={isPending}
-                  className="w-full text-xs bg-blue-600 hover:bg-blue-700 text-white"
-                >
-                  {isPending ? <Loader2 className="h-3.5 w-3.5 animate-spin mr-1" /> : null}
-                  Nâng cấp {starterConfig.name} ({starterConfig.priceMonthlyVnd.toLocaleString('vi-VN')} đ)
-                </Button>
+                <div className="space-y-1.5">
+                  <Button
+                    onClick={() => handlePlanAction(SubscriptionPlanTier.STARTER, starterConfig.name, starterConfig.priceMonthlyVnd)}
+                    disabled={isPending}
+                    className="w-full text-xs bg-blue-600 hover:bg-blue-700 text-white shadow-xs"
+                  >
+                    {isPending ? <Loader2 className="h-3.5 w-3.5 animate-spin mr-1" /> : <Zap className="h-3.5 w-3.5 mr-1 text-amber-300" />}
+                    Đăng ký {starterConfig.name} ({starterConfig.priceMonthlyVnd.toLocaleString('vi-VN')} đ)
+                  </Button>
+                  <p className="text-[11px] text-center text-slate-500">
+                    Kích hoạt ngay 30 ngày sử dụng
+                  </p>
+                </div>
               )}
             </div>
           </div>
@@ -494,23 +573,48 @@ export default function BillingPage() {
             </div>
 
             <div className="pt-6">
-              {currentTier === SubscriptionPlanTier.PRO ? (
-                <Button
-                  onClick={() => handleOpenCheckout(SubscriptionPlanTier.PRO, proConfig.name)}
-                  disabled={isPending}
-                  className="w-full text-xs bg-slate-900 hover:bg-slate-800 text-white"
-                >
-                  Gia hạn {proConfig.name}
-                </Button>
+              {currentTier === SubscriptionPlanTier.PRO && isCurrentSubActive ? (
+                <div className="space-y-1.5">
+                  <Button
+                    onClick={() => handlePlanAction(SubscriptionPlanTier.PRO, proConfig.name, proConfig.priceMonthlyVnd)}
+                    disabled={isPending}
+                    className="w-full text-xs bg-slate-900 hover:bg-slate-800 text-white shadow-xs"
+                  >
+                    {isPending ? <Loader2 className="h-3.5 w-3.5 animate-spin mr-1" /> : <RefreshCw className="h-3.5 w-3.5 mr-1" />}
+                    Gia hạn {proConfig.name} (+30 ngày)
+                  </Button>
+                  <p className="text-[11px] text-center text-purple-600 font-medium">
+                    Cộng dồn 30 ngày vào thời hạn hiện tại
+                  </p>
+                </div>
+              ) : isCurrentSubActive && currentTierLevel < PLAN_TIER_LEVEL[SubscriptionPlanTier.PRO] ? (
+                <div className="space-y-1.5">
+                  <Button
+                    onClick={() => handlePlanAction(SubscriptionPlanTier.PRO, proConfig.name, proConfig.priceMonthlyVnd)}
+                    disabled={isPending}
+                    className="w-full text-xs bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white shadow-xs font-semibold"
+                  >
+                    {isPending ? <Loader2 className="h-3.5 w-3.5 animate-spin mr-1" /> : <ArrowUpRight className="h-3.5 w-3.5 mr-1" />}
+                    Nâng cấp {proConfig.name} ({proConfig.priceMonthlyVnd.toLocaleString('vi-VN')} đ)
+                  </Button>
+                  <p className="text-[11px] text-center text-amber-600 font-medium">
+                    Kích hoạt ngay 30 ngày (sẽ thay thế gói hiện tại)
+                  </p>
+                </div>
               ) : (
-                <Button
-                  onClick={() => handleOpenCheckout(SubscriptionPlanTier.PRO, proConfig.name)}
-                  disabled={isPending}
-                  className="w-full text-xs bg-slate-900 hover:bg-slate-800 text-white"
-                >
-                  {isPending ? <Loader2 className="h-3.5 w-3.5 animate-spin mr-1" /> : null}
-                  Nâng cấp {proConfig.name} ({proConfig.priceMonthlyVnd.toLocaleString('vi-VN')} đ)
-                </Button>
+                <div className="space-y-1.5">
+                  <Button
+                    onClick={() => handlePlanAction(SubscriptionPlanTier.PRO, proConfig.name, proConfig.priceMonthlyVnd)}
+                    disabled={isPending}
+                    className="w-full text-xs bg-slate-900 hover:bg-slate-800 text-white shadow-xs"
+                  >
+                    {isPending ? <Loader2 className="h-3.5 w-3.5 animate-spin mr-1" /> : <ShieldCheck className="h-3.5 w-3.5 mr-1 text-purple-400" />}
+                    Đăng ký {proConfig.name} ({proConfig.priceMonthlyVnd.toLocaleString('vi-VN')} đ)
+                  </Button>
+                  <p className="text-[11px] text-center text-slate-500">
+                    Kích hoạt ngay 30 ngày sử dụng
+                  </p>
+                </div>
               )}
             </div>
           </div>
@@ -528,6 +632,93 @@ export default function BillingPage() {
 
         <TransactionHistoryTable transactions={transactions} />
       </div>
+
+      {/* Upgrade Confirmation Dialog */}
+      <Dialog
+        open={!!upgradeConfirmData}
+        onOpenChange={(open) => {
+          if (!open) setUpgradeConfirmData(null);
+        }}
+      >
+        <DialogContent className="max-w-md p-6">
+          <DialogHeader>
+            <div className="flex items-center gap-3">
+              <div className="h-10 w-10 rounded-full bg-amber-100 flex items-center justify-center shrink-0 text-amber-600">
+                <AlertTriangle className="h-5 w-5" />
+              </div>
+              <div>
+                <DialogTitle className="text-lg font-bold text-slate-900">
+                  Xác nhận nâng cấp gói {upgradeConfirmData?.planName}
+                </DialogTitle>
+                <DialogDescription className="text-xs text-slate-500 mt-0.5">
+                  Vui lòng kiểm tra kỹ chính sách chuyển đổi gói dịch vụ
+                </DialogDescription>
+              </div>
+            </div>
+          </DialogHeader>
+
+          <div className="space-y-3.5 py-3 text-xs">
+            {/* Warning callout */}
+            <div className="rounded-lg bg-amber-50 border border-amber-200/80 p-3.5 text-amber-900 space-y-1.5">
+              <p className="font-semibold flex items-center gap-1.5 text-amber-800">
+                <Info className="h-4 w-4 shrink-0 text-amber-600" />
+                Thời hạn gói cũ sẽ không được cộng dồn
+              </p>
+              <p className="text-amber-800/90 leading-relaxed">
+                Gói <strong>{upgradeConfirmData?.planName}</strong> sẽ được kích hoạt ngay lập tức trong <strong>30 ngày</strong> kể từ khi thanh toán thành công.
+              </p>
+              <p className="text-amber-800/90 leading-relaxed">
+                Số ngày sử dụng còn lại của gói <strong>{summary.planConfig.name}</strong> hiện tại (<strong>{summary.daysRemaining} ngày</strong>) sẽ bị thay thế và không được bảo lưu hoặc cộng dồn.
+              </p>
+            </div>
+
+            {/* Plan switch summary */}
+            <div className="rounded-lg border border-slate-200 bg-slate-50/70 p-3 space-y-2">
+              <div className="flex justify-between items-center">
+                <span className="text-slate-500">Gói hiện tại:</span>
+                <span className="font-semibold text-slate-700">
+                  {summary.planConfig.name} ({summary.daysRemaining} ngày còn lại)
+                </span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-slate-500">Gói mới nâng cấp:</span>
+                <span className="font-bold text-purple-700">
+                  {upgradeConfirmData?.planName} (30 ngày từ hôm nay)
+                </span>
+              </div>
+              <div className="border-t border-slate-200 pt-2 flex justify-between items-center">
+                <span className="font-medium text-slate-700">Số tiền thanh toán:</span>
+                <span className="text-base font-extrabold text-slate-900">
+                  {upgradeConfirmData?.price.toLocaleString('vi-VN')} đ
+                </span>
+              </div>
+            </div>
+          </div>
+
+          <DialogFooter className="gap-2 sm:gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setUpgradeConfirmData(null)}
+              className="text-xs border-slate-300"
+            >
+              Hủy bỏ
+            </Button>
+            <Button
+              size="sm"
+              onClick={() => {
+                if (!upgradeConfirmData) return;
+                const { targetPlan, planName } = upgradeConfirmData;
+                setUpgradeConfirmData(null);
+                handleOpenCheckout(targetPlan, planName);
+              }}
+              className="text-xs bg-blue-600 hover:bg-blue-700 text-white font-semibold"
+            >
+              Đồng ý & Tạo mã QR
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {/* PayOS VietQR Checkout Modal */}
       {modalData && (
