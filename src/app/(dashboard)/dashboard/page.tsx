@@ -8,15 +8,11 @@ import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import { ClipboardCheck, PlusCircle } from 'lucide-react';
 import { Metadata } from 'next';
-import { redirect } from 'next/navigation';
 
 export const metadata: Metadata = { title: 'Bảng điều khiển — EventGo Proof' };
 
 export default async function DashboardPage() {
   const { user } = await getCurrentUserSession();
-  if (user.isSystemAdmin) {
-    redirect('/admin');
-  }
 
   const campaigns = await getCampaignsUseCase();
   const pendingReviews = await new SupabaseSubmissionRepository().findPendingReviews(user.id);

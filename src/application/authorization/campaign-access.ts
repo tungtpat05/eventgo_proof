@@ -2,6 +2,7 @@ import { AuthorizationError } from '@/domain/errors';
 import { createServerSupabaseClient, createAdminSupabaseClient } from '@/infrastructure/supabase/server';
 import { env } from '@/config/env';
 import { getCurrentUserSession } from '@/application/use-cases/auth/get-current-user';
+import { CampaignRole, CampaignMemberStatus } from '@/domain/enums';
 
 export async function requireCampaignManager(campaignId: string): Promise<void> {
   const session = await getCurrentUserSession();
@@ -17,8 +18,8 @@ export async function requireCampaignManager(campaignId: string): Promise<void> 
       .select('id')
       .eq('campaign_id', campaignId)
       .eq('user_id', currentUserId)
-      .eq('role', 'MANAGER')
-      .eq('status', 'ACTIVE')
+      .eq('role', CampaignRole.MANAGER)
+      .eq('status', CampaignMemberStatus.ACTIVE)
       .maybeSingle();
 
     if (member) return;

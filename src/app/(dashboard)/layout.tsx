@@ -2,9 +2,14 @@ import React from 'react';
 import { Sidebar } from '@/components/shared/sidebar';
 import { Header } from '@/components/shared/header';
 import { getCurrentUserSession } from '@/application/use-cases/auth/get-current-user';
+import { redirect } from 'next/navigation';
 
 export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
   const session = await getCurrentUserSession();
+
+  if (session.user.isSystemAdmin) {
+    redirect('/admin/dashboard');
+  }
 
   return (
     <div className="min-h-screen bg-slate-50/50">

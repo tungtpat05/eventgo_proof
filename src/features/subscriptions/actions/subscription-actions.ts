@@ -275,7 +275,7 @@ export async function checkSubscriptionPaymentStatusAction(
 
     revalidatePath('/settings/billing');
     revalidatePath('/campaigns');
-    revalidatePath('/admin');
+    revalidatePath('/admin/dashboard');
 
     return {
       isPaid: true,
@@ -345,7 +345,7 @@ export async function simulatePaymentSuccessAction(transactionCode: string) {
 
   revalidatePath('/settings/billing');
   revalidatePath('/campaigns');
-  revalidatePath('/admin');
+  revalidatePath('/admin/dashboard');
 
   return {
     success: true,

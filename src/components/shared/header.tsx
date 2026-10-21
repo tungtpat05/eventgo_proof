@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { UserProfile } from '@/domain/entities';
 import { SubscriptionPlanTier } from '@/domain/enums';
 import { signOutAction } from '@/features/auth/actions/auth-actions';
-import { User, LogOut, ChevronDown, UserCircle, CreditCard, ShieldCheck } from 'lucide-react';
+import { User, LogOut, ChevronDown, UserCircle, CreditCard } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 interface HeaderProps {
@@ -63,16 +63,6 @@ export function Header({ user }: HeaderProps) {
           <CreditCard className="h-3.5 w-3.5" />
           <span>Gói dịch vụ</span>
         </Link>
-
-        {user?.isSystemAdmin && (
-          <Link
-            href="/admin"
-            className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium bg-slate-900 text-white hover:bg-slate-800 transition-colors shadow-sm"
-          >
-            <ShieldCheck className="h-3.5 w-3.5 text-blue-400" />
-            <span>Admin Portal</span>
-          </Link>
-        )}
 
         <div className="relative" ref={dropdownRef}>
           <button
@@ -153,17 +143,6 @@ export function Header({ user }: HeaderProps) {
                   <CreditCard className="h-4 w-4 text-blue-600" />
                   Gói dịch vụ & Thanh toán
                 </Link>
-
-                {user?.isSystemAdmin && (
-                  <Link
-                    href="/admin"
-                    onClick={() => setIsOpen(false)}
-                    className="flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm font-medium text-blue-700 bg-blue-50/50 hover:bg-blue-50 transition-colors"
-                  >
-                    <ShieldCheck className="h-4 w-4 text-blue-600" />
-                    Trang Quản trị Hệ thống
-                  </Link>
-                )}
               </div>
 
               <div className="py-1">

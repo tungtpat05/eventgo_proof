@@ -49,7 +49,7 @@ export async function updateSession(request: NextRequest) {
       .maybeSingle();
 
     if (profile?.is_system_admin) {
-      return NextResponse.redirect(new URL('/admin', request.url));
+      return NextResponse.redirect(new URL('/admin/dashboard', request.url));
     }
     return NextResponse.redirect(new URL('/dashboard', request.url));
   }

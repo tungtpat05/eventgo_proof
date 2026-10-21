@@ -50,7 +50,7 @@ export default async function InviteAcceptancePage({ searchParams }: InvitePageP
   } = await supabase.auth.getUser();
   const currentEmail = user?.email?.toLowerCase();
 
-  const destinationUrl = isCampaignInvite ? `/campaigns/${campaignId}` : '/admin';
+  const destinationUrl = isCampaignInvite ? `/campaigns/${campaignId}` : '/admin/dashboard';
 
   // 1. Người dùng đã đăng nhập sẵn
   if (user && currentEmail) {
@@ -60,7 +60,7 @@ export default async function InviteAcceptancePage({ searchParams }: InvitePageP
         redirect(destinationUrl);
       } else {
         await supabase.rpc('accept_pending_admin_invites');
-        redirect('/admin');
+        redirect('/admin/dashboard');
       }
     }
 

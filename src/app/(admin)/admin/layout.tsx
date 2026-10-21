@@ -17,11 +17,11 @@ export default async function AdminLayout({ children }: { children: React.ReactN
 
   // Guard: Must be system admin
   if (!session.user.isSystemAdmin) {
-    redirect('/campaigns?error=Yêu cầu quyền Quản trị viên hệ thống');
+    redirect('/dashboard');
   }
 
   const navItems = [
-    { href: '/admin', label: 'Tổng quan', icon: LayoutDashboard },
+    { href: '/admin/dashboard', label: 'Tổng quan', icon: LayoutDashboard },
     { href: '/admin/subscriptions', label: 'Quản lý Gói', icon: CreditCard },
     { href: '/admin/transactions', label: 'Giao dịch & Doanh thu', icon: Receipt },
     { href: '/admin/templates', label: 'Mẫu Checklist', icon: ListChecks },

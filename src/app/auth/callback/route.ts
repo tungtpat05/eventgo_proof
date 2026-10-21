@@ -55,9 +55,9 @@ export async function GET(request: NextRequest) {
 
   const isSystemAdmin = Boolean(profile?.is_system_admin);
 
-  // System Admin is redirected directly to /admin console
+  // System Admin is redirected directly to /admin/dashboard console
   if (isSystemAdmin) {
-    return NextResponse.redirect(new URL('/admin', request.url));
+    return NextResponse.redirect(new URL('/admin/dashboard', request.url));
   }
 
   // Ensure regular client user has at least a FREE subscription row
