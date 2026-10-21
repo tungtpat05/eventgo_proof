@@ -1,11 +1,8 @@
 'use client';
 
-import React, { useState, useEffect, useTransition } from 'react';
+import React, { useState, useEffect } from 'react';
 import * as XLSX from 'xlsx';
-import {
-  getAdminTransactionsAction,
-  manualApproveTransactionAction,
-} from '@/features/admin/actions/admin-actions';
+import { getAdminTransactionsAction } from '@/features/admin/actions/admin-actions';
 import { Transaction, TransactionStatus } from '@/domain/entities';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -32,7 +29,6 @@ export default function AdminTransactionsPage() {
   const [filterStatus, setFilterStatus] = useState<string>('ALL');
   const [search, setSearch] = useState('');
   const [isLoading, setIsLoading] = useState(true);
-  const [isPending, startTransition] = useTransition();
 
   const loadData = async () => {
     try {
@@ -48,18 +44,6 @@ export default function AdminTransactionsPage() {
   useEffect(() => {
     loadData();
   }, []);
-
-  const handleApprove = (id: string) => {
-    if (!confirm('Bạn có chắc chắn muốn xác nhận đã nhận tiền cho đơn hàng này?')) return;
-    startTransition(async () => {
-      try {
-        await manualApproveTransactionAction(id);
-        await loadData();
-      } catch (err: any) {
-        alert(err.message || 'Lỗi duyệt đơn');
-      }
-    });
-  };
 
   const handleExportExcel = () => {
     const data = transactions.map((t, idx) => ({
@@ -141,7 +125,7 @@ export default function AdminTransactionsPage() {
             Quản Lý Giao Dịch & Dòng Tiền
           </h1>
           <p className="text-sm text-slate-500 mt-1">
-            Đối soát các khoản thanh toán VietQR PayOS và phê duyệt thanh toán thủ công
+            Theo dõi và đối soát các giao dịch thanh toán tự động VietQR PayOS
           </p>
         </div>
 
@@ -223,7 +207,6 @@ export default function AdminTransactionsPage() {
                   <th className="py-3 px-4">Cổng</th>
                   <th className="py-3 px-4">Trạng thái</th>
                   <th className="py-3 px-4">Thời gian</th>
-                  <th className="py-3 px-4 text-right">Thao tác Admin</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
@@ -250,20 +233,6 @@ export default function AdminTransactionsPage() {
                       <p className="font-medium text-slate-700">{formatDateTime(t.createdAt)}</p>
                       {t.paidAt && (
                         <p className="text-[11px] text-emerald-600 font-medium">Đã trả: {formatDateTime(t.paidAt)}</p>
-                      )}
-                    </td>
-                    <td className="py-3 px-4 text-right">
-                      {t.status === TransactionStatus.PENDING ? (
-                        <Button
-                          size="sm"
-                          onClick={() => handleApprove(t.id)}
-                          disabled={isPending}
-                          className="text-xs bg-emerald-600 hover:bg-emerald-700 text-white h-8"
-                        >
-                          Duyệt thanh toán
-                        </Button>
-                      ) : (
-                        <span className="text-xs text-slate-400">—</span>
                       )}
                     </td>
                   </tr>

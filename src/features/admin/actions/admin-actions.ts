@@ -228,44 +228,6 @@ export async function getAdminTransactionsAction() {
   }));
 }
 
-export async function manualApproveTransactionAction(transactionId: string) {
-  await assertSystemAdmin();
-  const txn = await txnRepo.getById(transactionId);
-  if (!txn) throw new Error('Không tìm thấy giao dịch.');
-
-  // Update status to SUCCESS
-  await txnRepo.updateStatus(transactionId, TransactionStatus.SUCCESS, {
-    paidAt: new Date(),
-    notes: 'Quản trị viên xác nhận thanh toán thủ công',
-  });
-
-  // Calculate new expiration
-  const currentSub = await subRepo.getByUserId(txn.userId);
-  let newExpiresAt: Date;
-
-  if (
-    currentSub &&
-    currentSub.plan === txn.plan &&
-    currentSub.expiresAt &&
-    currentSub.expiresAt > new Date()
-  ) {
-    newExpiresAt = new Date(currentSub.expiresAt.getTime() + 30 * 24 * 60 * 60 * 1000);
-  } else {
-    newExpiresAt = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
-  }
-
-  await subRepo.upsert({
-    userId: txn.userId,
-    plan: txn.plan,
-    status: SubscriptionStatus.ACTIVE,
-    expiresAt: newExpiresAt,
-  });
-
-  revalidatePath('/admin/transactions');
-  revalidatePath('/admin/subscriptions');
-  revalidatePath('/settings/billing');
-  return { success: true };
-}
 
 
 // 5. Checklist Templates

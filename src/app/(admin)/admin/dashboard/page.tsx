@@ -154,7 +154,7 @@ export default function AdminDashboardPage() {
               <ArrowRight className="h-4 w-4 text-slate-400 group-hover:text-emerald-600 transition-colors" />
             </h3>
             <p className="text-xs text-slate-500 mt-1.5">
-              Theo dõi lịch sử đơn hàng PayOS VietQR, duyệt thanh toán thủ công và xuất Excel.
+              Theo dõi lịch sử đơn hàng PayOS VietQR, đối soát tự động và xuất Excel.
             </p>
           </div>
         </Link>
