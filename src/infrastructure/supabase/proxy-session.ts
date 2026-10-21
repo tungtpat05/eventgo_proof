@@ -30,9 +30,15 @@ export async function updateSession(request: NextRequest) {
   } = await supabase.auth.getUser();
 
   const pathname = request.nextUrl.pathname;
-  const isPublicRoute = pathname === '/login' || pathname.startsWith('/auth/callback');
+  const isPublicRoute =
+    pathname === '/login' ||
+    pathname.startsWith('/auth/callback') ||
+    pathname.startsWith('/api/dev-login');
 
-  if (!user && !isPublicRoute) {
+  const isDevSession =
+    process.env.NODE_ENV === 'development' && Boolean(request.cookies.get('dev_user_id')?.value);
+
+  if (!user && !isPublicRoute && !isDevSession) {
     return NextResponse.redirect(new URL('/login', request.url));
   }
   if (user && pathname === '/login') {

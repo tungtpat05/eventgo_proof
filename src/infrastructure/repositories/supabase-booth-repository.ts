@@ -119,16 +119,53 @@ export class SupabaseBoothRepository implements BoothRepository {
     boothId: string,
     supervisorMemberId?: string | null,
     approverMemberId?: string | null,
-    deadline?: Date | null
+    deadline?: Date | null,
+    supervisorInviteId?: string | null,
+    approverInviteId?: string | null
   ): Promise<void> {
     const supabase = await createServerSupabaseClient();
+
+    let finalSupMemberId = supervisorMemberId || null;
+    let finalSupInviteId = supervisorInviteId || null;
+    if (finalSupMemberId && finalSupMemberId.startsWith('invite_')) {
+      finalSupInviteId = finalSupMemberId.replace('invite_', '');
+      finalSupMemberId = null;
+    }
+
+    let finalAppMemberId = approverMemberId || null;
+    let finalAppInviteId = approverInviteId || null;
+    if (finalAppMemberId && finalAppMemberId.startsWith('invite_')) {
+      finalAppInviteId = finalAppMemberId.replace('invite_', '');
+      finalAppMemberId = null;
+    }
+
     const { error } = await supabase.rpc('assign_booth_personnel', {
       p_booth_id: boothId,
-      p_supervisor_member_id: supervisorMemberId || null,
-      p_approver_member_id: approverMemberId || null,
+      p_supervisor_member_id: finalSupMemberId,
+      p_approver_member_id: finalAppMemberId,
       p_deadline: deadline ? deadline.toISOString() : null,
-    });
-    if (error) throw new Error(error.message);
+      p_supervisor_invite_id: finalSupInviteId,
+      p_approver_invite_id: finalAppInviteId,
+    } as any);
+
+    if (error) {
+      // Fallback nếu database chưa chạy migration bổ sung tham số invite_id
+      if (
+        error.message.includes('p_supervisor_invite_id') ||
+        error.message.includes('function') ||
+        error.message.includes('parameters')
+      ) {
+        const { error: fallbackErr } = await supabase.rpc('assign_booth_personnel', {
+          p_booth_id: boothId,
+          p_supervisor_member_id: finalSupMemberId,
+          p_approver_member_id: finalAppMemberId,
+          p_deadline: deadline ? deadline.toISOString() : null,
+        });
+        if (fallbackErr) throw new Error(fallbackErr.message);
+      } else {
+        throw new Error(error.message);
+      }
+    }
   }
 
   async delete(id: string): Promise<void> {

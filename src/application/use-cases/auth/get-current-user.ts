@@ -95,6 +95,44 @@ export async function getCurrentUserSession(): Promise<CurrentUserSession> {
     }
   }
 
+  // Check for local development test session via cookie
+  if (process.env.NODE_ENV === 'development') {
+    try {
+      const { cookies } = await import('next/headers');
+      const cookieStore = await cookies();
+      const devUserId = cookieStore.get('dev_user_id')?.value;
+      if (devUserId) {
+        const dbClient = env.SUPABASE_SERVICE_ROLE_KEY ? createAdminSupabaseClient() : null;
+        if (dbClient) {
+          const { data: profile } = await dbClient
+            .from('profiles')
+            .select('*')
+            .eq('id', devUserId)
+            .maybeSingle();
+
+          if (profile) {
+            return {
+              user: {
+                id: profile.id,
+                email: profile.email,
+                fullName: profile.full_name || 'Tung Nguyen (Dev)',
+                avatarUrl: profile.avatar_url,
+                phone: profile.phone,
+                isSystemAdmin: false,
+                plan: SubscriptionPlanTier.PRO,
+                createdAt: new Date(profile.created_at),
+                updatedAt: new Date(profile.updated_at),
+              },
+              organizationName: 'EventGo Agency',
+            };
+          }
+        }
+      }
+    } catch {
+      // Fall through
+    }
+  }
+
   // Default demo Project Manager session for local prototyping
   return {
     user: {

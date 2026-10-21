@@ -3,8 +3,8 @@ import { requireCampaignManager } from '@/application/authorization/campaign-acc
 import { getCampaignDetailsUseCase } from './get-campaign-details';
 import { validateCampaignActivationUseCase } from './validate-campaign-activation';
 import { CHECKLIST_TEMPLATE_PRESETS, ChecklistTemplatePreset } from '@/domain/constants/checklist-templates';
-import { Campaign, Location, Booth, ChecklistItem, CampaignMember, PLAN_CONFIGS } from '@/domain/entities';
-import { CampaignRole, CampaignStatus, SubscriptionPlanTier } from '@/domain/enums';
+import { Campaign, Location, Booth, ChecklistItem, CampaignMember } from '@/domain/entities';
+import { CampaignRole, CampaignStatus, CampaignMemberStatus, SubscriptionPlanTier } from '@/domain/enums';
 import { SupabaseSubscriptionRepository } from '@/infrastructure/repositories/supabase-subscription-repository';
 
 export interface SubscriptionQuota {
@@ -16,12 +16,19 @@ export interface SubscriptionQuota {
   isAtQuotaLimit: boolean;
 }
 
+export interface WizardPersonnelOption extends CampaignMember {
+  isPending?: boolean;
+  inviteId?: string;
+}
+
 export interface CampaignWizardData {
   campaign: Campaign;
   locations: (Location & {
     booths: (Booth & {
       checklistItems: ChecklistItem[];
       isInheritedSupervisor?: boolean;
+      isSupervisorPending?: boolean;
+      isApproverPending?: boolean;
     })[];
   })[];
   allBooths: {
@@ -33,13 +40,18 @@ export interface CampaignWizardData {
     checklistCount: number;
     supervisorName?: string | null;
     approverName?: string | null;
+    supervisorMemberId?: string | null;
+    approverMemberId?: string | null;
+    isSupervisorPending?: boolean;
+    isApproverPending?: boolean;
   }[];
-  supervisors: CampaignMember[];
-  approvers: CampaignMember[];
+  supervisors: WizardPersonnelOption[];
+  approvers: WizardPersonnelOption[];
   templates: ChecklistTemplatePreset[];
   readiness: {
     canActivate: boolean;
     errors: string[];
+    warnings: string[];
     stats: {
       totalLocations: number;
       totalBooths: number;
@@ -47,6 +59,7 @@ export interface CampaignWizardData {
       boothsWithSupervisor: number;
       boothsWithApprover: number;
       boothsFullyStaffed: number;
+      boothsWithPendingStaff: number;
     };
   };
   subscriptionQuota: SubscriptionQuota;
@@ -105,31 +118,55 @@ export async function getCampaignWizardDataUseCase(campaignId: string): Promise<
     appAssignments = aData || [];
   }
 
-  // 5. Fetch Campaign Members with Profiles
-  const { data: membersData } = await supabase
-    .from('campaign_members')
-    .select('*, profiles:user_id(id, full_name, email, avatar_url, phone)')
-    .eq('campaign_id', campaignId)
-    .eq('status', 'ACTIVE' as any);
+  // 5. Fetch Campaign Members (ACTIVE) AND Pending Invites
+  const [{ data: membersData }, { data: invitesData }] = await Promise.all([
+    supabase
+      .from('campaign_members')
+      .select('*, profiles:user_id(id, full_name, email, avatar_url, phone)')
+      .eq('campaign_id', campaignId)
+      .eq('status', 'ACTIVE' as any),
+    supabase
+      .from('campaign_invites')
+      .select('*')
+      .eq('campaign_id', campaignId)
+      .eq('status', 'PENDING' as any),
+  ]);
 
-  const members: CampaignMember[] = (membersData || []).map((m: any) => ({
+  const activeMembers: WizardPersonnelOption[] = (membersData || []).map((m: any) => ({
     id: m.id,
     campaignId: m.campaign_id,
     userId: m.user_id,
     role: m.role as CampaignRole,
     status: m.status as any,
-    fullName: m.profiles?.full_name || 'Không rõ',
+    isPending: false,
+    fullName: m.profiles?.full_name || 'Thành viên',
     email: m.profiles?.email || '',
     avatarUrl: m.profiles?.avatar_url || null,
     createdAt: new Date(m.created_at),
     updatedAt: new Date(m.updated_at),
   }));
 
-  const memberMap = new Map<string, CampaignMember>();
-  members.forEach((m) => memberMap.set(m.id, m));
+  const pendingMembers: WizardPersonnelOption[] = (invitesData || []).map((inv: any) => ({
+    id: `invite_${inv.id}`,
+    inviteId: inv.id,
+    campaignId: inv.campaign_id,
+    userId: '',
+    role: inv.role as CampaignRole,
+    status: CampaignMemberStatus.ACTIVE,
+    isPending: true,
+    fullName: inv.email,
+    email: inv.email,
+    avatarUrl: null,
+    createdAt: new Date(inv.created_at),
+    updatedAt: new Date(inv.created_at),
+  }));
 
-  const supervisors = members.filter((m) => m.role === CampaignRole.SUPERVISOR);
-  const approvers = members.filter((m) => m.role === CampaignRole.APPROVER);
+  const allPersonnel = [...activeMembers, ...pendingMembers];
+  const personnelMap = new Map<string, WizardPersonnelOption>();
+  allPersonnel.forEach((m) => personnelMap.set(m.id, m));
+
+  const supervisors = allPersonnel.filter((m) => m.role === CampaignRole.SUPERVISOR);
+  const approvers = allPersonnel.filter((m) => m.role === CampaignRole.APPROVER);
 
   // Map checklists to booths
   const checklistsByBooth = new Map<string, ChecklistItem[]>();
@@ -149,12 +186,18 @@ export async function getCampaignWizardDataUseCase(campaignId: string): Promise<
     checklistsByBooth.set(c.booth_id, list);
   });
 
-  // Map assignments to booths
+  // Map assignments to booths (Hỗ trợ cả member_id và invite_id)
   const supByBooth = new Map<string, string>();
-  supAssignments.forEach((s) => supByBooth.set(s.booth_id, s.supervisor_member_id));
+  supAssignments.forEach((s) => {
+    const key = s.supervisor_member_id || (s.supervisor_invite_id ? `invite_${s.supervisor_invite_id}` : null);
+    if (key) supByBooth.set(s.booth_id, key);
+  });
 
   const appByBooth = new Map<string, string>();
-  appAssignments.forEach((a) => appByBooth.set(a.booth_id, a.approver_member_id));
+  appAssignments.forEach((a) => {
+    const key = a.approver_member_id || (a.approver_invite_id ? `invite_${a.approver_invite_id}` : null);
+    if (key) appByBooth.set(a.booth_id, key);
+  });
 
   // Map booths to locations
   const boothsByLocation = new Map<string, any[]>();
@@ -165,14 +208,14 @@ export async function getCampaignWizardDataUseCase(campaignId: string): Promise<
 
   boothRows.forEach((b) => {
     const items = checklistsByBooth.get(b.id) || [];
-    const supMemberId = supByBooth.get(b.id) || null;
-    const supMember = supMemberId ? memberMap.get(supMemberId) : null;
-    const appMemberId = appByBooth.get(b.id) || null;
-    const appMember = appMemberId ? memberMap.get(appMemberId) : null;
+    const supKey = supByBooth.get(b.id) || null;
+    const supMember = supKey ? personnelMap.get(supKey) : null;
+    const appKey = appByBooth.get(b.id) || null;
+    const appMember = appKey ? personnelMap.get(appKey) : null;
 
     const parentLoc = locRows.find((l) => l.id === b.location_id);
     const locDefaultSupId = (parentLoc as any)?.default_supervisor_member_id;
-    const isInherited = Boolean(locDefaultSupId && supMemberId === locDefaultSupId);
+    const isInherited = Boolean(locDefaultSupId && supKey === locDefaultSupId);
 
     const boothObj = {
       id: b.id,
@@ -181,30 +224,34 @@ export async function getCampaignWizardDataUseCase(campaignId: string): Promise<
       code: b.code,
       description: b.description,
       deadline: b.deadline ? new Date(b.deadline) : null,
-      supervisorMemberId: supMemberId,
+      supervisorMemberId: supKey,
       supervisorName: supMember ? supMember.fullName : null,
+      isSupervisorPending: supMember?.isPending || false,
       isInheritedSupervisor: isInherited,
-      approverMemberId: appMemberId,
+      approverMemberId: appKey,
       approverName: appMember ? appMember.fullName : null,
+      isApproverPending: appMember?.isPending || false,
       checklistCount: items.length,
       checklistItems: items,
-      createdAt: new Date(b.created_at),
-      updatedAt: new Date(b.updated_at),
     };
 
-    const list = boothsByLocation.get(b.location_id) || [];
-    list.push(boothObj);
-    boothsByLocation.set(b.location_id, list);
+    const locList = boothsByLocation.get(b.location_id) || [];
+    locList.push(boothObj);
+    boothsByLocation.set(b.location_id, locList);
 
     allBoothsFormatted.push({
       id: b.id,
       name: b.name,
       code: b.code,
       locationId: b.location_id,
-      locationName: locMap.get(b.location_id) || '',
+      locationName: locMap.get(b.location_id) || 'Không rõ',
       checklistCount: items.length,
+      supervisorMemberId: supKey,
       supervisorName: supMember ? supMember.fullName : null,
+      isSupervisorPending: supMember?.isPending || false,
+      approverMemberId: appKey,
       approverName: appMember ? appMember.fullName : null,
+      isApproverPending: appMember?.isPending || false,
     });
   });
 
@@ -212,7 +259,7 @@ export async function getCampaignWizardDataUseCase(campaignId: string): Promise<
   const structuredLocations = locRows.map((l) => {
     const childBooths = boothsByLocation.get(l.id) || [];
     const defaultSupId = (l as any).default_supervisor_member_id || null;
-    const defaultSup = defaultSupId ? memberMap.get(defaultSupId) : null;
+    const defaultSup = defaultSupId ? personnelMap.get(defaultSupId) : null;
 
     return {
       id: l.id,
@@ -253,11 +300,10 @@ export async function getCampaignWizardDataUseCase(campaignId: string): Promise<
       }));
     }
   } catch (err) {
-    // Fallback to presets if db table is not yet present
     templates = CHECKLIST_TEMPLATE_PRESETS;
   }
 
-  // 7. Readiness check
+  // 7. Readiness check & Warnings
   let readinessResult = { canActivate: false, errors: [] as string[] };
   try {
     readinessResult = await validateCampaignActivationUseCase(campaignId);
@@ -269,13 +315,22 @@ export async function getCampaignWizardDataUseCase(campaignId: string): Promise<
   let boothsWithSupervisor = 0;
   let boothsWithApprover = 0;
   let boothsFullyStaffed = 0;
+  let boothsWithPendingStaff = 0;
 
   allBoothsFormatted.forEach((b) => {
     if (b.checklistCount > 0) boothsWithChecklist++;
     if (b.supervisorName) boothsWithSupervisor++;
     if (b.approverName) boothsWithApprover++;
     if (b.supervisorName && b.approverName) boothsFullyStaffed++;
+    if (b.isSupervisorPending || b.isApproverPending) boothsWithPendingStaff++;
   });
+
+  const warnings: string[] = [];
+  if (boothsWithPendingStaff > 0) {
+    warnings.push(
+      `Có ${boothsWithPendingStaff} gian hàng đang được phân công cho nhân sự chưa kích hoạt tài khoản Google. Các gian hàng này sẽ tạm khóa tính năng nộp bằng chứng cho đến khi nhân sự đăng nhập chấp nhận lời mời.`
+    );
+  }
 
   // 8. Subscription Quota Calculation
   let subscriptionQuota: SubscriptionQuota = {
@@ -328,6 +383,7 @@ export async function getCampaignWizardDataUseCase(campaignId: string): Promise<
     readiness: {
       canActivate: readinessResult.canActivate,
       errors: readinessResult.errors,
+      warnings,
       stats: {
         totalLocations: structuredLocations.length,
         totalBooths: allBoothsFormatted.length,
@@ -335,6 +391,7 @@ export async function getCampaignWizardDataUseCase(campaignId: string): Promise<
         boothsWithSupervisor,
         boothsWithApprover,
         boothsFullyStaffed,
+        boothsWithPendingStaff,
       },
     },
     subscriptionQuota,

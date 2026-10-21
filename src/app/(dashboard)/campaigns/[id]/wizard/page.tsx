@@ -35,6 +35,7 @@ export default async function CampaignWizardPage({
       />
     );
   } catch (err: any) {
+    console.error('Wizard error for campaign', id, ':', err);
     // If not manager or forbidden
     redirect('/campaigns');
   }

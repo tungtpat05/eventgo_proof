@@ -9,9 +9,11 @@ export interface Booth {
   deadline?: Date | null;
   supervisorMemberId?: string | null;
   supervisorName?: string | null;
+  isSupervisorPending?: boolean;
   isInheritedSupervisor?: boolean;
   approverMemberId?: string | null;
   approverName?: string | null;
+  isApproverPending?: boolean;
   checklistCount?: number;
   completedChecklistCount?: number;
   checklistItems?: ChecklistItem[];

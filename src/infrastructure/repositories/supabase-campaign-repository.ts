@@ -1,8 +1,10 @@
 import { Campaign } from '@/domain/entities';
 import { CampaignRepository, CampaignWriteInput } from '@/domain/repositories/campaign-repository';
 import { CampaignMemberStatus, CampaignRole } from '@/domain/enums';
-import { createServerSupabaseClient } from '@/infrastructure/supabase/server';
+import { createServerSupabaseClient, createAdminSupabaseClient } from '@/infrastructure/supabase/server';
 import { Database } from '@/types/database.types';
+import { env } from '@/config/env';
+import { getCurrentUserSession } from '@/application/use-cases/auth/get-current-user';
 
 type CampaignRow = Database['public']['Tables']['campaigns']['Row'];
 
@@ -30,17 +32,19 @@ function mapCampaign(row: CampaignRow, role: CampaignRole): Campaign {
 
 export class SupabaseCampaignRepository implements CampaignRepository {
   async findById(id: string): Promise<Campaign | null> {
-    const supabase = await createServerSupabaseClient();
-    const { data: userData } = await supabase.auth.getUser();
-    if (!userData.user) return null;
+    const session = await getCurrentUserSession();
+    const currentUserId = session?.user?.id;
+    if (!currentUserId) return null;
+
+    const dbClient = env.SUPABASE_SERVICE_ROLE_KEY ? createAdminSupabaseClient() : await createServerSupabaseClient();
 
     const [{ data: campaign, error }, { data: membership }] = await Promise.all([
-      supabase.from('campaigns').select('*').eq('id', id).maybeSingle(),
-      supabase
+      dbClient.from('campaigns').select('*').eq('id', id).maybeSingle(),
+      dbClient
         .from('campaign_members')
         .select('role')
         .eq('campaign_id', id)
-        .eq('user_id', userData.user.id)
+        .eq('user_id', currentUserId)
         .eq('status', CampaignMemberStatus.ACTIVE)
         .maybeSingle(),
     ]);
@@ -51,10 +55,10 @@ export class SupabaseCampaignRepository implements CampaignRepository {
   }
 
   async findAccessibleByUser(userId: string): Promise<Campaign[]> {
-    const supabase = await createServerSupabaseClient();
+    const dbClient = env.SUPABASE_SERVICE_ROLE_KEY ? createAdminSupabaseClient() : await createServerSupabaseClient();
     const [{ data: campaigns, error }, { data: memberships, error: membershipError }] = await Promise.all([
-      supabase.from('campaigns').select('*').order('created_at', { ascending: false }),
-      supabase
+      dbClient.from('campaigns').select('*').order('created_at', { ascending: false }),
+      dbClient
         .from('campaign_members')
         .select('campaign_id, role')
         .eq('user_id', userId)
@@ -65,7 +69,7 @@ export class SupabaseCampaignRepository implements CampaignRepository {
     if (membershipError) throw new Error(membershipError.message);
 
     const roleByCampaign = new Map(memberships.map((item) => [item.campaign_id, item.role]));
-    return campaigns.flatMap((row) => {
+    return (campaigns || []).flatMap((row) => {
       const role = roleByCampaign.get(row.id);
       return role ? [mapCampaign(row, role)] : [];
     });

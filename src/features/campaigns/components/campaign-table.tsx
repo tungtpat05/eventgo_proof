@@ -261,28 +261,40 @@ export function CampaignTable({ campaigns }: CampaignTableProps) {
                       </div>
                     </td>
 
-                    {/* Cột 4: Tiến độ thiết lập */}
-                    <td className="py-4 px-4 whitespace-nowrap min-w-[140px]">
-                      <div className="space-y-1.5">
-                        <div className="flex items-center justify-between text-xs">
-                          <span className="font-medium text-slate-700">
-                            {c.setupProgress === 100 ? (
-                              <span className="text-emerald-600 font-semibold">Hoàn tất</span>
-                            ) : (
-                              `${c.setupProgress}%`
-                            )}
-                          </span>
+                    {/* Cột 4: Tiến độ */}
+                    <td className="py-4 px-4 whitespace-nowrap min-w-[150px]">
+                      {isDraft ? (
+                        <div className="space-y-1.5">
+                          <div className="flex items-center justify-between text-xs">
+                            <span className="font-semibold text-blue-700 bg-blue-50 px-2 py-0.5 rounded border border-blue-100">
+                              Bước {c.wizardStep || 1}/5
+                            </span>
+                            <span className="text-[11px] text-slate-500 font-medium">
+                              {c.setupProgress}%
+                            </span>
+                          </div>
+                          <div className="h-1.5 w-full overflow-hidden rounded-full bg-slate-100">
+                            <div
+                              className="h-full rounded-full bg-blue-600 transition-all duration-500"
+                              style={{ width: `${Math.max(c.setupProgress, 10)}%` }}
+                            />
+                          </div>
                         </div>
-                        <div className="h-2 w-full overflow-hidden rounded-full bg-slate-100">
-                          <div
-                            className={cn(
-                              'h-full rounded-full transition-all duration-500',
-                              c.setupProgress === 100 ? 'bg-emerald-500' : 'bg-blue-600'
-                            )}
-                            style={{ width: `${c.setupProgress}%` }}
-                          />
+                      ) : (
+                        <div className="space-y-1.5">
+                          <div className="flex items-center justify-between text-xs">
+                            <span className="font-medium text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-100">
+                              Đang vận hành
+                            </span>
+                            <span className="text-[11px] text-slate-500 font-medium">
+                              100%
+                            </span>
+                          </div>
+                          <div className="h-1.5 w-full overflow-hidden rounded-full bg-emerald-100">
+                            <div className="h-full rounded-full bg-emerald-500 w-full" />
+                          </div>
                         </div>
-                      </div>
+                      )}
                     </td>
 
                     {/* Cột 5: Trạng thái */}
@@ -295,9 +307,9 @@ export function CampaignTable({ campaigns }: CampaignTableProps) {
                           <Button
                             variant="outline"
                             size="sm"
-                            className="text-xs h-8 gap-1.5 border-slate-200 text-blue-600 hover:bg-blue-50 hover:text-blue-700 hover:border-blue-300 font-medium"
+                            className="text-xs h-8 gap-1.5 border-blue-200 bg-blue-50/50 text-blue-700 hover:bg-blue-100 hover:text-blue-800 hover:border-blue-300 font-medium"
                           >
-                            Tiếp tục thiết lập
+                            Tiếp tục bước {c.wizardStep || 1}
                             <ArrowRight className="h-3.5 w-3.5" />
                           </Button>
                         </Link>
@@ -306,9 +318,9 @@ export function CampaignTable({ campaigns }: CampaignTableProps) {
                           <Button
                             variant="outline"
                             size="sm"
-                            className="text-xs h-8 gap-1.5 border-slate-200 text-slate-700 hover:bg-slate-50 font-medium"
+                            className="text-xs h-8 gap-1.5 border-slate-200 text-slate-700 hover:bg-slate-100 font-medium"
                           >
-                            Xem chi tiết
+                            Mở Workspace
                             <ArrowRight className="h-3.5 w-3.5" />
                           </Button>
                         </Link>

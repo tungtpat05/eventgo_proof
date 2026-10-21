@@ -495,6 +495,37 @@ export async function cascadeLocationSupervisorInWizardAction(
   }
 }
 
+// 13b. Gán nhanh hàng loạt cả Supervisor và Approver cho tất cả Booth tại địa điểm
+export async function batchAssignLocationPersonnelInWizardAction(
+  campaignId: string,
+  locationId: string,
+  supervisorId: string | null,
+  approverId: string | null
+): Promise<WizardActionResult> {
+  try {
+    await requireCampaignManager(campaignId);
+    const supabase = await createServerSupabaseClient();
+    const { data: booths } = await supabase
+      .from('booths')
+      .select('id')
+      .eq('location_id', locationId);
+
+    const boothIds = (booths || []).map((b) => b.id);
+    for (const boothId of boothIds) {
+      await assignBoothPersonnelUseCase({
+        boothId,
+        supervisorMemberId: supervisorId,
+        approverMemberId: approverId,
+      });
+    }
+
+    revalidatePath(`/campaigns/${campaignId}/wizard`);
+    return { success: true };
+  } catch (err: any) {
+    return { success: false, error: err.message };
+  }
+}
+
 // 14. Kích hoạt chiến dịch (Step 5)
 export async function activateCampaignInWizardAction(campaignId: string): Promise<WizardActionResult> {
   try {

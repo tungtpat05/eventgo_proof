@@ -8,12 +8,16 @@ import {
   AlertCircle,
   Building2,
   Store,
-  CheckSquare,
   Users,
   Calendar,
   Sparkles,
-  ArrowLeft,
   ArrowRight,
+  Clock,
+  ShieldCheck,
+  Tag,
+  AlertTriangle,
+  ChevronDown,
+  ChevronUp,
 } from 'lucide-react';
 import { Campaign, Location, Booth, ChecklistItem } from '@/domain/entities';
 import { SubscriptionQuota } from '@/application/use-cases/campaigns/get-campaign-wizard-data';
@@ -34,10 +38,13 @@ interface Step5ReviewProps {
     checklistCount: number;
     supervisorName?: string | null;
     approverName?: string | null;
+    isSupervisorPending?: boolean;
+    isApproverPending?: boolean;
   }[];
   readiness: {
     canActivate: boolean;
     errors: string[];
+    warnings?: string[];
     stats: {
       totalLocations: number;
       totalBooths: number;
@@ -45,6 +52,7 @@ interface Step5ReviewProps {
       boothsWithSupervisor: number;
       boothsWithApprover: number;
       boothsFullyStaffed: number;
+      boothsWithPendingStaff?: number;
     };
   };
   subscriptionQuota?: SubscriptionQuota;
@@ -64,6 +72,7 @@ export function Step5Review({
   const router = useRouter();
   const [isActivating, setIsActivating] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [showTechnicalDetails, setShowTechnicalDetails] = useState(false);
 
   const formatDate = (date: Date) => {
     const d = new Date(date);
@@ -78,355 +87,322 @@ export function Step5Review({
     setIsActivating(false);
 
     if (res.success) {
-      router.push('/campaigns');
+      // Chuyển hướng thẳng vào Campaign Workspace vận hành
+      router.push(`/campaigns/${campaign.id}`);
     } else {
       setErrorMessage(res.error || 'Lỗi khi kích hoạt chiến dịch');
     }
   };
 
-  const handleSaveDraftAndExit = () => {
-    router.push('/campaigns');
+  const getStepTargetForError = (err: string): { step: number; label: string } => {
+    const lower = err.toLowerCase();
+    if (lower.includes('checklist') || lower.includes('tiêu chí')) {
+      return { step: 3, label: 'Sửa tại Bước 3 (Checklists)' };
+    }
+    if (lower.includes('supervisor') || lower.includes('approver') || lower.includes('giám sát') || lower.includes('phê duyệt') || lower.includes('nhân sự')) {
+      return { step: 4, label: 'Sửa tại Bước 4 (Phân công)' };
+    }
+    if (lower.includes('địa điểm') || lower.includes('gian hàng') || lower.includes('booth')) {
+      return { step: 2, label: 'Sửa tại Bước 2 (Địa điểm)' };
+    }
+    return { step: 1, label: 'Sửa tại Bước 1 (Thông tin)' };
   };
 
-  const checklistCoveragePercent =
-    allBooths.length > 0
-      ? Math.round((readiness.stats.boothsWithChecklist / allBooths.length) * 100)
-      : 0;
-
-  const staffingCoveragePercent =
-    allBooths.length > 0
-      ? Math.round((readiness.stats.boothsFullyStaffed / allBooths.length) * 100)
-      : 0;
+  const hasErrors = readiness.errors.length > 0;
+  const hasWarnings = (readiness.warnings && readiness.warnings.length > 0) || (readiness.stats.boothsWithPendingStaff || 0) > 0;
 
   return (
     <div className="space-y-6">
-      {/* 1. Summary Header Card */}
+      {/* 1. Header Tóm tắt chiến dịch */}
       <Card className="border border-slate-200 shadow-xs bg-white overflow-hidden">
-        <CardHeader className="border-b border-slate-100 bg-slate-50/40 p-4 sm:p-5">
-          <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-blue-50 text-blue-600">
-              <Sparkles className="h-5 w-5" />
+        <CardHeader className="border-b border-slate-100 bg-slate-50/50 p-4 sm:p-5">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+            <div className="flex items-center gap-3">
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-blue-50 text-blue-600 shadow-2xs">
+                <Sparkles className="h-5 w-5" />
+              </div>
+              <div>
+                <CardTitle className="text-base font-bold text-slate-900 leading-tight">
+                  Xác nhận & Kích hoạt chiến dịch
+                </CardTitle>
+                <CardDescription className="text-xs text-slate-500">
+                  Kiểm tra tính sẵn sàng trước khi đưa chiến dịch vào vận hành chính thức.
+                </CardDescription>
+              </div>
             </div>
-            <div>
-              <CardTitle className="text-base font-bold text-slate-900 leading-tight">
-                Xem lại & Kích hoạt chiến dịch
-              </CardTitle>
-              <CardDescription className="text-xs text-slate-500">
-                Thẩm định tính sẵn sàng và các tiêu chuẩn kiểm soát trước khi đưa vào vận hành.
-              </CardDescription>
+
+            <div className="flex items-center gap-2">
+              <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-700">
+                Bản nháp (DRAFT)
+              </span>
             </div>
           </div>
         </CardHeader>
 
-        <CardContent className="p-5 sm:p-6 space-y-6">
-          {errorMessage && (
-            <div className="rounded-lg bg-red-50 p-3.5 text-xs text-red-700 border border-red-200 whitespace-pre-line font-medium">
-              {errorMessage}
-            </div>
-          )}
-
-          {/* 4 Summary Blocks */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            {/* Box 1: Thông tin */}
-            <div className="p-4 rounded-xl border border-slate-200/90 bg-slate-50/50 space-y-2">
-              <div className="flex items-center justify-between text-xs font-semibold text-slate-500">
-                <span>Thông tin chiến dịch</span>
-                <button
-                  type="button"
-                  onClick={() => onGoToStep(1)}
-                  className="text-blue-600 hover:underline text-[11px]"
-                >
-                  Sửa
-                </button>
-              </div>
-              <p className="text-sm font-bold text-slate-900 truncate">{campaign.title}</p>
-              <p className="text-xs text-slate-600 truncate">{campaign.companyName}</p>
-              <div className="flex items-center gap-1 text-[11px] text-slate-400">
-                <Calendar className="h-3 w-3" />
-                <span>
-                  {formatDate(campaign.startDate)} - {formatDate(campaign.endDate)}
-                </span>
-              </div>
-            </div>
-
-            {/* Box 2: Quy mô */}
-            <div className="p-4 rounded-xl border border-slate-200/90 bg-slate-50/50 space-y-2">
-              <div className="flex items-center justify-between text-xs font-semibold text-slate-500">
-                <span>Quy mô triển khai</span>
-                <button
-                  type="button"
-                  onClick={() => onGoToStep(2)}
-                  className="text-blue-600 hover:underline text-[11px]"
-                >
-                  Sửa
-                </button>
-              </div>
-              <div className="flex items-baseline gap-2">
-                <span className="text-2xl font-bold text-slate-900">{locations.length}</span>
-                <span className="text-xs text-slate-500">địa điểm</span>
-              </div>
-              <div className="flex items-center gap-1 text-xs text-slate-600">
-                <Store className="h-3.5 w-3.5 text-slate-400" />
-                <span>{allBooths.length} gian hàng (booth)</span>
-              </div>
-            </div>
-
-            {/* Box 3: Checklist */}
-            <div className="p-4 rounded-xl border border-slate-200/90 bg-slate-50/50 space-y-2">
-              <div className="flex items-center justify-between text-xs font-semibold text-slate-500">
-                <span>Cấu hình Checklist</span>
-                <button
-                  type="button"
-                  onClick={() => onGoToStep(3)}
-                  className="text-blue-600 hover:underline text-[11px]"
-                >
-                  Sửa
-                </button>
-              </div>
-              <div className="flex items-baseline gap-2">
-                <span className="text-2xl font-bold text-slate-900">
-                  {readiness.stats.boothsWithChecklist}/{allBooths.length}
-                </span>
-                <span className="text-xs text-slate-500">booth ({checklistCoveragePercent}%)</span>
-              </div>
-              <div className="h-1.5 w-full rounded-full bg-slate-200 overflow-hidden">
-                <div
-                  className="h-full bg-blue-600 rounded-full"
-                  style={{ width: `${checklistCoveragePercent}%` }}
-                />
-              </div>
-            </div>
-
-            {/* Box 4: Nhân sự */}
-            <div className="p-4 rounded-xl border border-slate-200/90 bg-slate-50/50 space-y-2">
-              <div className="flex items-center justify-between text-xs font-semibold text-slate-500">
-                <span>Phân công nhân sự</span>
-                <button
-                  type="button"
-                  onClick={() => onGoToStep(4)}
-                  className="text-blue-600 hover:underline text-[11px]"
-                >
-                  Sửa
-                </button>
-              </div>
-              <div className="flex items-baseline gap-2">
-                <span className="text-2xl font-bold text-slate-900">
-                  {readiness.stats.boothsFullyStaffed}/{allBooths.length}
-                </span>
-                <span className="text-xs text-slate-500">booth ({staffingCoveragePercent}%)</span>
-              </div>
-              <div className="h-1.5 w-full rounded-full bg-slate-200 overflow-hidden">
-                <div
-                  className="h-full bg-blue-600 rounded-full"
-                  style={{ width: `${staffingCoveragePercent}%` }}
-                />
-              </div>
-            </div>
+        {/* Thông tin cốt lõi tóm tắt */}
+        <div className="p-4 sm:p-5 grid grid-cols-2 sm:grid-cols-4 gap-4 text-xs border-b border-slate-100 bg-white">
+          <div className="space-y-1">
+            <span className="text-slate-400 font-medium">Chiến dịch & Nhãn hàng</span>
+            <p className="font-bold text-slate-900 text-sm truncate">{campaign.title}</p>
+            <p className="text-blue-600 font-medium truncate">{campaign.brandName || 'Chưa đặt brand'}</p>
           </div>
 
-          {/* ========================================================================= */}
-          {/* PRE-FLIGHT VALIDATION CHECKLIST */}
-          {/* ========================================================================= */}
-          <div className="rounded-xl border border-slate-200 p-5 space-y-4">
-            <h4 className="text-xs font-bold uppercase tracking-wider text-slate-800">
-              Kiểm tra điều kiện kích hoạt chiến dịch (Pre-flight Inspection)
-            </h4>
-
-            <div className="space-y-2.5">
-              {/* Check 1: Info */}
-              <div className="flex items-center justify-between p-3 rounded-lg border border-slate-100 bg-slate-50/50 text-xs">
-                <div className="flex items-center gap-2.5">
-                  <CheckCircle2 className="h-4 w-4 text-emerald-600 shrink-0" />
-                  <span className="font-semibold text-slate-800">
-                    Thông tin cơ bản chiến dịch hợp lệ (Tên, khách hàng, ngày triển khai)
-                  </span>
-                </div>
-                <span className="text-emerald-700 font-bold bg-emerald-50 px-2 py-0.5 rounded text-[11px]">
-                  Đạt
-                </span>
-              </div>
-
-              {/* Check 2: Structure */}
-              <div className="flex items-center justify-between p-3 rounded-lg border border-slate-100 bg-slate-50/50 text-xs">
-                <div className="flex items-center gap-2.5">
-                  {locations.length > 0 && allBooths.length > 0 ? (
-                    <CheckCircle2 className="h-4 w-4 text-emerald-600 shrink-0" />
-                  ) : (
-                    <AlertCircle className="h-4 w-4 text-red-500 shrink-0" />
-                  )}
-                  <span className="font-semibold text-slate-800">
-                    Cấu trúc phân cấp: Có ít nhất 1 địa điểm và mọi địa điểm có booth
-                  </span>
-                </div>
-                {locations.length > 0 && allBooths.length > 0 ? (
-                  <span className="text-emerald-700 font-bold bg-emerald-50 px-2 py-0.5 rounded text-[11px]">
-                    Đạt
-                  </span>
-                ) : (
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => onGoToStep(2)}
-                    className="text-red-600 border-red-200 text-[11px] h-7 px-2"
-                  >
-                    Bổ sung ở Bước 2
-                  </Button>
-                )}
-              </div>
-
-              {/* Check 3: Checklist */}
-              <div className="flex items-center justify-between p-3 rounded-lg border border-slate-100 bg-slate-50/50 text-xs">
-                <div className="flex items-center gap-2.5">
-                  {readiness.stats.boothsWithChecklist === allBooths.length && allBooths.length > 0 ? (
-                    <CheckCircle2 className="h-4 w-4 text-emerald-600 shrink-0" />
-                  ) : (
-                    <AlertCircle className="h-4 w-4 text-amber-500 shrink-0" />
-                  )}
-                  <span className="font-semibold text-slate-800">
-                    Tiêu chí nghiệm thu: Mọi booth đều có cấu hình checklist tiêu chuẩn
-                  </span>
-                </div>
-                {readiness.stats.boothsWithChecklist === allBooths.length && allBooths.length > 0 ? (
-                  <span className="text-emerald-700 font-bold bg-emerald-50 px-2 py-0.5 rounded text-[11px]">
-                    Đạt
-                  </span>
-                ) : (
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => onGoToStep(3)}
-                    className="text-amber-700 border-amber-300 text-[11px] h-7 px-2"
-                  >
-                    Bổ sung ở Bước 3
-                  </Button>
-                )}
-              </div>
-
-              {/* Check 4: Staffing */}
-              <div className="flex items-center justify-between p-3 rounded-lg border border-slate-100 bg-slate-50/50 text-xs">
-                <div className="flex items-center gap-2.5">
-                  {readiness.stats.boothsFullyStaffed === allBooths.length && allBooths.length > 0 ? (
-                    <CheckCircle2 className="h-4 w-4 text-emerald-600 shrink-0" />
-                  ) : (
-                    <AlertCircle className="h-4 w-4 text-amber-500 shrink-0" />
-                  )}
-                  <span className="font-semibold text-slate-800">
-                    Phân công nhân sự: Mọi booth được gán đầy đủ Supervisor và Approver
-                  </span>
-                </div>
-                {readiness.stats.boothsFullyStaffed === allBooths.length && allBooths.length > 0 ? (
-                  <span className="text-emerald-700 font-bold bg-emerald-50 px-2 py-0.5 rounded text-[11px]">
-                    Đạt
-                  </span>
-                ) : (
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => onGoToStep(4)}
-                    className="text-amber-700 border-amber-300 text-[11px] h-7 px-2"
-                  >
-                    Bổ sung ở Bước 4
-                  </Button>
-                )}
-              </div>
+          <div className="space-y-1">
+            <span className="text-slate-400 font-medium">Thời gian vận hành</span>
+            <div className="flex items-center gap-1.5 font-semibold text-slate-800">
+              <Calendar className="h-3.5 w-3.5 text-slate-400 shrink-0" />
+              <span>{formatDate(campaign.startDate)} – {formatDate(campaign.endDate)}</span>
             </div>
+            <p className="text-slate-400 text-[11px]">{campaign.companyName}</p>
+          </div>
 
-            {/* Error Message Display */}
-            {errorMessage && (
-              <div className="rounded-xl bg-red-50 border border-red-200 p-4 flex items-start gap-3 text-red-800 text-xs">
-                <AlertCircle className="h-5 w-5 text-red-600 shrink-0 mt-0.5" />
-                <div className="space-y-1">
-                  <span className="font-bold block text-red-900">Không thể kích hoạt chiến dịch</span>
-                  <p className="text-red-700 whitespace-pre-line leading-relaxed">{errorMessage}</p>
-                </div>
-              </div>
-            )}
+          <div className="space-y-1">
+            <span className="text-slate-400 font-medium">Quy mô triển khai</span>
+            <div className="flex items-center gap-2 font-semibold text-slate-800">
+              <span>{readiness.stats.totalLocations} địa điểm</span>
+              <span>•</span>
+              <span>{readiness.stats.totalBooths} gian hàng</span>
+            </div>
+            <p className="text-emerald-600 font-medium">{readiness.stats.boothsWithChecklist} booth có checklist</p>
+          </div>
 
-            {/* Quota Soft-Lock Upgrade Paywall Banner */}
-            {subscriptionQuota?.isAtQuotaLimit ? (
-              <div className="rounded-xl border-2 border-amber-300 bg-linear-to-r from-amber-50 to-orange-50 p-5 space-y-3">
-                <div className="flex items-start gap-3.5">
-                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-amber-500 text-white font-bold shadow-xs">
-                    <Sparkles className="h-5 w-5" />
-                  </div>
-                  <div className="space-y-1">
-                    <div className="flex items-center gap-2">
-                      <h4 className="text-sm font-bold text-amber-950">
-                        Đã chạm giới hạn gói dịch vụ {subscriptionQuota.planName}
-                      </h4>
-                      <span className="rounded-full bg-amber-200/80 px-2.5 py-0.5 text-[11px] font-bold text-amber-900">
-                        {subscriptionQuota.activeCampaignCount} / {subscriptionQuota.maxActiveCampaigns} chiến dịch
-                      </span>
-                    </div>
-                    <p className="text-xs text-amber-900/90 leading-relaxed">
-                      Gói <strong>{subscriptionQuota.planName}</strong> cho phép tối đa{' '}
-                      <strong>{subscriptionQuota.maxActiveCampaigns} chiến dịch đang hoạt động</strong> cùng một lúc.
-                      Để kích hoạt chiến dịch này, vui lòng nâng cấp gói dịch vụ (Starter hoặc Pro) hoặc chuyển bớt các chiến dịch đang chạy sang trạng thái Hoàn thành.
-                    </p>
-                  </div>
-                </div>
-                <div className="flex items-center gap-2.5 pt-1 pl-13">
-                  <Button
-                    type="button"
-                    size="sm"
-                    onClick={() => router.push('/settings/billing')}
-                    className="bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold h-8 px-4 shadow-xs"
-                  >
-                    <Sparkles className="h-3.5 w-3.5 mr-1.5" />
-                    Nâng cấp gói ngay
-                  </Button>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    onClick={handleSaveDraftAndExit}
-                    className="border-amber-300 bg-white text-amber-900 hover:bg-amber-100 text-xs h-8"
-                  >
-                    Lưu bản nháp & Xem danh sách
-                  </Button>
-                </div>
-              </div>
-            ) : readiness.canActivate ? (
-              <div className="rounded-xl bg-emerald-50 border border-emerald-200 p-4 flex items-center gap-3 text-emerald-800 text-xs">
-                <CheckCircle2 className="h-5 w-5 text-emerald-600 shrink-0" />
-                <div>
-                  <span className="font-bold block">Chiến dịch đã đủ điều kiện kích hoạt!</span>
-                  <span className="text-emerald-700/90 text-[11px]">
-                    Bấm nút "Kích hoạt chiến dịch" để chính thức chuyển sang trạng thái Đang hoạt động
-                    (ACTIVE) và mở quyền nộp bài cho Supervisor.
-                  </span>
-                </div>
-              </div>
+          <div className="space-y-1">
+            <span className="text-slate-400 font-medium">Nhân sự phụ trách</span>
+            <div className="flex items-center gap-1.5 font-semibold text-slate-800">
+              <Users className="h-3.5 w-3.5 text-slate-400 shrink-0" />
+              <span>{readiness.stats.boothsFullyStaffed}/{readiness.stats.totalBooths} booth đủ người</span>
+            </div>
+            {(readiness.stats.boothsWithPendingStaff || 0) > 0 ? (
+              <p className="text-blue-600 font-medium">{readiness.stats.boothsWithPendingStaff} booth chờ xác nhận</p>
             ) : (
-              <div className="rounded-xl bg-amber-50 border border-amber-200 p-4 flex items-center gap-3 text-amber-800 text-xs">
-                <AlertCircle className="h-5 w-5 text-amber-600 shrink-0" />
-                <div>
-                  <span className="font-bold block">Chưa đủ điều kiện kích hoạt chiến dịch</span>
-                  <span className="text-amber-700/90 text-[11px]">
-                    Bạn có thể bấm "Lưu bản nháp & Thoát" để quay lại hoàn thiện sau, hoặc bấm vào
-                    các nút "Bổ sung" ở trên để hoàn tất các điểm còn thiếu.
-                  </span>
-                </div>
-              </div>
+              <p className="text-emerald-600 font-medium">Tất cả đã kích hoạt</p>
             )}
           </div>
-        </CardContent>
+        </div>
       </Card>
 
-      {/* Footer Navigation */}
-      <WizardFooter
-        currentStep={5}
-        onBack={onBack}
-        onNext={
-          readiness.canActivate && !subscriptionQuota?.isAtQuotaLimit
-            ? handleActivate
-            : undefined
-        }
-        nextText="Kích hoạt chiến dịch"
-        isNextLoading={isActivating}
-        showSaveDraft={true}
-        onSaveDraft={handleSaveDraftAndExit}
-      />
+      {/* 2. Màn hình Thẩm định điều kiện (Preflight Validation - Action-Oriented) */}
+      <div className="space-y-4">
+        {/* A. THÔNG BÁO LỖI CHẶN CỨNG (HARD BLOCKING ERRORS) - Nếu có */}
+        {hasErrors && (
+          <Card className="border-red-200 bg-red-50/40 shadow-xs overflow-hidden">
+            <CardHeader className="p-4 sm:p-5 border-b border-red-100 bg-red-50/80">
+              <div className="flex items-center gap-2.5 text-red-700">
+                <AlertCircle className="h-5 w-5 shrink-0" />
+                <div>
+                  <h4 className="text-sm font-bold text-red-900 leading-tight">
+                    Cần hoàn thành các điều kiện bắt buộc trước khi kích hoạt ({readiness.errors.length} vấn đề)
+                  </h4>
+                  <p className="text-xs text-red-600 mt-0.5">
+                    Hệ thống tạm khóa nút kích hoạt để đảm bảo toàn vẹn dữ liệu vận hành.
+                  </p>
+                </div>
+              </div>
+            </CardHeader>
+
+            <CardContent className="p-4 sm:p-5 space-y-2.5">
+              {readiness.errors.map((err, idx) => {
+                const target = getStepTargetForError(err);
+                return (
+                  <div
+                    key={idx}
+                    className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 p-3 rounded-xl bg-white border border-red-200 text-xs shadow-2xs"
+                  >
+                    <div className="flex items-start gap-2 text-red-800">
+                      <span className="font-bold text-red-600 mt-0.5">•</span>
+                      <span className="font-medium">{err}</span>
+                    </div>
+
+                    <Button
+                      type="button"
+                      size="sm"
+                      onClick={() => onGoToStep(target.step)}
+                      className="shrink-0 text-xs h-7 px-3 bg-red-600 hover:bg-red-700 text-white font-medium gap-1 self-end sm:self-auto"
+                    >
+                      <span>{target.label}</span>
+                      <ArrowRight className="h-3 w-3" />
+                    </Button>
+                  </div>
+                );
+              })}
+            </CardContent>
+          </Card>
+        )}
+
+        {/* B. THÔNG BÁO THÀNH CÔNG NẾU KHÔNG CÓ LỖI (CLEAN STATE) */}
+        {!hasErrors && (
+          <div className="rounded-xl border border-emerald-200 bg-emerald-50/60 p-4 sm:p-5 flex items-start gap-3 shadow-xs">
+            <CheckCircle2 className="h-5 w-5 text-emerald-600 shrink-0 mt-0.5" />
+            <div className="flex-1 text-xs text-emerald-800">
+              <h4 className="font-bold text-emerald-950 text-sm">
+                Chiến dịch đã vượt qua tất cả điều kiện vận hành bắt buộc
+              </h4>
+              <p className="mt-1 text-emerald-700 leading-relaxed">
+                Tất cả địa điểm ({readiness.stats.totalLocations}), gian hàng ({readiness.stats.totalBooths}), tiêu chí checklist và phân công nhân sự đều hợp lệ. Chiến dịch đã sẵn sàng để chuyển sang trạng thái <strong>Hoạt động (ACTIVE)</strong>.
+              </p>
+            </div>
+          </div>
+        )}
+
+        {/* C. CẢNH BÁO MỀM (SOFT WARNINGS: Ví dụ nhân sự PENDING) */}
+        {hasWarnings && (
+          <div className="rounded-xl border border-blue-200 bg-blue-50/50 p-4 sm:p-5 flex items-start gap-3 shadow-xs">
+            <Clock className="h-5 w-5 text-blue-600 shrink-0 mt-0.5" />
+            <div className="flex-1 text-xs text-blue-900 space-y-1">
+              <h4 className="font-bold text-blue-950 text-sm">
+                Lưu ý về nhân sự đang chờ xác nhận
+              </h4>
+              <p className="text-blue-800 leading-relaxed">
+                Có <strong>{readiness.stats.boothsWithPendingStaff || 1} gian hàng</strong> được phân công cho nhân sự chưa kích hoạt tài khoản Google. 
+                Bạn <strong>vẫn có thể kích hoạt chiến dịch ngay bây giờ</strong> để bắt đầu lịch trình. Tuy nhiên, tính năng nộp bằng chứng tại các booth này sẽ tạm khóa cho đến khi nhân sự đăng nhập chấp nhận lời mời.
+              </p>
+            </div>
+          </div>
+        )}
+
+        {/* D. THÔNG BÁO LỖI SERVER ACTION NẾU CÓ */}
+        {errorMessage && (
+          <div className="rounded-xl border border-red-200 bg-red-50 p-4 text-xs text-red-700 flex items-start gap-2.5">
+            <AlertCircle className="h-4 w-4 text-red-600 shrink-0 mt-0.5" />
+            <span className="font-medium whitespace-pre-line">{errorMessage}</span>
+          </div>
+        )}
+
+        {/* E. BẬT/TẮT XEM CHI TIẾT KỸ THUẬT NẾU CẦN */}
+        <div className="pt-1">
+          <button
+            type="button"
+            onClick={() => setShowTechnicalDetails(!showTechnicalDetails)}
+            className="text-xs font-semibold text-slate-500 hover:text-slate-800 flex items-center gap-1 cursor-pointer"
+          >
+            <span>{showTechnicalDetails ? 'Ẩn bảng chi tiết gian hàng' : 'Xem chi tiết phân bổ từng gian hàng'}</span>
+            {showTechnicalDetails ? <ChevronUp className="h-3.5 w-3.5" /> : <ChevronDown className="h-3.5 w-3.5" />}
+          </button>
+
+          {showTechnicalDetails && (
+            <div className="mt-3 rounded-xl border border-slate-200 bg-white overflow-hidden shadow-2xs">
+              <div className="overflow-x-auto max-h-72">
+                <table className="w-full text-left text-xs border-collapse">
+                  <thead>
+                    <tr className="border-b border-slate-100 bg-slate-50 text-[10px] font-bold uppercase tracking-wider text-slate-400">
+                      <th className="py-2.5 px-4">Địa điểm / Booth</th>
+                      <th className="py-2.5 px-4">Checklist</th>
+                      <th className="py-2.5 px-4">Supervisor</th>
+                      <th className="py-2.5 px-4">Approver</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100">
+                    {allBooths.map((b) => (
+                      <tr key={b.id} className="hover:bg-slate-50/50">
+                        <td className="py-2.5 px-4 whitespace-nowrap font-medium text-slate-800">
+                          {b.locationName} — {b.name}
+                        </td>
+                        <td className="py-2.5 px-4 whitespace-nowrap text-slate-600">
+                          {b.checklistCount > 0 ? (
+                            <span className="text-emerald-600 font-semibold">{b.checklistCount} tiêu chí</span>
+                          ) : (
+                            <span className="text-red-600 font-bold">Chưa có checklist</span>
+                          )}
+                        </td>
+                        <td className="py-2.5 px-4 whitespace-nowrap">
+                          {b.supervisorName ? (
+                            b.isSupervisorPending ? (
+                              <span className="text-blue-600 font-medium">{b.supervisorName} (⏳)</span>
+                            ) : (
+                              <span className="text-slate-700">{b.supervisorName}</span>
+                            )
+                          ) : (
+                            <span className="text-amber-600 font-bold">Chưa gán</span>
+                          )}
+                        </td>
+                        <td className="py-2.5 px-4 whitespace-nowrap">
+                          {b.approverName ? (
+                            b.isApproverPending ? (
+                              <span className="text-blue-600 font-medium">{b.approverName} (⏳)</span>
+                            ) : (
+                              <span className="text-slate-700">{b.approverName}</span>
+                            )
+                          ) : (
+                            <span className="text-amber-600 font-bold">Chưa gán</span>
+                          )}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* F. KHỐI HẠN NGẠCH GÓI SAAS (TÁCH RIÊNG XUỐNG DƯỚI) */}
+        {subscriptionQuota && (
+          <div className="rounded-xl border border-slate-200 bg-slate-50/70 p-3.5 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 text-xs text-slate-600">
+            <div className="flex items-center gap-2">
+              <ShieldCheck className="h-4 w-4 text-blue-600 shrink-0" />
+              <span>
+                Gói đăng ký: <strong className="text-slate-900">{subscriptionQuota.planName}</strong> (Đang dùng {subscriptionQuota.activeCampaignCount}/{subscriptionQuota.maxActiveCampaigns} chiến dịch Active)
+              </span>
+            </div>
+
+            {subscriptionQuota.isAtQuotaLimit ? (
+              <span className="font-bold text-red-600 bg-red-50 border border-red-200 px-2.5 py-0.5 rounded-full text-[11px]">
+                Đã đạt giới hạn gói
+              </span>
+            ) : (
+              <span className="text-slate-500 text-[11px]">
+                Còn trống {subscriptionQuota.remainingSlots} chiến dịch
+              </span>
+            )}
+          </div>
+        )}
+      </div>
+
+      {/* 3. Footer Navigation & CTA Chính */}
+      <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-6 border-t border-slate-200 bg-white">
+        <Button
+          type="button"
+          variant="outline"
+          onClick={onBack}
+          disabled={isActivating}
+          className="w-full sm:w-auto text-xs"
+        >
+          ← Quay lại Bước 4
+        </Button>
+
+        <div className="flex items-center gap-2 w-full sm:w-auto">
+          <Button
+            type="button"
+            variant="ghost"
+            onClick={() => router.push('/campaigns')}
+            disabled={isActivating}
+            className="text-xs text-slate-500 hover:text-slate-800"
+          >
+            Lưu nháp & Thoát
+          </Button>
+
+          <Button
+            type="button"
+            disabled={hasErrors || isActivating || Boolean(subscriptionQuota?.isAtQuotaLimit)}
+            onClick={handleActivate}
+            className={cn(
+              'w-full sm:w-auto gap-2 text-xs font-semibold px-6 h-10 shadow-md cursor-pointer transition-all',
+              hasErrors || Boolean(subscriptionQuota?.isAtQuotaLimit)
+                ? 'bg-slate-200 text-slate-400 cursor-not-allowed shadow-none'
+                : 'bg-emerald-600 hover:bg-emerald-700 text-white shadow-emerald-600/20'
+            )}
+          >
+            {isActivating ? (
+              'Đang kích hoạt...'
+            ) : (
+              <>
+                <Sparkles className="h-4 w-4" />
+                Kích hoạt chiến dịch ngay
+              </>
+            )}
+          </Button>
+        </div>
+      </div>
     </div>
   );
 }

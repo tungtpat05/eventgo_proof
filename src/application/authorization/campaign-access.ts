@@ -1,7 +1,29 @@
 import { AuthorizationError } from '@/domain/errors';
-import { createServerSupabaseClient } from '@/infrastructure/supabase/server';
+import { createServerSupabaseClient, createAdminSupabaseClient } from '@/infrastructure/supabase/server';
+import { env } from '@/config/env';
+import { getCurrentUserSession } from '@/application/use-cases/auth/get-current-user';
 
 export async function requireCampaignManager(campaignId: string): Promise<void> {
+  const session = await getCurrentUserSession();
+  const currentUserId = session?.user?.id;
+  if (!currentUserId) {
+    throw new AuthorizationError('Chỉ Manager của chiến dịch mới được thực hiện hành động này.');
+  }
+
+  if (env.SUPABASE_SERVICE_ROLE_KEY) {
+    const admin = createAdminSupabaseClient();
+    const { data: member } = await admin
+      .from('campaign_members')
+      .select('id')
+      .eq('campaign_id', campaignId)
+      .eq('user_id', currentUserId)
+      .eq('role', 'MANAGER')
+      .eq('status', 'ACTIVE')
+      .maybeSingle();
+
+    if (member) return;
+  }
+
   const supabase = await createServerSupabaseClient();
   const { data, error } = await supabase.rpc('is_campaign_manager', { target_campaign_id: campaignId });
   if (error || !data) throw new AuthorizationError('Chỉ Manager của chiến dịch mới được thực hiện hành động này.');
