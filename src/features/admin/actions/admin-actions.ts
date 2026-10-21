@@ -59,16 +59,11 @@ export async function getAdminOverviewAction() {
     .filter((t) => t.status === TransactionStatus.SUCCESS)
     .reduce((sum, t) => sum + t.amount, 0);
 
-  const pendingTransactionsCount = transactions.filter(
-    (t) => t.status === TransactionStatus.PENDING
-  ).length;
-
   return {
     totalUsers: totalUsers || 0,
     activeCampaigns: activeCampaigns || 0,
     totalBooths: totalBooths || 0,
     totalRevenue,
-    pendingTransactionsCount,
   };
 }
 

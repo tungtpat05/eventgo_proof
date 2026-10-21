@@ -3,14 +3,12 @@
 import React, { useState, useEffect } from 'react';
 import { getAdminOverviewAction } from '@/features/admin/actions/admin-actions';
 import { Card, CardContent } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import {
   Users,
   Flag,
   Store,
   DollarSign,
-  Clock,
   ArrowRight,
   Loader2,
   ShieldCheck,
@@ -24,7 +22,6 @@ export default function AdminDashboardPage() {
     activeCampaigns: number;
     totalBooths: number;
     totalRevenue: number;
-    pendingTransactionsCount: number;
   } | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -109,23 +106,6 @@ export default function AdminDashboardPage() {
         })}
       </div>
 
-      {/* Pending Transactions Alert */}
-      {stats.pendingTransactionsCount > 0 && (
-        <div className="p-4 rounded-xl border border-amber-300 bg-amber-50 text-amber-900 flex items-center justify-between">
-          <div className="flex items-center gap-2.5">
-            <Clock className="h-5 w-5 text-amber-600" />
-            <span className="text-sm font-medium">
-              Có <strong>{stats.pendingTransactionsCount}</strong> đơn hàng đang chờ xác nhận thanh toán.
-            </span>
-          </div>
-          <Link href="/admin/transactions">
-            <Button size="sm" className="bg-amber-600 hover:bg-amber-700 text-white text-xs gap-1">
-              Xem đơn chờ duyệt
-              <ArrowRight className="h-3.5 w-3.5" />
-            </Button>
-          </Link>
-        </div>
-      )}
 
       {/* Quick Navigation Cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
