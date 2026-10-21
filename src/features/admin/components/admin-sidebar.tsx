@@ -1,28 +1,45 @@
 'use client';
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import {
   LayoutDashboard,
-  CreditCard,
+  Wallet,
+  Package,
+  RefreshCw,
   Receipt,
+  Landmark,
   ListChecks,
   UserCheck,
   ShieldCheck,
+  ChevronDown,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
-const navItems = [
-  { href: '/admin/dashboard', label: 'Tổng quan', icon: LayoutDashboard },
-  { href: '/admin/subscriptions', label: 'Quản lý Gói', icon: CreditCard },
-  { href: '/admin/transactions', label: 'Giao dịch & Doanh thu', icon: Receipt },
-  { href: '/admin/templates', label: 'Mẫu Checklist', icon: ListChecks },
-  { href: '/admin/admins', label: 'Quản trị viên', icon: UserCheck },
-];
-
 export function AdminSidebar() {
   const pathname = usePathname();
+
+  // Nhóm các route liên quan đến tiền & thanh toán
+  const billingSubRoutes = [
+    { href: '/admin/plans', label: 'Gói dịch vụ', icon: Package },
+    { href: '/admin/subscriptions', label: 'Quản lý đăng ký', icon: RefreshCw },
+    { href: '/admin/transactions', label: 'Lịch sử giao dịch', icon: Receipt },
+    { href: '/admin/payment-settings', label: 'Cấu hình nhận tiền', icon: Landmark },
+  ];
+
+  const isBillingActive = billingSubRoutes.some((item) =>
+    pathname.startsWith(item.href)
+  );
+
+  const [isBillingOpen, setIsBillingOpen] = useState(true);
+
+  // Tự động mở submenu khi người dùng duyệt đến một trong các trang thuộc nhóm
+  useEffect(() => {
+    if (isBillingActive) {
+      setIsBillingOpen(true);
+    }
+  }, [isBillingActive]);
 
   return (
     <aside className="w-full md:w-64 bg-slate-900 text-white shrink-0 flex flex-col justify-between border-r border-slate-800">
@@ -40,31 +57,122 @@ export function AdminSidebar() {
           </div>
         </div>
 
-        {/* Navigation Links with Active State */}
-        <nav className="p-4 space-y-1">
-          {navItems.map((item) => {
-            const Icon = item.icon;
-            const isActive =
-              item.href === '/admin/dashboard'
-                ? pathname === '/admin/dashboard' || pathname === '/admin'
-                : pathname.startsWith(item.href);
+        {/* Navigation Links */}
+        <nav className="p-4 space-y-1.5">
+          {/* 1. Tổng quan */}
+          <Link
+            href="/admin/dashboard"
+            className={cn(
+              'flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs sm:text-sm font-medium transition-colors',
+              pathname === '/admin/dashboard' || pathname === '/admin'
+                ? 'bg-blue-600 text-white font-semibold shadow-xs'
+                : 'text-slate-300 hover:text-white hover:bg-slate-800/80'
+            )}
+          >
+            <LayoutDashboard
+              className={cn(
+                'h-4 w-4',
+                pathname === '/admin/dashboard' || pathname === '/admin'
+                  ? 'text-white'
+                  : 'text-blue-400'
+              )}
+            />
+            <span>Tổng quan</span>
+          </Link>
 
-            return (
-              <Link
-                key={item.href}
-                href={item.href}
+          {/* 2. Nhóm: Thanh toán & Gói dịch vụ (Collapsible Dropdown) */}
+          <div className="pt-1">
+            <button
+              type="button"
+              onClick={() => setIsBillingOpen((prev) => !prev)}
+              className={cn(
+                'w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-xs sm:text-sm font-medium transition-colors select-none',
+                isBillingActive
+                  ? 'text-white font-semibold bg-slate-800/50'
+                  : 'text-slate-300 hover:text-white hover:bg-slate-800/60'
+              )}
+            >
+              <div className="flex items-center gap-3">
+                <Wallet className={cn('h-4 w-4', isBillingActive ? 'text-blue-400' : 'text-slate-400')} />
+                <span>Thanh toán</span>
+              </div>
+              <ChevronDown
                 className={cn(
-                  'flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs sm:text-sm font-medium transition-colors',
-                  isActive
-                    ? 'bg-blue-600 text-white font-semibold shadow-xs'
-                    : 'text-slate-300 hover:text-white hover:bg-slate-800/80'
+                  'h-4 w-4 text-slate-400 transition-transform duration-200',
+                  isBillingOpen ? 'rotate-0' : '-rotate-90'
                 )}
-              >
-                <Icon className={cn('h-4 w-4', isActive ? 'text-white' : 'text-blue-400')} />
-                <span>{item.label}</span>
-              </Link>
-            );
-          })}
+              />
+            </button>
+
+            {/* Submenu Items */}
+            {isBillingOpen && (
+              <div className="mt-1 pl-3 space-y-1 border-l-2 border-slate-800 ml-4">
+                {billingSubRoutes.map((subItem) => {
+                  const SubIcon = subItem.icon;
+                  const isSubActive = pathname === subItem.href || pathname.startsWith(subItem.href + '/');
+
+                  return (
+                    <Link
+                      key={subItem.href}
+                      href={subItem.href}
+                      className={cn(
+                        'flex items-center gap-3 px-3 py-2 rounded-xl text-xs sm:text-sm font-medium transition-colors',
+                        isSubActive
+                          ? 'bg-slate-800 text-white font-semibold shadow-xs ring-1 ring-slate-700/60'
+                          : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/40'
+                      )}
+                    >
+                      <SubIcon
+                        className={cn(
+                          'h-4 w-4 shrink-0',
+                          isSubActive ? 'text-blue-400' : 'text-slate-400'
+                        )}
+                      />
+                      <span>{subItem.label}</span>
+                    </Link>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+
+          {/* 3. Mẫu Checklist */}
+          <Link
+            href="/admin/templates"
+            className={cn(
+              'flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs sm:text-sm font-medium transition-colors',
+              pathname.startsWith('/admin/templates')
+                ? 'bg-blue-600 text-white font-semibold shadow-xs'
+                : 'text-slate-300 hover:text-white hover:bg-slate-800/80'
+            )}
+          >
+            <ListChecks
+              className={cn(
+                'h-4 w-4',
+                pathname.startsWith('/admin/templates') ? 'text-white' : 'text-blue-400'
+              )}
+            />
+            <span>Mẫu Checklist</span>
+          </Link>
+
+          {/* 4. Quản trị viên */}
+          <Link
+            href="/admin/admins"
+            className={cn(
+              'flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs sm:text-sm font-medium transition-colors',
+              pathname.startsWith('/admin/admins')
+                ? 'bg-blue-600 text-white font-semibold shadow-xs'
+                : 'text-slate-300 hover:text-white hover:bg-slate-800/80'
+            )}
+          >
+            <UserCheck
+              className={cn(
+                'h-4 w-4',
+                pathname.startsWith('/admin/admins') ? 'text-white' : 'text-blue-400'
+              )}
+            />
+            <span>Quản trị viên</span>
+          </Link>
         </nav>
       </div>
     </aside>

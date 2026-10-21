@@ -379,8 +379,43 @@ export async function updateAdminPlanConfigAction(
   const updated = await subRepo.updatePlanConfig(tier, data);
 
   revalidatePath('/admin/subscriptions');
+  revalidatePath('/admin/plans');
   revalidatePath('/settings/billing');
   revalidatePath('/campaigns/new');
 
   return updated;
+}
+
+// 7. Payment Gateway & Bank Beneficiary Info (Readonly)
+export async function getPaymentGatewayConfigAction() {
+  await assertSystemAdmin();
+  const { BENEFICIARY_BANK, isPayOSConfigured } = await import('@/infrastructure/payos/payos-client');
+
+  const clientId = process.env.PAYOS_CLIENT_ID || '';
+  const maskedClientId =
+    clientId.length > 8
+      ? `${clientId.slice(0, 4)}••••••••${clientId.slice(-4)}`
+      : clientId
+      ? '••••••••'
+      : 'Chưa thiết lập';
+
+  return {
+    beneficiaryBank: {
+      bankName: BENEFICIARY_BANK.bankName,
+      bankBin: BENEFICIARY_BANK.bankBin,
+      accountNumber: BENEFICIARY_BANK.accountNumber,
+      accountName: BENEFICIARY_BANK.accountName,
+      transferSyntaxPrefix: 'EVENTGO',
+      branch: 'Hội sở chính MB Bank - Toàn quốc',
+    },
+    payos: {
+      isConfigured: isPayOSConfigured,
+      maskedClientId,
+      hasApiKey: Boolean(process.env.PAYOS_API_KEY),
+      hasChecksumKey: Boolean(process.env.PAYOS_CHECKSUM_KEY),
+      webhookUrl: `${env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/api/webhooks/payos`,
+      gatewayName: 'PayOS VietQR Napas 24/7',
+    },
+    isReadonly: true,
+  };
 }
