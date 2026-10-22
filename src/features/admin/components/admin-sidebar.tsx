@@ -42,10 +42,10 @@ export function AdminSidebar() {
   }, [isBillingActive]);
 
   return (
-    <aside className="w-full md:w-64 bg-slate-900 text-white shrink-0 flex flex-col justify-between border-r border-slate-800">
-      <div>
+    <aside className="w-full md:w-64 md:fixed md:inset-y-0 md:left-0 md:z-40 bg-slate-900 text-white shrink-0 flex flex-col justify-between border-r border-slate-800 md:h-screen">
+      <div className="flex-1 flex flex-col min-h-0">
         {/* Logo / Title */}
-        <div className="h-16 flex items-center px-6 border-b border-slate-800 gap-2.5">
+        <div className="h-16 flex items-center px-6 border-b border-slate-800 gap-2.5 shrink-0">
           <div className="h-8 w-8 bg-blue-600 rounded-lg flex items-center justify-center text-white shadow-sm">
             <ShieldCheck className="h-5 w-5" />
           </div>
@@ -58,7 +58,7 @@ export function AdminSidebar() {
         </div>
 
         {/* Navigation Links */}
-        <nav className="p-4 space-y-1.5">
+        <nav className="flex-1 p-4 space-y-1.5 overflow-y-auto">
           {/* 1. Tổng quan */}
           <Link
             href="/admin/dashboard"
@@ -174,6 +174,13 @@ export function AdminSidebar() {
             <span>Quản trị viên</span>
           </Link>
         </nav>
+      </div>
+
+      {/* Footer / System Status */}
+      <div className="p-4 border-t border-slate-800/80 shrink-0">
+        <div className="rounded-xl bg-slate-800/60 p-2.5 text-xs text-slate-400 text-center border border-slate-700/50">
+          Phiên bản <span className="font-semibold text-slate-200">v1.0 (Admin)</span>
+        </div>
       </div>
     </aside>
   );

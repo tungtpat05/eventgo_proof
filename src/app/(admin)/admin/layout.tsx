@@ -13,11 +13,11 @@ export default async function AdminLayout({ children }: { children: React.ReactN
   }
 
   return (
-    <div className="min-h-screen bg-slate-50 flex flex-col md:flex-row">
+    <div className="min-h-screen bg-slate-50">
       <AdminSidebar />
 
       {/* Main Admin Content Area */}
-      <div className="flex-1 flex flex-col min-w-0">
+      <div className="md:pl-64 flex flex-col flex-1 min-w-0 min-h-screen">
         <AdminHeader user={session.user} />
 
         <main className="flex-1 p-6 max-w-7xl w-full mx-auto">
