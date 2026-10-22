@@ -8,7 +8,6 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { formatDateTime, cn } from '@/lib/utils';
 import {
-  Receipt,
   Download,
   CheckCircle2,
   Clock,
@@ -228,30 +227,18 @@ export default function AdminTransactionsPage() {
   };
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-bold text-slate-900 flex items-center gap-2">
-            <Receipt className="h-6 w-6 text-emerald-600" />
-            Quản Lý Giao Dịch & Dòng Tiền
-          </h1>
-          <p className="text-sm text-slate-500 mt-1">
-            Theo dõi và đối soát các giao dịch thanh toán tự động VietQR PayOS
-          </p>
-        </div>
-
-        <div className="flex items-center gap-2">
-          <Button
-            size="sm"
-            onClick={handleExportExcel}
-            disabled={filtered.length === 0}
-            className="text-xs bg-emerald-600 hover:bg-emerald-700 text-white gap-1.5 disabled:opacity-50"
-          >
-            <Download className="h-3.5 w-3.5" />
-            Xuất Excel ({filtered.length})
-          </Button>
-        </div>
+    <div className="space-y-4">
+      {/* Action bar */}
+      <div className="flex items-center justify-end">
+        <Button
+          size="sm"
+          onClick={handleExportExcel}
+          disabled={filtered.length === 0}
+          className="text-xs bg-emerald-600 hover:bg-emerald-700 text-white gap-1.5 disabled:opacity-50 h-8 px-3 shadow-xs"
+        >
+          <Download className="h-3.5 w-3.5" />
+          Xuất Excel ({filtered.length})
+        </Button>
       </div>
 
       {/* Transactions Table with Column Filtering */}

@@ -106,19 +106,14 @@ export default function NewTemplatePage() {
 
   return (
     <div className="max-w-3xl space-y-6 pb-12">
-      {/* Header */}
-      <div className="flex items-center gap-3">
+      {/* Header back link */}
+      <div className="flex items-center gap-2">
         <Link href="/admin/templates">
-          <Button variant="outline" size="sm" className="h-8 w-8 p-0 border-slate-300">
-            <ArrowLeft className="h-4 w-4" />
+          <Button variant="ghost" size="sm" className="h-8 text-xs text-slate-600 hover:text-slate-900 gap-1.5 -ml-2">
+            <ArrowLeft className="h-3.5 w-3.5" />
+            Quay lại Thư viện mẫu
           </Button>
         </Link>
-        <div>
-          <h1 className="text-xl font-bold text-slate-900">Tạo Bộ Mẫu Checklist Tiêu Chuẩn Mới</h1>
-          <p className="text-xs text-slate-500">
-            Cấu hình bộ tiêu chí theo ngành để người dùng nạp nhanh vào chiến dịch
-          </p>
-        </div>
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-6">

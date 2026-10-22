@@ -19,7 +19,6 @@ import {
   DialogFooter,
 } from '@/components/ui/dialog';
 import {
-  Package,
   Loader2,
   CheckCircle2,
   Settings2,
@@ -107,18 +106,6 @@ export default function AdminPlansPage() {
 
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-bold text-slate-900 flex items-center gap-2">
-            <Package className="h-6 w-6 text-blue-600" />
-            Cấu Hình Gói Dịch Vụ
-          </h1>
-          <p className="text-sm text-slate-500 mt-1">
-            Quản lý danh mục gói dịch vụ, giá niêm yết, hạn mức chiến dịch đồng thời và các đặc quyền đi kèm
-          </p>
-        </div>
-      </div>
 
       {isLoading ? (
         <div className="py-16 flex justify-center">

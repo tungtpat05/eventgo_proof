@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { Landmark, Copy, Check, Loader2 } from 'lucide-react';
+import { Copy, Check, Loader2 } from 'lucide-react';
 import { getPaymentGatewayConfigAction } from '@/features/admin/actions/admin-actions';
 
 interface PaymentConfigData {
@@ -68,16 +68,6 @@ export default function AdminPaymentSettingsPage() {
 
   return (
     <div className="space-y-6 max-w-3xl">
-      {/* Header */}
-      <div>
-        <h1 className="text-2xl font-bold text-slate-900 flex items-center gap-2">
-          <Landmark className="h-6 w-6 text-blue-600" />
-          Cấu hình nhận tiền
-        </h1>
-        <p className="text-sm text-slate-500 mt-1">
-          Thông tin tài khoản thụ hưởng và cổng thanh toán tự động (Chế độ xem)
-        </p>
-      </div>
 
       <div className="bg-white rounded-2xl border border-slate-200 shadow-xs p-6 space-y-6">
         {/* Phần 1: Tài khoản ngân hàng thụ hưởng */}

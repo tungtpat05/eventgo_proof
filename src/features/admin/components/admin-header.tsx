@@ -2,15 +2,55 @@
 
 import React, { useState, useRef, useEffect } from 'react';
 import Link from 'next/link';
+import { usePathname } from 'next/navigation';
 import { UserProfile } from '@/domain/entities';
 import { signOutAction } from '@/features/auth/actions/auth-actions';
-import { User, LogOut, ChevronDown, UserCircle, ShieldCheck } from 'lucide-react';
+import { User, LogOut, ChevronDown, UserCircle, ShieldCheck, ChevronRight } from 'lucide-react';
 
 interface AdminHeaderProps {
   user: UserProfile;
 }
 
+interface AdminBreadcrumb {
+  group?: string;
+  groupHref?: string;
+  title: string;
+}
+
+function getAdminBreadcrumb(pathname: string): AdminBreadcrumb {
+  if (pathname === '/admin' || pathname === '/admin/dashboard') {
+    return { title: 'Tổng quan' };
+  }
+  if (pathname.startsWith('/admin/transactions')) {
+    return { group: 'Thanh toán', title: 'Lịch sử giao dịch' };
+  }
+  if (pathname.startsWith('/admin/subscriptions')) {
+    return { group: 'Thanh toán', title: 'Quản lý đăng ký' };
+  }
+  if (pathname.startsWith('/admin/plans')) {
+    return { group: 'Thanh toán', title: 'Gói dịch vụ' };
+  }
+  if (pathname.startsWith('/admin/payment-settings')) {
+    return { group: 'Thanh toán', title: 'Cấu hình nhận tiền' };
+  }
+  if (pathname === '/admin/templates/new') {
+    return { group: 'Mẫu Checklist', groupHref: '/admin/templates', title: 'Tạo mẫu mới' };
+  }
+  if (pathname.startsWith('/admin/templates')) {
+    return { group: 'Mẫu Checklist', title: 'Thư viện mẫu' };
+  }
+  if (pathname.startsWith('/admin/admins')) {
+    return { group: 'Quản trị viên', title: 'Danh sách quản trị' };
+  }
+  if (pathname.startsWith('/admin/profile')) {
+    return { group: 'Tài khoản', title: 'Thông tin cá nhân' };
+  }
+  return { title: 'Quản trị hệ thống' };
+}
+
 export function AdminHeader({ user }: AdminHeaderProps) {
+  const pathname = usePathname();
+  const breadcrumb = getAdminBreadcrumb(pathname);
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
@@ -27,7 +67,32 @@ export function AdminHeader({ user }: AdminHeaderProps) {
   }, []);
 
   return (
-    <header className="sticky top-0 z-30 flex h-16 items-center justify-end border-b border-slate-200 bg-white/95 px-6 backdrop-blur">
+    <header className="sticky top-0 z-30 flex h-16 items-center justify-between border-b border-slate-200 bg-white/95 px-6 backdrop-blur">
+      {/* 1-Line Breadcrumb: Nhóm > Tên trang */}
+      <nav aria-label="Breadcrumb" className="flex items-center gap-2 text-xs sm:text-sm font-medium min-w-0">
+        {breadcrumb.group ? (
+          <>
+            {breadcrumb.groupHref ? (
+              <Link
+                href={breadcrumb.groupHref}
+                className="text-slate-400 hover:text-slate-700 transition-colors"
+              >
+                {breadcrumb.group}
+              </Link>
+            ) : (
+              <span className="text-slate-400 select-none">{breadcrumb.group}</span>
+            )}
+            <ChevronRight className="h-3.5 w-3.5 text-slate-300 shrink-0" aria-hidden="true" />
+            <span className="font-semibold text-slate-900 truncate">
+              {breadcrumb.title}
+            </span>
+          </>
+        ) : (
+          <span className="font-semibold text-slate-900 truncate">
+            {breadcrumb.title}
+          </span>
+        )}
+      </nav>
       <div className="flex items-center gap-3">
         {/* User Dropdown */}
         <div className="relative" ref={dropdownRef}>

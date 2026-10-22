@@ -13,7 +13,6 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { formatDate, formatDateTime } from '@/lib/utils';
 import {
-  UserCheck,
   UserPlus,
   Mail,
   ShieldCheck,
@@ -140,16 +139,6 @@ export default function AdminMembersPage() {
 
   return (
     <div className="space-y-8 max-w-5xl">
-      {/* Header */}
-      <div>
-        <h1 className="text-2xl font-bold text-slate-900 flex items-center gap-2">
-          <UserCheck className="h-6 w-6 text-blue-600" />
-          Quản Lý Đội Ngũ Quản Trị Viên (System Admins)
-        </h1>
-        <p className="text-sm text-slate-500 mt-1">
-          Mời thêm Quản trị viên mới qua Email Google hoặc thu hồi quyền truy cập phân vùng Admin
-        </p>
-      </div>
 
       {/* Invite Box */}
       <div className="p-6 bg-white rounded-2xl border border-slate-200 shadow-sm space-y-4">

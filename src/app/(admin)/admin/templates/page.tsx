@@ -9,7 +9,6 @@ import {
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import {
-  ListChecks,
   Plus,
   Trash2,
   Loader2,
@@ -52,21 +51,11 @@ export default function AdminTemplatesPage() {
 
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-bold text-slate-900 flex items-center gap-2">
-            <ListChecks className="h-6 w-6 text-purple-600" />
-            Thư Viện Mẫu Tiêu Chuẩn Checklist
-          </h1>
-          <p className="text-sm text-slate-500 mt-1">
-            Quản lý các bộ checklist chuẩn theo ngành để người dùng nạp nhanh vào Booth ở Bước 3 Wizard
-          </p>
-        </div>
-
+      {/* Action bar */}
+      <div className="flex items-center justify-end">
         <Link href="/admin/templates/new">
-          <Button size="sm" className="bg-purple-600 hover:bg-purple-700 text-white text-xs gap-1.5 shadow-sm">
-            <Plus className="h-4 w-4" />
+          <Button size="sm" className="bg-purple-600 hover:bg-purple-700 text-white text-xs gap-1.5 shadow-xs h-8 px-3">
+            <Plus className="h-3.5 w-3.5" />
             Tạo Mẫu Mới
           </Button>
         </Link>

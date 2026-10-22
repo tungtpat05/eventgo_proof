@@ -20,7 +20,6 @@ import {
   DialogFooter,
 } from '@/components/ui/dialog';
 import {
-  RefreshCw,
   Search,
   Loader2,
   Sparkles,
@@ -215,16 +214,6 @@ export default function AdminSubscriptionsPage() {
 
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div>
-        <h1 className="text-2xl font-bold text-slate-900 flex items-center gap-2">
-          <RefreshCw className="h-6 w-6 text-blue-600" />
-          Quản Lý Đăng Ký Thuê Bao
-        </h1>
-        <p className="text-sm text-slate-500 mt-1">
-          Theo dõi danh sách khách hàng đang sử dụng dịch vụ, gói hiện tại, thời hạn hiệu lực và điều chỉnh gói thủ công
-        </p>
-      </div>
 
       {isLoading ? (
         <div className="py-16 flex justify-center">

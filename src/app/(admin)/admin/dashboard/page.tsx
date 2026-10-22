@@ -11,7 +11,6 @@ import {
   DollarSign,
   ArrowRight,
   Loader2,
-  ShieldCheck,
   CreditCard,
   ListChecks,
 } from 'lucide-react';
@@ -74,16 +73,6 @@ export default function AdminDashboardPage() {
 
   return (
     <div className="space-y-8">
-      {/* Page Title */}
-      <div>
-        <h1 className="text-2xl font-bold text-slate-900 tracking-tight flex items-center gap-2">
-          <ShieldCheck className="h-6 w-6 text-blue-600" />
-          Bảng Điều Khiển Quản Trị Hệ Thống
-        </h1>
-        <p className="text-sm text-slate-500 mt-1">
-          Theo dõi tổng quan chỉ số vận hành, dòng tiền giao dịch và hạn mức thuê bao
-        </p>
-      </div>
 
       {/* KPI Cards Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
