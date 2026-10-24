@@ -1,7 +1,6 @@
 'use client';
 
 import React, { useState, useEffect, useTransition } from 'react';
-import Link from 'next/link';
 import {
   getAdminPlanConfigsAction,
   updateAdminPlanConfigAction,
@@ -23,12 +22,13 @@ import {
   CheckCircle2,
   Settings2,
   Check,
-  Zap,
-  ShieldCheck,
   Edit3,
-  Users,
+  Package,
+  RefreshCw,
   Sparkles,
+  AlertCircle,
 } from 'lucide-react';
+import { cn } from '@/lib/utils';
 
 export default function AdminPlansPage() {
   const [planConfigs, setPlanConfigs] = useState<PlanConfig[]>([]);
@@ -44,6 +44,7 @@ export default function AdminPlansPage() {
   const [formFeatures, setFormFeatures] = useState('');
   const [formIsPopular, setFormIsPopular] = useState(false);
   const [formIsActive, setFormIsActive] = useState(true);
+  const [formError, setFormError] = useState<string | null>(null);
 
   const loadData = async () => {
     try {
@@ -51,7 +52,7 @@ export default function AdminPlansPage() {
       setPlanConfigs(configsData);
     } catch (err) {
       console.error('Failed to load plan configs:', err);
-      // Fallback
+      // Fallback statically configured plans
       setPlanConfigs([
         PLAN_CONFIGS[SubscriptionPlanTier.FREE],
         PLAN_CONFIGS[SubscriptionPlanTier.STARTER],
@@ -75,10 +76,29 @@ export default function AdminPlansPage() {
     setFormFeatures(plan.features ? plan.features.join('\n') : '');
     setFormIsPopular(plan.isPopular);
     setFormIsActive(plan.isActive);
+    setFormError(null);
   };
 
   const handleSavePlanConfig = () => {
     if (!editingPlan) return;
+
+    if (!formName.trim()) {
+      setFormError('Vui lòng nhập tên hiển thị của gói.');
+      return;
+    }
+
+    if (formPrice === '' || formPrice < 0) {
+      setFormError('Giá niêm yết không hợp lệ (không được âm).');
+      return;
+    }
+
+    if (formMaxCampaigns === '' || formMaxCampaigns < 1) {
+      setFormError('Hạn mức chiến dịch tối thiểu là 1.');
+      return;
+    }
+
+    setFormError(null);
+
     startTransition(async () => {
       try {
         const featureLines = formFeatures
@@ -99,124 +119,386 @@ export default function AdminPlansPage() {
         setEditingPlan(null);
         await loadData();
       } catch (err: any) {
-        alert(err.message || 'Lỗi lưu cấu hình gói');
+        setFormError(err.message || 'Lỗi khi lưu cấu hình gói dịch vụ');
       }
     });
   };
 
+  // Resolve Free, Starter, Pro configs reliably
+  const freePlan =
+    planConfigs.find((p) => p.tier === SubscriptionPlanTier.FREE) ||
+    PLAN_CONFIGS[SubscriptionPlanTier.FREE];
+  const starterPlan =
+    planConfigs.find((p) => p.tier === SubscriptionPlanTier.STARTER) ||
+    PLAN_CONFIGS[SubscriptionPlanTier.STARTER];
+  const proPlan =
+    planConfigs.find((p) => p.tier === SubscriptionPlanTier.PRO) ||
+    PLAN_CONFIGS[SubscriptionPlanTier.PRO];
+
+  const plans = [freePlan, starterPlan, proPlan];
+
+  // Helper for matrix check/dash indicators
+  const renderCheckOrDash = (isEnabled: boolean) => {
+    if (isEnabled) {
+      return (
+        <div className="flex justify-center items-center">
+          <div className="h-6 w-6 rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center border border-emerald-200/60 shadow-2xs">
+            <Check className="h-3.5 w-3.5 stroke-[2.5]" />
+          </div>
+        </div>
+      );
+    }
+    return (
+      <div className="flex justify-center items-center">
+        <span className="text-slate-300 font-semibold text-sm select-none">—</span>
+      </div>
+    );
+  };
+
   return (
     <div className="space-y-6">
+      {/* Page Title & Action Bar */}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 pb-1">
+        <div>
+          <h1 className="text-xl font-bold text-slate-900 tracking-tight flex items-center gap-2">
+            <Package className="h-5 w-5 text-blue-600" />
+            Cấu hình Gói dịch vụ
+          </h1>
+          <p className="text-xs text-slate-500 mt-1">
+            Bảng so sánh và quản trị cấu hình các gói dịch vụ SaaS trên hệ thống
+          </p>
+        </div>
+
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => {
+            setIsLoading(true);
+            loadData();
+          }}
+          disabled={isLoading}
+          className="text-xs h-8 border-slate-300 gap-1.5 self-start sm:self-auto cursor-pointer hover:bg-slate-50"
+        >
+          <RefreshCw className={cn('h-3.5 w-3.5 text-slate-500', isLoading && 'animate-spin')} />
+          Làm mới
+        </Button>
+      </div>
 
       {isLoading ? (
-        <div className="py-16 flex justify-center">
+        <div className="py-24 flex flex-col items-center justify-center gap-3">
           <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
+          <p className="text-xs text-slate-500 font-medium">Đang tải cấu hình gói dịch vụ...</p>
         </div>
       ) : (
-        <div className="space-y-6">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {planConfigs.map((plan) => {
-              const isStarter = plan.tier === SubscriptionPlanTier.STARTER;
-              const isPro = plan.tier === SubscriptionPlanTier.PRO;
+        /* Subscription Plan Comparison Table */
+        <div className="rounded-2xl border border-slate-200 bg-white shadow-xs overflow-hidden">
+          <div className="overflow-x-auto">
+            <table className="w-full text-left border-collapse text-xs sm:text-sm">
+              {/* TABLE HEADER */}
+              <thead>
+                <tr className="border-b border-slate-200 bg-slate-50/90 text-slate-700">
+                  <th className="py-4 px-5 text-left font-semibold w-[34%] min-w-[260px] sticky left-0 bg-slate-50/95 z-20 backdrop-blur-xs shadow-[1px_0_0_0_#e2e8f0]">
+                    <span className="text-xs uppercase tracking-wider text-slate-500 font-bold">
+                      Thông số / Tính năng
+                    </span>
+                  </th>
+                  {plans.map((plan) => {
+                    const isStarter = plan.tier === SubscriptionPlanTier.STARTER;
+                    const isPro = plan.tier === SubscriptionPlanTier.PRO;
 
-              return (
-                <div
-                  key={plan.tier}
-                  className={`rounded-2xl border p-5 flex flex-col justify-between bg-white transition-all shadow-sm relative ${isStarter
-                    ? 'border-blue-300 ring-1 ring-blue-400/30'
-                    : isPro
-                      ? 'border-purple-300 ring-1 ring-purple-400/30'
-                      : 'border-slate-200'
-                    }`}
-                >
-                  {plan.isPopular && (
-                    <div className="absolute -top-3 left-1/2 -translate-x-1/2">
-                      <span className="bg-blue-600 text-white text-[10px] font-bold px-3 py-0.5 rounded-full uppercase tracking-wider shadow-sm flex items-center gap-1">
-                        <Sparkles className="h-3 w-3" />
-                        Phổ biến nhất
-                      </span>
-                    </div>
-                  )}
-
-                  <div>
-                    {/* Card Top */}
-                    <div className="flex justify-between items-start mb-2">
-                      <div>
-                        <div className="flex items-center gap-1.5">
-                          {isStarter && <Zap className="h-4 w-4 text-amber-500" />}
-                          {isPro && <ShieldCheck className="h-4 w-4 text-purple-600" />}
-                          <h3 className="font-bold text-slate-900 text-base">{plan.name}</h3>
-                        </div>
-                        <span className="text-[11px] font-mono font-medium text-slate-400">
-                          {plan.tier}
-                        </span>
-                      </div>
-                      <Badge
-                        variant="outline"
-                        className={
-                          plan.isActive
-                            ? 'bg-emerald-50 text-emerald-700 border-emerald-200 text-[10px]'
-                            : 'bg-slate-100 text-slate-500 border-slate-200 text-[10px]'
-                        }
+                    return (
+                      <th
+                        key={plan.tier}
+                        className={cn(
+                          'py-4 px-4 text-center w-[22%] min-w-[170px] border-l border-slate-200/80',
+                          isStarter && 'bg-blue-50/25',
+                          isPro && 'bg-purple-50/20'
+                        )}
                       >
-                        {plan.isActive ? 'Đang mở bán' : 'Tạm ẩn'}
-                      </Badge>
-                    </div>
+                        <div className="flex flex-col items-center gap-1.5">
+                          <span className="font-bold text-slate-900 text-sm sm:text-base">
+                            {plan.name}
+                          </span>
 
-                    <p className="text-xs text-slate-500 min-h-[32px] mb-3">
-                      {plan.description || 'Chưa có mô tả'}
-                    </p>
+                          <div className="flex flex-wrap items-center justify-center gap-1.5">
+                            <Badge
+                              variant="outline"
+                              className={cn(
+                                'text-[10px] font-medium px-2 py-0.5 gap-1',
+                                plan.isActive
+                                  ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                                  : 'bg-slate-100 text-slate-500 border-slate-200'
+                              )}
+                            >
+                              <span
+                                className={cn(
+                                  'h-1.5 w-1.5 rounded-full',
+                                  plan.isActive ? 'bg-emerald-500' : 'bg-slate-400'
+                                )}
+                              />
+                              {plan.isActive ? 'Đang mở bán' : 'Ngừng mở bán'}
+                            </Badge>
 
-                    {/* Price & Quota Box */}
-                    <div className="bg-slate-50 border border-slate-100 rounded-xl p-3 mb-4 space-y-1">
-                      <div className="flex items-baseline justify-between">
-                        <span className="text-xs text-slate-500">Giá niêm yết:</span>
-                        <span className="text-base font-extrabold text-slate-900">
-                          {plan.priceMonthlyVnd === 0
-                            ? 'Miễn phí'
-                            : `${plan.priceMonthlyVnd.toLocaleString('vi-VN')} đ/tháng`}
-                        </span>
-                      </div>
-                      <div className="flex items-baseline justify-between">
-                        <span className="text-xs text-slate-500">Hạn mức Active:</span>
-                        <span className="text-xs font-bold text-blue-600">
-                          {plan.maxActiveCampaigns} Chiến dịch song song
-                        </span>
-                      </div>
-                    </div>
-
-                    {/* Features list */}
-                    <div className="space-y-2 text-xs text-slate-600 border-t border-slate-100 pt-3">
-                      <span className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider block">
-                        Đặc quyền gói ({plan.features ? plan.features.length : 0})
-                      </span>
-                      {plan.features && plan.features.length > 0 ? (
-                        plan.features.map((feat, idx) => (
-                          <div key={idx} className="flex items-start gap-2">
-                            <Check className="h-3.5 w-3.5 text-emerald-600 shrink-0 mt-0.5" />
-                            <span className="text-slate-700 leading-snug">{feat}</span>
+                            {plan.isPopular && (
+                              <Badge
+                                variant="outline"
+                                className="bg-blue-50 text-blue-700 border-blue-200 text-[10px] font-medium px-1.5 py-0.5 gap-1"
+                              >
+                                <Sparkles className="h-2.5 w-2.5 text-blue-600" />
+                                Phổ biến
+                              </Badge>
+                            )}
                           </div>
-                        ))
-                      ) : (
-                        <p className="text-[11px] text-slate-400 italic">Chưa cấu hình tính năng</p>
-                      )}
-                    </div>
-                  </div>
+                        </div>
+                      </th>
+                    );
+                  })}
+                </tr>
+              </thead>
 
-                  {/* Actions */}
-                  <div className="pt-5 mt-4 border-t border-slate-100">
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={() => handleOpenEditPlan(plan)}
-                      className="w-full text-xs h-8 border-slate-300 hover:border-blue-600 hover:text-blue-600 gap-1.5"
+              <tbody className="divide-y divide-slate-100">
+                {/* ========================================================= */}
+                {/* NHÓM 1: THÔNG TIN GÓI */}
+                {/* ========================================================= */}
+                <tr className="bg-slate-100/80 border-y border-slate-200">
+                  <td
+                    colSpan={4}
+                    className="py-2.5 px-5 font-bold text-xs uppercase tracking-wider text-slate-700"
+                  >
+                    Thông tin gói
+                  </td>
+                </tr>
+
+                {/* Hàng: Giá hàng tháng */}
+                <tr className="hover:bg-slate-50/50 transition-colors">
+                  <td className="py-3.5 px-5 font-medium text-slate-700 sticky left-0 bg-white z-10 shadow-[1px_0_0_0_#f1f5f9]">
+                    Giá hàng tháng
+                  </td>
+                  {plans.map((plan) => (
+                    <td
+                      key={plan.tier}
+                      className="py-3.5 px-4 text-center border-l border-slate-100 font-bold text-slate-900"
                     >
-                      <Edit3 className="h-3.5 w-3.5" />
-                      Chỉnh sửa cấu hình gói
-                    </Button>
-                  </div>
-                </div>
-              );
-            })}
+                      {plan.priceMonthlyVnd === 0
+                        ? 'Miễn phí'
+                        : `${plan.priceMonthlyVnd.toLocaleString('vi-VN')} đ/tháng`}
+                    </td>
+                  ))}
+                </tr>
+
+                {/* ========================================================= */}
+                {/* NHÓM 2: GIỚI HẠN SỬ DỤNG */}
+                {/* ========================================================= */}
+                <tr className="bg-slate-100/80 border-y border-slate-200">
+                  <td
+                    colSpan={4}
+                    className="py-2.5 px-5 font-bold text-xs uppercase tracking-wider text-slate-700"
+                  >
+                    Giới hạn sử dụng
+                  </td>
+                </tr>
+
+                {/* Hàng: Chiến dịch đang hoạt động */}
+                <tr className="hover:bg-slate-50/50 transition-colors">
+                  <td className="py-3.5 px-5 font-medium text-slate-700 sticky left-0 bg-white z-10 shadow-[1px_0_0_0_#f1f5f9]">
+                    Chiến dịch đang hoạt động
+                  </td>
+                  {plans.map((plan) => (
+                    <td
+                      key={plan.tier}
+                      className="py-3.5 px-4 text-center border-l border-slate-100 font-semibold text-slate-800"
+                    >
+                      {plan.maxActiveCampaigns} chiến dịch
+                    </td>
+                  ))}
+                </tr>
+
+                {/* Hàng: Dung lượng lưu trữ */}
+                {/* TODO: Giới hạn dung lượng lưu trữ chưa được triển khai */}
+                <tr className="hover:bg-slate-50/50 transition-colors">
+                  <td className="py-3.5 px-5 font-medium text-slate-700 sticky left-0 bg-white z-10 shadow-[1px_0_0_0_#f1f5f9]">
+                    <div className="flex items-center gap-2">
+                      <span>Dung lượng lưu trữ</span>
+                      <span className="text-[10px] font-normal px-1.5 py-0.5 rounded bg-slate-100 text-slate-500 border border-slate-200 whitespace-nowrap">
+                        Chưa áp dụng
+                      </span>
+                    </div>
+                  </td>
+                  <td className="py-3.5 px-4 text-center border-l border-slate-100 text-slate-700 font-medium">
+                    1 GB
+                  </td>
+                  <td className="py-3.5 px-4 text-center border-l border-slate-100 text-slate-700 font-medium">
+                    10 GB
+                  </td>
+                  <td className="py-3.5 px-4 text-center border-l border-slate-100 text-slate-700 font-medium">
+                    100 GB
+                  </td>
+                </tr>
+
+                {/* Hàng: Thành viên tham gia */}
+                <tr className="hover:bg-slate-50/50 transition-colors">
+                  <td className="py-3.5 px-5 font-medium text-slate-700 sticky left-0 bg-white z-10 shadow-[1px_0_0_0_#f1f5f9]">
+                    Thành viên tham gia
+                  </td>
+                  {plans.map((plan) => (
+                    <td
+                      key={plan.tier}
+                      className="py-3.5 px-4 text-center border-l border-slate-100 text-slate-700"
+                    >
+                      {plan.maxParticipants === null
+                        ? 'Không giới hạn'
+                        : `${plan.maxParticipants} thành viên`}
+                    </td>
+                  ))}
+                </tr>
+
+                {/* Hàng: Địa điểm và gian hàng */}
+                <tr className="hover:bg-slate-50/50 transition-colors">
+                  <td className="py-3.5 px-5 font-medium text-slate-700 sticky left-0 bg-white z-10 shadow-[1px_0_0_0_#f1f5f9]">
+                    Địa điểm và gian hàng
+                  </td>
+                  {plans.map((plan) => (
+                    <td
+                      key={plan.tier}
+                      className="py-3.5 px-4 text-center border-l border-slate-100 text-slate-700"
+                    >
+                      {plan.maxBooths === null ? 'Không giới hạn' : `${plan.maxBooths} địa điểm`}
+                    </td>
+                  ))}
+                </tr>
+
+                {/* ========================================================= */}
+                {/* NHÓM 3: TÍNH NĂNG NÂNG CAO */}
+                {/* ========================================================= */}
+                <tr className="bg-slate-100/80 border-y border-slate-200">
+                  <td
+                    colSpan={4}
+                    className="py-2.5 px-5 font-bold text-xs uppercase tracking-wider text-slate-700"
+                  >
+                    Tính năng nâng cao
+                  </td>
+                </tr>
+
+                {/* Hàng: Nhân bản chiến dịch */}
+                <tr className="hover:bg-slate-50/50 transition-colors">
+                  <td className="py-3.5 px-5 font-medium text-slate-700 sticky left-0 bg-white z-10 shadow-[1px_0_0_0_#f1f5f9]">
+                    <div className="flex items-center gap-1.5">
+                      <span>Nhân bản chiến dịch</span>
+                      <span className="text-[10px] text-slate-400 font-normal">(Dự kiến)</span>
+                    </div>
+                  </td>
+                  <td className="py-3.5 px-4 text-center border-l border-slate-100">
+                    {renderCheckOrDash(false)}
+                  </td>
+                  <td className="py-3.5 px-4 text-center border-l border-slate-100">
+                    {renderCheckOrDash(true)}
+                  </td>
+                  <td className="py-3.5 px-4 text-center border-l border-slate-100">
+                    {renderCheckOrDash(true)}
+                  </td>
+                </tr>
+
+                {/* Hàng: Mẫu chiến dịch có sẵn */}
+                <tr className="hover:bg-slate-50/50 transition-colors">
+                  <td className="py-3.5 px-5 font-medium text-slate-700 sticky left-0 bg-white z-10 shadow-[1px_0_0_0_#f1f5f9]">
+                    <div className="flex items-center gap-1.5">
+                      <span>Mẫu chiến dịch có sẵn</span>
+                      <span className="text-[10px] text-slate-400 font-normal">(Dự kiến)</span>
+                    </div>
+                  </td>
+                  <td className="py-3.5 px-4 text-center border-l border-slate-100">
+                    {renderCheckOrDash(false)}
+                  </td>
+                  <td className="py-3.5 px-4 text-center border-l border-slate-100">
+                    {renderCheckOrDash(false)}
+                  </td>
+                  <td className="py-3.5 px-4 text-center border-l border-slate-100">
+                    {renderCheckOrDash(true)}
+                  </td>
+                </tr>
+
+                {/* Hàng: Xuất báo cáo Excel/PDF */}
+                <tr className="hover:bg-slate-50/50 transition-colors">
+                  <td className="py-3.5 px-5 font-medium text-slate-700 sticky left-0 bg-white z-10 shadow-[1px_0_0_0_#f1f5f9]">
+                    <div className="flex items-center gap-1.5">
+                      <span>Xuất báo cáo Excel/PDF</span>
+                      <span className="text-[10px] text-emerald-600 font-normal">
+                        (Excel hỗ trợ)
+                      </span>
+                    </div>
+                  </td>
+                  <td className="py-3.5 px-4 text-center border-l border-slate-100">
+                    {renderCheckOrDash(false)}
+                  </td>
+                  <td className="py-3.5 px-4 text-center border-l border-slate-100">
+                    {renderCheckOrDash(true)}
+                  </td>
+                  <td className="py-3.5 px-4 text-center border-l border-slate-100">
+                    {renderCheckOrDash(true)}
+                  </td>
+                </tr>
+
+                {/* Hàng: Báo cáo tổng hợp nhiều chiến dịch */}
+                <tr className="hover:bg-slate-50/50 transition-colors">
+                  <td className="py-3.5 px-5 font-medium text-slate-700 sticky left-0 bg-white z-10 shadow-[1px_0_0_0_#f1f5f9]">
+                    <div className="flex items-center gap-1.5">
+                      <span>Báo cáo tổng hợp nhiều chiến dịch</span>
+                      <span className="text-[10px] text-slate-400 font-normal">(Dự kiến)</span>
+                    </div>
+                  </td>
+                  <td className="py-3.5 px-4 text-center border-l border-slate-100">
+                    {renderCheckOrDash(false)}
+                  </td>
+                  <td className="py-3.5 px-4 text-center border-l border-slate-100">
+                    {renderCheckOrDash(false)}
+                  </td>
+                  <td className="py-3.5 px-4 text-center border-l border-slate-100">
+                    {renderCheckOrDash(true)}
+                  </td>
+                </tr>
+
+                {/* Hàng: Hỗ trợ kỹ thuật 24/7 */}
+                <tr className="hover:bg-slate-50/50 transition-colors">
+                  <td className="py-3.5 px-5 font-medium text-slate-700 sticky left-0 bg-white z-10 shadow-[1px_0_0_0_#f1f5f9]">
+                    Hỗ trợ kỹ thuật 24/7
+                  </td>
+                  <td className="py-3.5 px-4 text-center border-l border-slate-100">
+                    {renderCheckOrDash(false)}
+                  </td>
+                  <td className="py-3.5 px-4 text-center border-l border-slate-100">
+                    {renderCheckOrDash(false)}
+                  </td>
+                  <td className="py-3.5 px-4 text-center border-l border-slate-100">
+                    {renderCheckOrDash(true)}
+                  </td>
+                </tr>
+
+                {/* ========================================================= */}
+                {/* NHÓM 4: THAO TÁC QUẢN TRỊ */}
+                {/* ========================================================= */}
+                <tr className="bg-slate-50/90 border-t-2 border-slate-200">
+                  <td className="py-4 px-5 font-semibold text-slate-700 sticky left-0 bg-slate-50/95 z-10 shadow-[1px_0_0_0_#e2e8f0]">
+                    Thao tác quản trị
+                  </td>
+                  {plans.map((plan) => (
+                    <td
+                      key={plan.tier}
+                      className="py-4 px-4 text-center border-l border-slate-100"
+                    >
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => handleOpenEditPlan(plan)}
+                        className="text-xs h-8 px-3.5 border-slate-300 hover:border-blue-600 hover:text-blue-600 font-medium cursor-pointer gap-1.5 shadow-2xs hover:bg-blue-50/40"
+                      >
+                        <Edit3 className="h-3.5 w-3.5" />
+                        Chỉnh sửa
+                      </Button>
+                    </td>
+                  ))}
+                </tr>
+              </tbody>
+            </table>
           </div>
         </div>
       )}
@@ -228,15 +510,22 @@ export default function AdminPlansPage() {
             <DialogHeader>
               <DialogTitle className="text-lg font-bold text-slate-900 flex items-center gap-2">
                 <Settings2 className="h-5 w-5 text-blue-600" />
-                Chỉnh Sửa Cấu Hình {editingPlan.name}
+                Chỉnh Sửa Cấu Hình {editingPlan.name.toLowerCase().startsWith('gói') ? editingPlan.name : `Gói ${editingPlan.name}`}
               </DialogTitle>
               <DialogDescription className="text-xs text-slate-500">
                 Mã hệ thống: <strong className="font-mono text-slate-800">{editingPlan.tier}</strong>
               </DialogDescription>
             </DialogHeader>
 
+            {formError && (
+              <div className="flex items-center gap-2 p-3 text-xs rounded-xl bg-rose-50 text-rose-700 border border-rose-200">
+                <AlertCircle className="h-4 w-4 shrink-0 text-rose-600" />
+                <span>{formError}</span>
+              </div>
+            )}
+
             <div className="space-y-4 py-3 text-xs">
-              {/* Plan Name */}
+              {/* Tên hiển thị */}
               <div>
                 <label className="font-semibold text-slate-700 block mb-1">
                   Tên hiển thị của gói
@@ -250,7 +539,7 @@ export default function AdminPlansPage() {
                 />
               </div>
 
-              {/* Price & Max Campaigns in 2 columns */}
+              {/* Giá & Hạn mức Chiến dịch */}
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className="font-semibold text-slate-700 block mb-1">
@@ -276,7 +565,7 @@ export default function AdminPlansPage() {
 
                 <div>
                   <label className="font-semibold text-slate-700 block mb-1">
-                    Hạn mức Active cùng lúc
+                    Hạn mức chiến dịch hoạt động
                   </label>
                   <input
                     type="number"
@@ -289,11 +578,11 @@ export default function AdminPlansPage() {
                     }}
                     className="w-full px-3 py-2 text-sm rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
                   />
-                  <p className="text-[11px] text-slate-400 mt-0.5">Số chiến dịch tối đa</p>
+                  <p className="text-[11px] text-slate-400 mt-0.5">Số chiến dịch song song</p>
                 </div>
               </div>
 
-              {/* Description */}
+              {/* Mô tả tóm tắt */}
               <div>
                 <label className="font-semibold text-slate-700 block mb-1">
                   Mô tả tóm tắt
@@ -307,7 +596,7 @@ export default function AdminPlansPage() {
                 />
               </div>
 
-              {/* Features List */}
+              {/* Danh sách tính năng */}
               <div>
                 <label className="font-semibold text-slate-700 block mb-1">
                   Danh sách tính năng đặc quyền (Mỗi dòng một tính năng)
@@ -321,29 +610,29 @@ export default function AdminPlansPage() {
                 />
               </div>
 
-              {/* Checkboxes: Popular & Active */}
+              {/* Checkboxes: Phổ biến & Kích hoạt */}
               <div className="pt-2 border-t border-slate-100 space-y-2">
-                <label className="flex items-center gap-2 cursor-pointer">
+                <label className="flex items-center gap-2 cursor-pointer select-none">
                   <input
                     type="checkbox"
                     checked={formIsPopular}
                     onChange={(e) => setFormIsPopular(e.target.checked)}
-                    className="h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500"
+                    className="h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500 cursor-pointer"
                   />
                   <span className="font-medium text-slate-700">
-                    Gắn nhãn &quot;Phổ biến nhất&quot; (Hiển thị nổi bật trên trang thanh toán)
+                    Gắn nhãn &quot;Phổ biến nhất&quot; (Hiển thị nhãn trên bảng so sánh)
                   </span>
                 </label>
 
-                <label className="flex items-center gap-2 cursor-pointer">
+                <label className="flex items-center gap-2 cursor-pointer select-none">
                   <input
                     type="checkbox"
                     checked={formIsActive}
                     onChange={(e) => setFormIsActive(e.target.checked)}
-                    className="h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500"
+                    className="h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500 cursor-pointer"
                   />
                   <span className="font-medium text-slate-700">
-                    Kích hoạt hiển thị cho khách hàng lựa chọn
+                    Kích hoạt mở bán (Cho phép khách hàng lựa chọn và thanh toán)
                   </span>
                 </label>
               </div>
@@ -354,7 +643,7 @@ export default function AdminPlansPage() {
                 variant="outline"
                 size="sm"
                 onClick={() => setEditingPlan(null)}
-                className="text-xs"
+                className="text-xs cursor-pointer"
               >
                 Hủy
               </Button>
@@ -362,7 +651,7 @@ export default function AdminPlansPage() {
                 size="sm"
                 onClick={handleSavePlanConfig}
                 disabled={isPending}
-                className="text-xs bg-blue-600 hover:bg-blue-700 text-white"
+                className="text-xs bg-blue-600 hover:bg-blue-700 text-white cursor-pointer"
               >
                 {isPending ? (
                   <Loader2 className="h-3.5 w-3.5 animate-spin mr-1" />
@@ -378,3 +667,4 @@ export default function AdminPlansPage() {
     </div>
   );
 }
+

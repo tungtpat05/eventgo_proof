@@ -118,7 +118,7 @@ export async function getCurrentUserSession(): Promise<CurrentUserSession> {
                 fullName: profile.full_name || 'Tung Nguyen (Dev)',
                 avatarUrl: profile.avatar_url,
                 phone: profile.phone,
-                isSystemAdmin: false,
+                isSystemAdmin: profile.is_system_admin ?? false,
                 plan: SubscriptionPlanTier.PRO,
                 createdAt: new Date(profile.created_at),
                 updatedAt: new Date(profile.updated_at),
