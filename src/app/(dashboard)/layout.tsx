@@ -3,11 +3,15 @@ import { Sidebar } from '@/components/shared/sidebar';
 import { Header } from '@/components/shared/header';
 import { getCurrentUserSession } from '@/application/use-cases/auth/get-current-user';
 import { redirect } from 'next/navigation';
+import { cookies } from 'next/headers';
 
 export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
   const session = await getCurrentUserSession();
+  const cookieStore = await cookies();
+  const viewMode = cookieStore.get('eventgo_view_mode')?.value;
 
-  if (session.user.isSystemAdmin) {
+  // Guard: If user is system admin, only redirect to admin dashboard if they haven't switched to client view
+  if (session.user.isSystemAdmin && viewMode !== 'client') {
     redirect('/admin/dashboard');
   }
 

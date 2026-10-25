@@ -14,13 +14,13 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
       'inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-white transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-950 focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 cursor-pointer';
 
     const variants: Record<string, string> = {
-      default: 'bg-blue-600 text-white hover:bg-blue-700 shadow-sm',
-      destructive: 'bg-red-600 text-white hover:bg-red-700 shadow-sm',
-      outline: 'border border-slate-200 bg-white hover:bg-slate-100 hover:text-slate-900',
-      secondary: 'bg-slate-100 text-slate-900 hover:bg-slate-200',
+      default: 'bg-primary text-primary-foreground hover:bg-primary/90 shadow-sm active:scale-[0.98]',
+      destructive: 'bg-destructive text-destructive-foreground hover:bg-destructive/90 shadow-sm active:scale-[0.98]',
+      outline: 'border border-slate-200 bg-white hover:bg-slate-100 hover:text-slate-900 active:scale-[0.98]',
+      secondary: 'bg-secondary text-secondary-foreground hover:bg-secondary/80 active:scale-[0.98]',
       ghost: 'hover:bg-slate-100 hover:text-slate-900',
-      link: 'text-blue-600 underline-offset-4 hover:underline p-0 h-auto',
-      success: 'bg-emerald-600 text-white hover:bg-emerald-700 shadow-sm',
+      link: 'text-primary underline-offset-4 hover:underline p-0 h-auto',
+      success: 'bg-emerald-600 text-white hover:bg-emerald-700 shadow-sm active:scale-[0.98]',
     };
 
     const sizes: Record<string, string> = {

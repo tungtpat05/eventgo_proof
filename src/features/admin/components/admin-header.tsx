@@ -4,8 +4,9 @@ import React, { useState, useRef, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { UserProfile } from '@/domain/entities';
-import { signOutAction } from '@/features/auth/actions/auth-actions';
-import { User, LogOut, ChevronDown, UserCircle, ShieldCheck, ChevronRight } from 'lucide-react';
+import { signOutAction, switchPersonaViewAction } from '@/features/auth/actions/auth-actions';
+import { User, LogOut, ChevronDown, UserCircle, ShieldCheck, ChevronRight, Menu, ExternalLink } from 'lucide-react';
+import { useAdminLayout } from '../context/admin-layout-context';
 
 interface AdminHeaderProps {
   user: UserProfile;
@@ -50,6 +51,7 @@ function getAdminBreadcrumb(pathname: string): AdminBreadcrumb {
 
 export function AdminHeader({ user }: AdminHeaderProps) {
   const pathname = usePathname();
+  const { toggleSidebar } = useAdminLayout();
   const breadcrumb = getAdminBreadcrumb(pathname);
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
@@ -67,9 +69,20 @@ export function AdminHeader({ user }: AdminHeaderProps) {
   }, []);
 
   return (
-    <header className="sticky top-0 z-30 flex h-16 items-center justify-between border-b border-slate-200 bg-white/95 px-6 backdrop-blur">
-      {/* 1-Line Breadcrumb: Nhóm > Tên trang */}
-      <nav aria-label="Breadcrumb" className="flex items-center gap-2 text-xs sm:text-sm font-medium min-w-0">
+    <header className="sticky top-0 z-30 flex h-16 items-center justify-between border-b border-slate-200 bg-white/95 px-4 sm:px-6 backdrop-blur">
+      <div className="flex items-center gap-2 sm:gap-3 min-w-0">
+        {/* Mobile Hamburger Button */}
+        <button
+          type="button"
+          onClick={toggleSidebar}
+          aria-label="Mở menu quản trị"
+          className="md:hidden p-2 rounded-lg text-slate-600 hover:text-slate-900 hover:bg-slate-100 transition-colors cursor-pointer"
+        >
+          <Menu className="h-5 w-5" />
+        </button>
+
+        {/* 1-Line Breadcrumb: Nhóm > Tên trang */}
+        <nav aria-label="Breadcrumb" className="flex items-center gap-1.5 sm:gap-2 text-xs sm:text-sm font-medium min-w-0">
         {breadcrumb.group ? (
           <>
             {breadcrumb.groupHref ? (
@@ -93,7 +106,21 @@ export function AdminHeader({ user }: AdminHeaderProps) {
           </span>
         )}
       </nav>
+      </div>
+
       <div className="flex items-center gap-3">
+        {/* Switch to Client Workspace Button */}
+        <form action={() => switchPersonaViewAction('client')}>
+          <button
+            type="submit"
+            className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold bg-blue-50 text-blue-700 border border-blue-200 hover:bg-blue-100 hover:text-blue-800 transition-colors cursor-pointer"
+            title="Xem giao diện người dùng / khách hàng"
+          >
+            <ExternalLink className="h-3.5 w-3.5" />
+            <span>Workspace Khách hàng</span>
+          </button>
+        </form>
+
         {/* User Dropdown */}
         <div className="relative" ref={dropdownRef}>
           <button
@@ -153,6 +180,16 @@ export function AdminHeader({ user }: AdminHeaderProps) {
                   <UserCircle className="h-4 w-4 text-slate-500" />
                   Thông tin tài khoản
                 </Link>
+
+                <form action={() => switchPersonaViewAction('client')} className="w-full">
+                  <button
+                    type="submit"
+                    className="flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-sm font-medium text-blue-700 hover:bg-blue-50 transition-colors cursor-pointer"
+                  >
+                    <ExternalLink className="h-4 w-4 text-blue-600" />
+                    Vào Workspace Khách hàng
+                  </button>
+                </form>
               </div>
 
               {/* Sign out */}

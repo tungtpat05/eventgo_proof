@@ -208,7 +208,7 @@ export function CampaignTable({ campaigns }: CampaignTableProps) {
                     <Search className="h-5 w-5" />
                   </div>
                   <p className="text-sm font-medium text-slate-700">Không tìm thấy chiến dịch nào</p>
-                  <p className="text-xs text-slate-400 mt-0.5">
+                  <p className="text-xs text-slate-500 mt-0.5">
                     Thử thay đổi từ khóa tìm kiếm hoặc chuyển sang tab lọc khác.
                   </p>
                 </td>

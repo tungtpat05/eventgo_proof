@@ -3,6 +3,7 @@
 import { env } from '@/config/env';
 import { createServerSupabaseClient } from '@/infrastructure/supabase/server';
 import { redirect } from 'next/navigation';
+import { cookies } from 'next/headers';
 
 export async function signInWithGoogleAction(formData?: FormData): Promise<void> {
   const supabase = await createServerSupabaseClient();
@@ -38,8 +39,20 @@ export async function signInWithGoogleAction(formData?: FormData): Promise<void>
   redirect(data.url);
 }
 
+export async function switchPersonaViewAction(mode: 'admin' | 'client'): Promise<void> {
+  const cookieStore = await cookies();
+  cookieStore.set('eventgo_view_mode', mode, { path: '/', maxAge: 60 * 60 * 24 * 7 });
+  if (mode === 'admin') {
+    redirect('/admin/dashboard');
+  } else {
+    redirect('/dashboard');
+  }
+}
+
 export async function signOutAction(): Promise<void> {
   const supabase = await createServerSupabaseClient();
+  const cookieStore = await cookies();
+  cookieStore.delete('eventgo_view_mode');
   await supabase.auth.signOut();
   redirect('/login');
 }

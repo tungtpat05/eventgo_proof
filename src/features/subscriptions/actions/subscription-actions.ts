@@ -291,68 +291,6 @@ export async function checkSubscriptionPaymentStatusAction(
   return { isPaid: false, status: 'PENDING' };
 }
 
-export async function simulatePaymentSuccessAction(transactionCode: string) {
-  const session = await getCurrentUserSession();
-  const currentUserId = session.user.id;
-  const txn = await txnRepo.getByCode(transactionCode).catch(() => null);
-
-  const targetPlan = txn?.plan || (transactionCode.includes('PRO')
-    ? SubscriptionPlanTier.PRO
-    : transactionCode.includes('STARTER')
-    ? SubscriptionPlanTier.STARTER
-    : SubscriptionPlanTier.FREE);
-
-  const targetUserId = txn?.userId || currentUserId;
-
-  if (txn && txn.status === TransactionStatus.SUCCESS) {
-    return { success: true, message: 'Giao dịch đã được kích hoạt trước đó.' };
-  }
-
-  // 1. Mark transaction as SUCCESS if exists in DB
-  if (txn) {
-    await txnRepo.updateStatus(txn.id, TransactionStatus.SUCCESS, {
-      paidAt: new Date(),
-      notes: 'Thanh toán thành công (Simulated Sandbox)',
-    }).catch(() => {});
-  }
-
-  // 2. Fetch current subscription to handle cumulative extension
-  const currentSub = await subRepo.getByUserId(targetUserId).catch(() => null);
-  let newExpiresAt: Date;
-
-  if (
-    currentSub &&
-    currentSub.plan === targetPlan &&
-    currentSub.expiresAt &&
-    currentSub.expiresAt > new Date()
-  ) {
-    // Cumulative extension: extend 30 days from existing expiry date
-    newExpiresAt = new Date(currentSub.expiresAt.getTime() + 30 * 24 * 60 * 60 * 1000);
-  } else {
-    // Fresh 30 days from now
-    newExpiresAt = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
-  }
-
-  // 3. Upsert subscription
-  await subRepo.upsert({
-    userId: targetUserId,
-    plan: targetPlan,
-    status: SubscriptionStatus.ACTIVE,
-    expiresAt: newExpiresAt,
-  }).catch((err) => {
-    console.warn('Could not upsert subscription to DB (migration pending):', err.message);
-  });
-
-  revalidatePath('/settings/billing');
-  revalidatePath('/campaigns');
-  revalidatePath('/admin/dashboard');
-
-  return {
-    success: true,
-    message: `Đã kích hoạt thành công ${PLAN_CONFIGS[targetPlan].name} đến ${newExpiresAt.toLocaleDateString('vi-VN')}!`,
-  };
-}
-
 export async function getUserTransactionsAction() {
   const session = await getCurrentUserSession();
   return txnRepo.getByUserId(session.user.id);

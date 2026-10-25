@@ -48,22 +48,108 @@ export async function getAdminOverviewAction() {
     { count: activeCampaigns },
     { count: totalBooths },
     { transactions },
+    { subscriptions },
+    { data: profiles },
   ] = await Promise.all([
     supabase.from('profiles').select('*', { count: 'exact', head: true }),
     supabase.from('campaigns').select('*', { count: 'exact', head: true }).eq('status', CampaignStatus.ACTIVE),
     supabase.from('booths').select('*', { count: 'exact', head: true }),
     txnRepo.getAll(),
+    subRepo.getAll(),
+    supabase.from('profiles').select('id, full_name, email'),
   ]);
 
-  const totalRevenue = transactions
-    .filter((t) => t.status === TransactionStatus.SUCCESS)
-    .reduce((sum, t) => sum + t.amount, 0);
+  const profileMap = new Map((profiles || []).map((p) => [p.id, p]));
+
+  const successfulTxns = transactions.filter((t) => t.status === TransactionStatus.SUCCESS);
+  const totalRevenue = successfulTxns.reduce((sum, t) => sum + t.amount, 0);
+
+  // Latest 6 transactions with customer info
+  const recentTransactions = transactions.slice(0, 6).map((t) => ({
+    id: t.id,
+    transactionCode: t.transactionCode,
+    amount: t.amount,
+    currency: t.currency,
+    status: t.status,
+    plan: t.plan,
+    provider: t.provider,
+    createdAt: t.createdAt,
+    customerName: profileMap.get(t.userId)?.full_name || 'Khách hàng',
+    customerEmail: profileMap.get(t.userId)?.email || '',
+  }));
+
+  // Real 6-month revenue calculation from successful transactions
+  const now = new Date();
+  const currentYear = now.getFullYear();
+  const currentMonth = now.getMonth(); // 0 to 11
+
+  const monthlyRevenue = [];
+  for (let i = 5; i >= 0; i--) {
+    const d = new Date(currentYear, currentMonth - i, 1);
+    const yr = d.getFullYear();
+    const mo = d.getMonth();
+    const monthKey = `T${mo + 1}`;
+    const fullMonthName = `Tháng ${mo + 1}/${yr}`;
+
+    const monthTxns = successfulTxns.filter((t) => {
+      const dt = new Date(t.createdAt);
+      return dt.getFullYear() === yr && dt.getMonth() === mo;
+    });
+
+    const amount = monthTxns.reduce((sum, t) => sum + t.amount, 0);
+
+    monthlyRevenue.push({
+      month: monthKey,
+      fullMonthName,
+      amount,
+      count: monthTxns.length,
+      isCurrent: i === 0,
+    });
+  }
+
+  const maxMonthAmount = Math.max(...monthlyRevenue.map((m) => m.amount), 0);
+  const monthlyRevenueWithHeight = monthlyRevenue.map((m) => ({
+    ...m,
+    height: maxMonthAmount > 0
+      ? `${Math.max(6, Math.round((m.amount / maxMonthAmount) * 100))}%`
+      : '4px',
+  }));
+
+  // Real growth calculation: current month vs previous month
+  const curMonthAmount = monthlyRevenue[5].amount;
+  const prevMonthAmount = monthlyRevenue[4].amount;
+  let revenueGrowthRate = 0;
+  if (prevMonthAmount > 0) {
+    revenueGrowthRate = Math.round(((curMonthAmount - prevMonthAmount) / prevMonthAmount) * 100);
+  } else if (curMonthAmount > 0) {
+    revenueGrowthRate = 100;
+  } else {
+    revenueGrowthRate = 0;
+  }
+
+  // Real Plan distribution counts
+  const starterCount = subscriptions.filter((s) => s.plan === SubscriptionPlanTier.STARTER).length;
+  const proCount = subscriptions.filter((s) => s.plan === SubscriptionPlanTier.PRO).length;
+  const explicitFreeCount = subscriptions.filter((s) => s.plan === SubscriptionPlanTier.FREE).length;
+  const totalProfilesCount = totalUsers || (profiles || []).length;
+  const freeCount = Math.max(explicitFreeCount, Math.max(0, totalProfilesCount - starterCount - proCount));
+
+  const planDistribution = {
+    free: freeCount,
+    starter: starterCount,
+    pro: proCount,
+  };
 
   return {
     totalUsers: totalUsers || 0,
     activeCampaigns: activeCampaigns || 0,
     totalBooths: totalBooths || 0,
     totalRevenue,
+    recentTransactions,
+    planDistribution,
+    monthlyRevenue: monthlyRevenueWithHeight,
+    revenueGrowthRate,
+    currentMonthLabel: `Tháng ${currentMonth + 1}/${currentYear}`,
   };
 }
 
@@ -203,6 +289,33 @@ export async function manualUpdateSubscriptionAction(
   revalidatePath('/admin/subscriptions');
   revalidatePath('/settings/billing');
   return updated;
+}
+
+export async function batchUpdateSubscriptionsAction(
+  userIds: string[],
+  plan: SubscriptionPlanTier,
+  daysValid: number = 30
+) {
+  await assertSystemAdmin();
+  const expiresAt =
+    plan === SubscriptionPlanTier.FREE
+      ? null
+      : new Date(Date.now() + daysValid * 24 * 60 * 60 * 1000);
+
+  await Promise.all(
+    userIds.map((userId) =>
+      subRepo.upsert({
+        userId,
+        plan,
+        status: SubscriptionStatus.ACTIVE,
+        expiresAt,
+      })
+    )
+  );
+
+  revalidatePath('/admin/subscriptions');
+  revalidatePath('/settings/billing');
+  return { success: true, count: userIds.length };
 }
 
 // 4. Transactions Management

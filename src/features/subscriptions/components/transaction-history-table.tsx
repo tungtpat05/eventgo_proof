@@ -15,8 +15,8 @@ export function TransactionHistoryTable({ transactions }: TransactionHistoryTabl
     return (
       <div className="text-center py-10 bg-white rounded-xl border border-slate-200 p-6">
         <CreditCard className="h-10 w-10 text-slate-300 mx-auto mb-2" />
-        <p className="text-sm font-medium text-slate-600">Chưa có lịch sử giao dịch nào</p>
-        <p className="text-xs text-slate-400 mt-1">Các giao dịch thanh toán nâng gói sẽ được lưu lại tại đây.</p>
+        <p className="text-sm font-medium text-slate-700">Chưa có lịch sử giao dịch nào</p>
+        <p className="text-xs text-slate-500 mt-1">Các giao dịch thanh toán nâng gói sẽ được lưu lại tại đây.</p>
       </div>
     );
   }

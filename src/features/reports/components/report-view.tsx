@@ -5,29 +5,51 @@ import * as XLSX from 'xlsx';
 import { Campaign, Location } from '@/domain/entities';
 import { Button } from '@/components/ui/button';
 import { formatDate } from '@/lib/utils';
-import { Printer, Download, CheckCircle2, ShieldCheck } from 'lucide-react';
+import { Clock, Download, CheckCircle2, ShieldCheck, Printer } from 'lucide-react';
+
+export interface LocationAuditStat {
+  totalChecklists: number;
+  approvedCount: number;
+  boothCount: number;
+}
 
 interface ReportViewProps {
   campaign: Campaign;
   locations: Location[];
+  locationStats?: Record<string, LocationAuditStat>;
 }
 
-export function ReportView({ campaign, locations }: ReportViewProps) {
+export function ReportView({ campaign, locations, locationStats }: ReportViewProps) {
   const handlePrint = () => {
     window.print();
   };
 
   const handleExportExcel = () => {
-    const data = locations.map((loc, idx) => ({
-      STT: idx + 1,
-      'Chiến Dịch': campaign.title,
-      'Thương Hiệu': campaign.brandName,
-      'Tên Gian Hàng': loc.name,
-      'Địa Chỉ': loc.address,
-      'Thành Phố': loc.city,
-      'Hạn Chót': loc.deadline ? formatDate(loc.deadline) : '—',
-      'Trạng Thái Nghiệm Thu': 'Hoàn thành 100%',
-    }));
+    const data = locations.map((loc, idx) => {
+      const stat = locationStats?.[loc.id] || { totalChecklists: 0, approvedCount: 0, boothCount: 0 };
+      let statusText = 'Chưa thiết lập';
+      if (stat.totalChecklists > 0) {
+        if (stat.approvedCount >= stat.totalChecklists) {
+          statusText = 'Hoàn thành 100%';
+        } else {
+          statusText = `Đang tiến hành (${Math.round((stat.approvedCount / stat.totalChecklists) * 100)}% - ${stat.approvedCount}/${stat.totalChecklists} đạt)`;
+        }
+      } else {
+        statusText = 'Chưa có tiêu chí (0/0)';
+      }
+
+      return {
+        STT: idx + 1,
+        'Chiến Dịch': campaign.title,
+        'Thương Hiệu': campaign.brandName,
+        'Tên Gian Hàng': loc.name,
+        'Địa Chỉ': loc.address,
+        'Thành Phố': loc.city,
+        'Hạn Chót': loc.deadline ? formatDate(loc.deadline) : '—',
+        'Tiêu Chí Đạt': `${stat.approvedCount}/${stat.totalChecklists}`,
+        'Trạng Thái Nghiệm Thu': statusText,
+      };
+    });
 
     const ws = XLSX.utils.json_to_sheet(data);
     const wb = XLSX.utils.book_new();
@@ -124,22 +146,48 @@ export function ReportView({ campaign, locations }: ReportViewProps) {
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
-                {locations.map((loc, idx) => (
-                  <tr key={loc.id} className="hover:bg-slate-50/50">
-                    <td className="p-3 font-semibold text-slate-500">#{idx + 1}</td>
-                    <td className="p-3 font-bold text-slate-900">{loc.name}</td>
-                    <td className="p-3 text-slate-600">
-                      {loc.address}, {loc.city}
-                    </td>
-                    <td className="p-3 text-slate-600">5 / 5 Tiêu chí đạt</td>
-                    <td className="p-3 text-right">
-                      <span className="inline-flex items-center gap-1 font-semibold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200 text-[11px]">
-                        <CheckCircle2 className="h-3 w-3" />
-                        Đã nghiệm thu
-                      </span>
-                    </td>
-                  </tr>
-                ))}
+                {locations.map((loc, idx) => {
+                  const stat = locationStats?.[loc.id] || { totalChecklists: 0, approvedCount: 0, boothCount: 0 };
+                  const isFullyApproved = stat.totalChecklists > 0 && stat.approvedCount >= stat.totalChecklists;
+                  const isInProgress = stat.approvedCount > 0 && stat.approvedCount < stat.totalChecklists;
+                  const hasNoChecklists = stat.totalChecklists === 0;
+
+                  return (
+                    <tr key={loc.id} className="hover:bg-slate-50/50">
+                      <td className="p-3 font-semibold text-slate-500">#{idx + 1}</td>
+                      <td className="p-3 font-bold text-slate-900">{loc.name}</td>
+                      <td className="p-3 text-slate-600">
+                        {loc.address}, {loc.city}
+                      </td>
+                      <td className="p-3 text-slate-600">
+                        {stat.totalChecklists > 0
+                          ? `${stat.approvedCount} / ${stat.totalChecklists} Tiêu chí đạt`
+                          : '0 / 0 Tiêu chí'}
+                      </td>
+                      <td className="p-3 text-right">
+                        {isFullyApproved ? (
+                          <span className="inline-flex items-center gap-1 font-semibold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200 text-[11px]">
+                            <CheckCircle2 className="h-3 w-3" />
+                            Đã nghiệm thu (100%)
+                          </span>
+                        ) : isInProgress ? (
+                          <span className="inline-flex items-center gap-1 font-semibold text-amber-700 bg-amber-50 px-2 py-0.5 rounded border border-amber-200 text-[11px]">
+                            <Clock className="h-3 w-3" />
+                            Đang tiến hành ({Math.round((stat.approvedCount / stat.totalChecklists) * 100)}%)
+                          </span>
+                        ) : hasNoChecklists ? (
+                          <span className="inline-flex items-center gap-1 font-medium text-slate-500 bg-slate-100 px-2 py-0.5 rounded text-[11px]">
+                            Chưa có tiêu chí (0/0)
+                          </span>
+                        ) : (
+                          <span className="inline-flex items-center gap-1 font-medium text-rose-700 bg-rose-50 px-2 py-0.5 rounded border border-rose-200 text-[11px]">
+                            Chưa nghiệm thu (0%)
+                          </span>
+                        )}
+                      </td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           </div>

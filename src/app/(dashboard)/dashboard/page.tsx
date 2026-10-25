@@ -38,7 +38,7 @@ export default async function DashboardPage() {
       {pendingReviews.length > 0 && (
         <Card className="border-amber-200 bg-amber-50/50">
           <CardHeader className="pb-2"><CardTitle className="flex items-center gap-2 text-base"><ClipboardCheck className="h-5 w-5 text-amber-600" />{pendingReviews.length} submission đang chờ bạn duyệt</CardTitle></CardHeader>
-          <CardContent><Link href="/approvals"><Button size="sm" variant="outline">Mở hàng đợi phê duyệt</Button></Link></CardContent>
+          <CardContent><Link href="/campaigns/approvals"><Button size="sm" variant="outline" className="cursor-pointer font-medium">Mở hàng đợi phê duyệt</Button></Link></CardContent>
         </Card>
       )}
 
