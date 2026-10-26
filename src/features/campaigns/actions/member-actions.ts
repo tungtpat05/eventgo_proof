@@ -199,6 +199,9 @@ export async function resendCampaignInviteEmailAction(
   }
 }
 
+import { cancelCampaignInviteUseCase } from '@/application/use-cases/campaigns/cancel-campaign-invite';
+import { revokeCampaignMemberUseCase } from '@/application/use-cases/campaigns/revoke-campaign-member';
+
 export async function updateCampaignMemberAction(
   campaignId: string,
   memberId: string,
@@ -218,3 +221,47 @@ export async function updateCampaignMemberAction(
     return { error: formatted.error };
   }
 }
+
+/**
+ * Server Action: Thu hồi / Hủy lời mời đang chờ xác nhận
+ */
+export async function cancelCampaignInviteAction(
+  campaignId: string,
+  inviteId: string
+): Promise<{ success?: boolean; error?: string; unassignedBoothsCount?: number }> {
+  try {
+    const result = await cancelCampaignInviteUseCase(campaignId, inviteId);
+    if (!result.success) return { error: result.error };
+
+    revalidatePath(`/campaigns/${campaignId}`);
+    revalidatePath(`/campaigns/${campaignId}/members`);
+    revalidatePath(`/campaigns/${campaignId}/wizard`);
+    return { success: true, unassignedBoothsCount: result.unassignedBoothsCount };
+  } catch (error: unknown) {
+    const formatted = formatActionError(error, 'Không thể thu hồi lời mời.');
+    return { error: formatted.error };
+  }
+}
+
+/**
+ * Server Action: Xóa / Thu hồi thành viên đã kích hoạt khỏi chiến dịch
+ */
+export async function revokeCampaignMemberAction(
+  campaignId: string,
+  memberId: string
+): Promise<{ success?: boolean; error?: string; unassignedBoothsCount?: number }> {
+  try {
+    const result = await revokeCampaignMemberUseCase(campaignId, memberId);
+    if (!result.success) return { error: result.error };
+
+    revalidatePath(`/campaigns/${campaignId}`);
+    revalidatePath(`/campaigns/${campaignId}/members`);
+    revalidatePath(`/campaigns/${campaignId}/wizard`);
+    revalidatePath('/dashboard');
+    return { success: true, unassignedBoothsCount: result.unassignedBoothsCount };
+  } catch (error: unknown) {
+    const formatted = formatActionError(error, 'Không thể thu hồi quyền thành viên.');
+    return { error: formatted.error };
+  }
+}
+
