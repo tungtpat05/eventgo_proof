@@ -7,6 +7,7 @@ import { UserProfile } from '@/domain/entities';
 import { signOutAction, switchPersonaViewAction } from '@/features/auth/actions/auth-actions';
 import { User, LogOut, ChevronDown, UserCircle, ShieldCheck, ChevronRight, Menu, ExternalLink } from 'lucide-react';
 import { useAdminLayout } from '../context/admin-layout-context';
+import { LanguageSwitcher } from '@/components/shared/language-switcher';
 
 interface AdminHeaderProps {
   user: UserProfile;
@@ -108,7 +109,10 @@ export function AdminHeader({ user }: AdminHeaderProps) {
       </nav>
       </div>
 
-      <div className="flex items-center gap-3">
+      <div className="flex items-center gap-2.5 sm:gap-3">
+        {/* Language Switcher */}
+        <LanguageSwitcher />
+
         {/* Switch to Client Workspace Button */}
         <form action={() => switchPersonaViewAction('client')}>
           <button
