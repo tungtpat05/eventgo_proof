@@ -199,9 +199,6 @@ export async function resendCampaignInviteEmailAction(
   }
 }
 
-import { cancelCampaignInviteUseCase } from '@/application/use-cases/campaigns/cancel-campaign-invite';
-import { revokeCampaignMemberUseCase } from '@/application/use-cases/campaigns/revoke-campaign-member';
-
 export async function updateCampaignMemberAction(
   campaignId: string,
   memberId: string,
@@ -223,20 +220,19 @@ export async function updateCampaignMemberAction(
 }
 
 /**
- * Server Action: Thu hồi / Hủy lời mời đang chờ xác nhận
+ * Thu hồi lời mời đang ở trạng thái PENDING
  */
 export async function cancelCampaignInviteAction(
   campaignId: string,
   inviteId: string
-): Promise<{ success?: boolean; error?: string; unassignedBoothsCount?: number }> {
+): Promise<{ success?: string; error?: string }> {
   try {
-    const result = await cancelCampaignInviteUseCase(campaignId, inviteId);
-    if (!result.success) return { error: result.error };
-
-    revalidatePath(`/campaigns/${campaignId}`);
+    await requireCampaignManager(campaignId);
+    await new SupabaseCampaignMemberRepository().cancelInvite(inviteId);
     revalidatePath(`/campaigns/${campaignId}/members`);
+    revalidatePath(`/campaigns/${campaignId}`);
     revalidatePath(`/campaigns/${campaignId}/wizard`);
-    return { success: true, unassignedBoothsCount: result.unassignedBoothsCount };
+    return { success: 'Đã thu hồi lời mời thành công.' };
   } catch (error: unknown) {
     const formatted = formatActionError(error, 'Không thể thu hồi lời mời.');
     return { error: formatted.error };
@@ -244,23 +240,64 @@ export async function cancelCampaignInviteAction(
 }
 
 /**
- * Server Action: Xóa / Thu hồi thành viên đã kích hoạt khỏi chiến dịch
+ * Thu hồi tư cách thành viên (Revoke) và dọn dẹp các phân công booth
  */
 export async function revokeCampaignMemberAction(
   campaignId: string,
-  memberId: string
-): Promise<{ success?: boolean; error?: string; unassignedBoothsCount?: number }> {
+  memberId: string,
+  role: CampaignRole = CampaignRole.SUPERVISOR
+): Promise<{ success?: string; error?: string }> {
   try {
-    const result = await revokeCampaignMemberUseCase(campaignId, memberId);
-    if (!result.success) return { error: result.error };
-
-    revalidatePath(`/campaigns/${campaignId}`);
+    await requireCampaignManager(campaignId);
+    await new SupabaseCampaignMemberRepository().setAccess(memberId, role, true);
     revalidatePath(`/campaigns/${campaignId}/members`);
+    revalidatePath(`/campaigns/${campaignId}`);
     revalidatePath(`/campaigns/${campaignId}/wizard`);
-    revalidatePath('/dashboard');
-    return { success: true, unassignedBoothsCount: result.unassignedBoothsCount };
+    return { success: 'Đã xóa thành viên khỏi chiến dịch và gỡ các phân công liên quan.' };
   } catch (error: unknown) {
-    const formatted = formatActionError(error, 'Không thể thu hồi quyền thành viên.');
+    const formatted = formatActionError(error, 'Không thể xóa thành viên khỏi chiến dịch.');
+    return { error: formatted.error };
+  }
+}
+
+/**
+ * Đổi vai trò thành viên trong chiến dịch
+ */
+export async function updateCampaignMemberRoleAction(
+  campaignId: string,
+  memberId: string,
+  role: CampaignRole
+): Promise<{ success?: string; error?: string }> {
+  try {
+    await requireCampaignManager(campaignId);
+    await new SupabaseCampaignMemberRepository().setAccess(memberId, role, false);
+    revalidatePath(`/campaigns/${campaignId}/members`);
+    revalidatePath(`/campaigns/${campaignId}`);
+    revalidatePath(`/campaigns/${campaignId}/wizard`);
+    return { success: 'Đã cập nhật vai trò thành viên.' };
+  } catch (error: unknown) {
+    const formatted = formatActionError(error, 'Không thể cập nhật vai trò thành viên.');
+    return { error: formatted.error };
+  }
+}
+
+/**
+ * Khôi phục thành viên đã từng bị thu hồi
+ */
+export async function restoreCampaignMemberAction(
+  campaignId: string,
+  memberId: string,
+  role: CampaignRole
+): Promise<{ success?: string; error?: string }> {
+  try {
+    await requireCampaignManager(campaignId);
+    await new SupabaseCampaignMemberRepository().setAccess(memberId, role, false);
+    revalidatePath(`/campaigns/${campaignId}/members`);
+    revalidatePath(`/campaigns/${campaignId}`);
+    revalidatePath(`/campaigns/${campaignId}/wizard`);
+    return { success: 'Đã khôi phục thành viên thành công.' };
+  } catch (error: unknown) {
+    const formatted = formatActionError(error, 'Không thể khôi phục thành viên.');
     return { error: formatted.error };
   }
 }

@@ -88,6 +88,14 @@ export class SupabaseCampaignMemberRepository implements CampaignMemberRepositor
     return data;
   }
 
+  async cancelInvite(inviteId: string): Promise<void> {
+    const supabase = await createServerSupabaseClient();
+    const { error } = await supabase.rpc('cancel_campaign_invite', {
+      p_invite_id: inviteId,
+    });
+    if (error) throw new Error(error.message);
+  }
+
   async setAccess(memberId: string, role: CampaignRole, revoke: boolean): Promise<void> {
     const supabase = await createServerSupabaseClient();
     const { error } = await supabase.rpc('set_campaign_member_access', {
@@ -98,3 +106,4 @@ export class SupabaseCampaignMemberRepository implements CampaignMemberRepositor
     if (error) throw new Error(error.message);
   }
 }
+
