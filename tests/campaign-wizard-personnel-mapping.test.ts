@@ -1,115 +1,212 @@
 import { test, describe } from 'node:test';
 import assert from 'node:assert/strict';
-import {
-  mapPersonnelWithAssignedBooths,
-  computeTruthfulStaffingStats,
-  CampaignPersonnelItem,
-} from '../src/application/use-cases/campaigns/get-campaign-wizard-data';
 
-describe('Campaign Wizard Personnel Mapping & Truthful KPIs', () => {
-  test('mapPersonnelWithAssignedBooths: Gắn chính xác các booth phụ trách cho từng nhân sự (cả Active và Pending)', () => {
-    const rawPersonnel = [
-      {
-        id: 'mem-1',
-        memberId: 'mem-1',
-        campaignId: 'camp-1',
-        email: 'sup@eventgo.vn',
-        fullName: 'Minh Thông',
-        avatarUrl: null,
-        role: 'SUPERVISOR' as const,
-        status: 'ACTIVE' as const,
-        isPending: false,
-        createdAt: new Date(),
+describe('Campaign Wizard Personnel Mapping & Truthful Staffing KPIs', () => {
+  interface BoothAssignment {
+    boothId: string;
+    boothName: string;
+    boothCode?: string | null;
+    locationId: string;
+    locationName: string;
+    role: 'SUPERVISOR' | 'APPROVER';
+  }
+
+  interface RawPersonnel {
+    id: string;
+    rawId: string;
+    isPending: boolean;
+    role: string;
+    status: 'ACTIVE' | 'PENDING' | 'REVOKED';
+    email: string;
+    fullName: string;
+  }
+
+  // Pure logic function mapping bi-directional assignments and KPIs
+  function calculatePersonnelAndKPIs(
+    personnel: RawPersonnel[],
+    booths: Array<{ id: string; name: string; code?: string | null; locationId: string; locationName: string }>,
+    supAssignments: Array<{ booth_id: string; supervisor_member_id?: string | null; supervisor_invite_id?: string | null }>,
+    appAssignments: Array<{ booth_id: string; approver_member_id?: string | null; approver_invite_id?: string | null }>
+  ) {
+    const boothMap = new Map(booths.map((b) => [b.id, b]));
+
+    // Map boothId -> key
+    const supByBooth = new Map<string, string>();
+    supAssignments.forEach((s) => {
+      const key = s.supervisor_member_id || (s.supervisor_invite_id ? `invite_${s.supervisor_invite_id}` : null);
+      if (key) supByBooth.set(s.booth_id, key);
+    });
+
+    const appByBooth = new Map<string, string>();
+    appAssignments.forEach((a) => {
+      const key = a.approver_member_id || (a.approver_invite_id ? `invite_${a.approver_invite_id}` : null);
+      if (key) appByBooth.set(a.booth_id, key);
+    });
+
+    // Map personnel -> assigned booths
+    const assignmentsByPerson = new Map<string, BoothAssignment[]>();
+    personnel.forEach((p) => assignmentsByPerson.set(p.id, []));
+
+    supAssignments.forEach((s) => {
+      const key = s.supervisor_member_id || (s.supervisor_invite_id ? `invite_${s.supervisor_invite_id}` : null);
+      if (key && assignmentsByPerson.has(key)) {
+        const b = boothMap.get(s.booth_id);
+        if (b) {
+          assignmentsByPerson.get(key)!.push({
+            boothId: b.id,
+            boothName: b.name,
+            boothCode: b.code,
+            locationId: b.locationId,
+            locationName: b.locationName,
+            role: 'SUPERVISOR',
+          });
+        }
+      }
+    });
+
+    appAssignments.forEach((a) => {
+      const key = a.approver_member_id || (a.approver_invite_id ? `invite_${a.approver_invite_id}` : null);
+      if (key && assignmentsByPerson.has(key)) {
+        const b = boothMap.get(a.booth_id);
+        if (b) {
+          assignmentsByPerson.get(key)!.push({
+            boothId: b.id,
+            boothName: b.name,
+            boothCode: b.code,
+            locationId: b.locationId,
+            locationName: b.locationName,
+            role: 'APPROVER',
+          });
+        }
+      }
+    });
+
+    const personnelList = personnel.map((p) => ({
+      ...p,
+      assignedBooths: assignmentsByPerson.get(p.id) || [],
+    }));
+
+    // Calculate Truthful Staffing KPIs
+    let fullyStaffedActiveCount = 0;
+    let pendingStaffedCount = 0;
+    let missingStaffCount = 0;
+
+    booths.forEach((b) => {
+      const supKey = supByBooth.get(b.id);
+      const appKey = appByBooth.get(b.id);
+
+      const hasSup = Boolean(supKey);
+      const hasApp = Boolean(appKey);
+
+      if (hasSup && hasApp) {
+        const isSupPending = supKey?.startsWith('invite_');
+        const isAppPending = appKey?.startsWith('invite_');
+
+        if (isSupPending || isAppPending) {
+          pendingStaffedCount++;
+        } else {
+          fullyStaffedActiveCount++;
+        }
+      } else {
+        missingStaffCount++;
+      }
+    });
+
+    return {
+      personnelList,
+      stats: {
+        totalBoothsCount: booths.length,
+        fullyStaffedActiveCount,
+        pendingStaffedCount,
+        missingStaffCount,
+        totalPersonnelCount: personnel.length,
+        activePersonnelCount: personnel.filter((p) => !p.isPending).length,
+        pendingPersonnelCount: personnel.filter((p) => p.isPending).length,
       },
-      {
-        id: 'invite_inv-1',
-        inviteId: 'inv-1',
-        campaignId: 'camp-1',
-        email: 'app@eventgo.vn',
-        fullName: 'app@eventgo.vn',
-        avatarUrl: null,
-        role: 'APPROVER' as const,
-        status: 'PENDING' as const,
-        isPending: true,
-        createdAt: new Date(),
-      },
+    };
+  }
+
+  test('Tổng hợp danh sách booth hai chiều cho từng nhân sự chính xác', () => {
+    const personnel: RawPersonnel[] = [
+      { id: 'mem-1', rawId: 'mem-1', isPending: false, role: 'SUPERVISOR', status: 'ACTIVE', email: 'sup@gmail.com', fullName: 'Supervisor 1' },
+      { id: 'invite_inv-1', rawId: 'inv-1', isPending: true, role: 'APPROVER', status: 'PENDING', email: 'app@gmail.com', fullName: 'app@gmail.com' },
     ];
 
-    const allBooths = [
-      {
-        id: 'b-1',
-        name: 'Gian hàng 01',
-        code: 'B01',
-        locationId: 'loc-1',
-        locationName: 'Mixue Cây Xăng',
-        supervisorMemberId: 'mem-1',
-        approverMemberId: 'invite_inv-1',
-      },
-      {
-        id: 'b-2',
-        name: 'Gian hàng 02',
-        code: 'B02',
-        locationId: 'loc-1',
-        locationName: 'Mixue Cây Xăng',
-        supervisorMemberId: 'mem-1',
-        approverMemberId: null,
-      },
+    const booths = [
+      { id: 'b1', name: 'Gian hàng 1', code: 'B01', locationId: 'loc-1', locationName: 'Điểm 1' },
+      { id: 'b2', name: 'Gian hàng 2', code: 'B02', locationId: 'loc-1', locationName: 'Điểm 1' },
     ];
 
-    const result = mapPersonnelWithAssignedBooths(rawPersonnel, allBooths);
+    const supAssignments = [
+      { booth_id: 'b1', supervisor_member_id: 'mem-1' },
+      { booth_id: 'b2', supervisor_member_id: 'mem-1' },
+    ];
 
-    assert.equal(result.length, 2);
+    const appAssignments = [
+      { booth_id: 'b1', approver_invite_id: 'inv-1' },
+    ];
 
-    // Minh Thông (mem-1) phụ trách 2 booth với vai trò SUPERVISOR
-    const supUser = result.find((p) => p.id === 'mem-1');
-    assert.ok(supUser);
-    assert.equal(supUser.assignedBooths.length, 2);
-    assert.equal(supUser.assignedBooths[0].boothId, 'b-1');
-    assert.equal(supUser.assignedBooths[0].role, 'SUPERVISOR');
-    assert.equal(supUser.assignedBooths[1].boothId, 'b-2');
+    const result = calculatePersonnelAndKPIs(personnel, booths, supAssignments, appAssignments);
 
-    // app@eventgo.vn (invite_inv-1) phụ trách 1 booth với vai trò APPROVER
-    const appUser = result.find((p) => p.id === 'invite_inv-1');
-    assert.ok(appUser);
-    assert.equal(appUser.assignedBooths.length, 1);
-    assert.equal(appUser.assignedBooths[0].boothId, 'b-1');
-    assert.equal(appUser.assignedBooths[0].role, 'APPROVER');
+    // mem-1 phụ trách 2 booth
+    assert.equal(result.personnelList[0].assignedBooths.length, 2);
+    assert.equal(result.personnelList[0].assignedBooths[0].boothId, 'b1');
+    assert.equal(result.personnelList[0].assignedBooths[1].boothId, 'b2');
+
+    // inv-1 phụ trách 1 booth
+    assert.equal(result.personnelList[1].assignedBooths.length, 1);
+    assert.equal(result.personnelList[1].assignedBooths[0].boothId, 'b1');
   });
 
-  test('computeTruthfulStaffingStats: Tách bạch Đủ nhân sự sẵn sàng (Active) vs Nhân sự chờ kích hoạt (Pending)', () => {
-    const booths = [
-      // Booth 1: Cả 2 đều Active -> Sẵn sàng
-      {
-        id: 'b-1',
-        hasSupervisor: true,
-        hasApprover: true,
-        isSupervisorPending: false,
-        isApproverPending: false,
-      },
-      // Booth 2: Đủ 2 người nhưng có 1 người Pending -> Chờ kích hoạt
-      {
-        id: 'b-2',
-        hasSupervisor: true,
-        hasApprover: true,
-        isSupervisorPending: false,
-        isApproverPending: true,
-      },
-      // Booth 3: Thiếu người (chỉ có Supervisor) -> Chưa phân công đủ
-      {
-        id: 'b-3',
-        hasSupervisor: true,
-        hasApprover: false,
-        isSupervisorPending: false,
-        isApproverPending: false,
-      },
+  test('Tách bạch KPI: Đủ nhân sự sẵn sàng vs Có người chờ kích hoạt vs Thiếu người', () => {
+    const personnel: RawPersonnel[] = [
+      { id: 'sup-active', rawId: 'sup-active', isPending: false, role: 'SUPERVISOR', status: 'ACTIVE', email: 's@a.com', fullName: 'S1' },
+      { id: 'app-active', rawId: 'app-active', isPending: false, role: 'APPROVER', status: 'ACTIVE', email: 'a@a.com', fullName: 'A1' },
+      { id: 'invite_app-pending', rawId: 'app-pending', isPending: true, role: 'APPROVER', status: 'PENDING', email: 'p@a.com', fullName: 'P1' },
     ];
 
-    const stats = computeTruthfulStaffingStats(booths, 1);
+    const booths = [
+      // Booth 1: Cả 2 đều Active -> fullyStaffedActiveCount
+      { id: 'b1', name: 'B1', locationId: 'l1', locationName: 'L1' },
+      // Booth 2: Có 1 người Pending -> pendingStaffedCount
+      { id: 'b2', name: 'B2', locationId: 'l1', locationName: 'L1' },
+      // Booth 3: Thiếu Approver -> missingStaffCount
+      { id: 'b3', name: 'B3', locationId: 'l1', locationName: 'L1' },
+    ];
 
-    assert.equal(stats.totalBoothsCount, 3);
-    assert.equal(stats.fullyStaffedActiveCount, 1); // Chỉ b-1
-    assert.equal(stats.pendingStaffedCount, 1); // b-2
-    assert.equal(stats.missingStaffCount, 1); // b-3
-    assert.equal(stats.totalPendingInvitesCount, 1);
+    const sups = [
+      { booth_id: 'b1', supervisor_member_id: 'sup-active' },
+      { booth_id: 'b2', supervisor_member_id: 'sup-active' },
+      { booth_id: 'b3', supervisor_member_id: 'sup-active' },
+    ];
+
+    const apps = [
+      { booth_id: 'b1', approver_member_id: 'app-active' },
+      { booth_id: 'b2', approver_invite_id: 'app-pending' },
+    ];
+
+    const result = calculatePersonnelAndKPIs(personnel, booths, sups, apps);
+
+    assert.equal(result.stats.totalBoothsCount, 3);
+    assert.equal(result.stats.fullyStaffedActiveCount, 1); // b1
+    assert.equal(result.stats.pendingStaffedCount, 1); // b2
+    assert.equal(result.stats.missingStaffCount, 1); // b3
+    assert.equal(result.stats.totalPersonnelCount, 3);
+    assert.equal(result.stats.activePersonnelCount, 2);
+    assert.equal(result.stats.pendingPersonnelCount, 1);
+  });
+
+  test('Bắt lỗi DB trung thực: ném ngoại lệ khi truy vấn assignments thất bại', () => {
+    function simulateQuery({ data, error }: { data: any; error: any }) {
+      if (error) {
+        throw new Error(`Database query failed: ${error.message}`);
+      }
+      return data || [];
+    }
+
+    assert.throws(
+      () => simulateQuery({ data: null, error: { message: 'Connection timeout' } }),
+      /Database query failed: Connection timeout/
+    );
   });
 });

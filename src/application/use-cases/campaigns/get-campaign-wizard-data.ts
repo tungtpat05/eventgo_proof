@@ -21,158 +21,34 @@ export interface WizardPersonnelOption extends CampaignMember {
   inviteId?: string;
 }
 
-export interface AssignedBoothSummary {
-  boothId: string;
-  boothName: string;
-  boothCode?: string | null;
-  locationId: string;
-  locationName: string;
-  role: 'SUPERVISOR' | 'APPROVER';
-}
-
 export interface CampaignPersonnelItem {
-  id: string; // memberId or invite_inviteId
-  memberId?: string;
-  inviteId?: string;
-  userId?: string;
-  campaignId: string;
+  id: string; // memberId hoặc `invite_${inviteId}`
+  rawId: string; // UUID gốc
+  isPending: boolean;
+  role: CampaignRole;
+  status: 'ACTIVE' | 'PENDING' | 'REVOKED';
   email: string;
   fullName: string;
-  avatarUrl?: string | null;
-  role: CampaignRole;
-  status: 'ACTIVE' | 'PENDING';
-  isPending: boolean;
-  assignedBooths: AssignedBoothSummary[];
+  avatarUrl: string | null;
   createdAt: Date;
-}
-
-export interface TruthfulStaffingStats {
-  totalBoothsCount: number;
-  fullyStaffedActiveCount: number; // Cả Supervisor và Approver đều đã kích hoạt (Active)
-  pendingStaffedCount: number;     // Đã gán đủ 2 vị trí nhưng có ít nhất 1 người chờ kích hoạt
-  missingStaffCount: number;       // Khuyết ít nhất 1 vị trí
-  totalPendingInvitesCount: number;
-}
-
-export function mapPersonnelWithAssignedBooths(
-  rawPersonnel: Array<{
-    id: string;
-    memberId?: string;
-    inviteId?: string;
-    userId?: string;
-    campaignId: string;
-    email: string;
-    fullName: string;
-    avatarUrl?: string | null;
-    role: any;
-    status: any;
-    isPending?: boolean;
-    createdAt?: Date;
-  }>,
-  allBooths: Array<{
-    id: string;
-    name: string;
-    code?: string | null;
+  assignedBooths: {
+    boothId: string;
+    boothName: string;
+    boothCode?: string | null;
     locationId: string;
     locationName: string;
-    supervisorMemberId?: string | null;
-    approverMemberId?: string | null;
-  }>
-): CampaignPersonnelItem[] {
-  return rawPersonnel.map((p) => {
-    const assignedBooths: AssignedBoothSummary[] = [];
-
-    allBooths.forEach((b) => {
-      const isSup =
-        b.supervisorMemberId === p.id ||
-        (p.memberId && b.supervisorMemberId === p.memberId) ||
-        (p.inviteId && b.supervisorMemberId === `invite_${p.inviteId}`);
-
-      if (isSup) {
-        assignedBooths.push({
-          boothId: b.id,
-          boothName: b.name,
-          boothCode: b.code,
-          locationId: b.locationId,
-          locationName: b.locationName,
-          role: 'SUPERVISOR',
-        });
-      }
-
-      const isApp =
-        b.approverMemberId === p.id ||
-        (p.memberId && b.approverMemberId === p.memberId) ||
-        (p.inviteId && b.approverMemberId === `invite_${p.inviteId}`);
-
-      if (isApp) {
-        assignedBooths.push({
-          boothId: b.id,
-          boothName: b.name,
-          boothCode: b.code,
-          locationId: b.locationId,
-          locationName: b.locationName,
-          role: 'APPROVER',
-        });
-      }
-    });
-
-    return {
-      id: p.id,
-      memberId: p.memberId,
-      inviteId: p.inviteId,
-      userId: p.userId,
-      campaignId: p.campaignId,
-      email: p.email,
-      fullName: p.fullName,
-      avatarUrl: p.avatarUrl,
-      role: p.role as CampaignRole,
-      status: p.isPending ? 'PENDING' : 'ACTIVE',
-      isPending: Boolean(p.isPending),
-      assignedBooths,
-      createdAt: p.createdAt || new Date(),
-    };
-  });
+    role: 'SUPERVISOR' | 'APPROVER';
+  }[];
 }
 
-export function computeTruthfulStaffingStats(
-  booths: Array<{
-    hasSupervisor?: boolean;
-    hasApprover?: boolean;
-    supervisorMemberId?: string | null;
-    approverMemberId?: string | null;
-    isSupervisorPending?: boolean;
-    isApproverPending?: boolean;
-  }>,
-  totalPendingInvites: number = 0
-): TruthfulStaffingStats {
-  let fullyStaffedActiveCount = 0;
-  let pendingStaffedCount = 0;
-  let missingStaffCount = 0;
-
-  booths.forEach((b) => {
-    const hasSup = Boolean(b.hasSupervisor ?? b.supervisorMemberId);
-    const hasApp = Boolean(b.hasApprover ?? b.approverMemberId);
-    const isSupPending = Boolean(b.isSupervisorPending);
-    const isAppPending = Boolean(b.isApproverPending);
-
-    if (hasSup && hasApp) {
-      if (isSupPending || isAppPending) {
-        pendingStaffedCount++;
-      } else {
-        fullyStaffedActiveCount++;
-      }
-    } else {
-      missingStaffCount++;
-    }
-  });
-
-  return {
-    totalBoothsCount: booths.length,
-    fullyStaffedActiveCount,
-    pendingStaffedCount,
-    missingStaffCount,
-    totalPendingInvitesCount: totalPendingInvites,
-  };
+export interface PersonnelStaffingStats {
+  totalBoothsCount: number;
+  fullyStaffedActiveCount: number;
+  pendingStaffedCount: number;
+  missingStaffCount: number;
+  totalPersonnelCount: number;
+  activePersonnelCount: number;
+  pendingPersonnelCount: number;
 }
 
 export interface CampaignWizardData {
@@ -202,7 +78,7 @@ export interface CampaignWizardData {
   supervisors: WizardPersonnelOption[];
   approvers: WizardPersonnelOption[];
   personnelList: CampaignPersonnelItem[];
-  staffingStats: TruthfulStaffingStats;
+  staffingStats: PersonnelStaffingStats;
   templates: ChecklistTemplatePreset[];
   readiness: {
     canActivate: boolean;
@@ -231,11 +107,12 @@ export async function getCampaignWizardDataUseCase(campaignId: string): Promise<
   const supabase = createAdminSupabaseClient();
 
   // 1. Fetch Locations
-  const { data: locsData } = await supabase
+  const { data: locsData, error: locErr } = await supabase
     .from('locations')
     .select('*')
     .eq('campaign_id', campaignId)
     .order('name');
+  if (locErr) throw new Error(`Lỗi tải danh sách địa điểm: ${locErr.message}`);
 
   const locRows = locsData || [];
   const locationIds = locRows.map((l) => l.id);
@@ -243,11 +120,12 @@ export async function getCampaignWizardDataUseCase(campaignId: string): Promise<
   // 2. Fetch Booths
   let boothRows: any[] = [];
   if (locationIds.length > 0) {
-    const { data: bData } = await supabase
+    const { data: bData, error: bErr } = await supabase
       .from('booths')
       .select('*')
       .in('location_id', locationIds)
       .order('name');
+    if (bErr) throw new Error(`Lỗi tải danh sách gian hàng: ${bErr.message}`);
     boothRows = bData || [];
   }
   const boothIds = boothRows.map((b) => b.id);
@@ -255,11 +133,12 @@ export async function getCampaignWizardDataUseCase(campaignId: string): Promise<
   // 3. Fetch Checklist items
   let checklistRows: any[] = [];
   if (boothIds.length > 0) {
-    const { data: cData } = await supabase
+    const { data: cData, error: cErr } = await supabase
       .from('checklist_items')
       .select('*')
       .in('booth_id', boothIds)
       .order('order_index');
+    if (cErr) throw new Error(`Lỗi tải danh sách checklist: ${cErr.message}`);
     checklistRows = cData || [];
   }
 
@@ -267,16 +146,18 @@ export async function getCampaignWizardDataUseCase(campaignId: string): Promise<
   let supAssignments: any[] = [];
   let appAssignments: any[] = [];
   if (boothIds.length > 0) {
-    const [{ data: sData }, { data: aData }] = await Promise.all([
+    const [{ data: sData, error: sErr }, { data: aData, error: aErr }] = await Promise.all([
       supabase.from('booth_supervisor_assignments').select('*').in('booth_id', boothIds),
       supabase.from('booth_approver_assignments').select('*').in('booth_id', boothIds),
     ]);
+    if (sErr) throw new Error(`Lỗi tải phân công giám sát viên: ${sErr.message}`);
+    if (aErr) throw new Error(`Lỗi tải phân công người duyệt: ${aErr.message}`);
     supAssignments = sData || [];
     appAssignments = aData || [];
   }
 
   // 5. Fetch Campaign Members (ACTIVE) AND Pending Invites
-  const [{ data: membersData }, { data: invitesData }] = await Promise.all([
+  const [{ data: membersData, error: mErr }, { data: invitesData, error: iErr }] = await Promise.all([
     supabase
       .from('campaign_members')
       .select('*')
@@ -288,10 +169,13 @@ export async function getCampaignWizardDataUseCase(campaignId: string): Promise<
       .eq('campaign_id', campaignId)
       .eq('status', 'PENDING' as any),
   ]);
+  if (mErr) throw new Error(`Lỗi tải danh sách thành viên: ${mErr.message}`);
+  if (iErr) throw new Error(`Lỗi tải danh sách lời mời: ${iErr.message}`);
 
   const rawMembers = membersData || [];
   const userIds = Array.from(new Set(rawMembers.map((m: any) => m.user_id).filter(Boolean)));
   const profileMap = new Map<string, any>();
+
 
   if (userIds.length > 0) {
     const { data: profilesData } = await supabase
@@ -545,8 +429,76 @@ export async function getCampaignWizardDataUseCase(campaignId: string): Promise<
     // Non-blocking fallback
   }
 
-  const personnelList = mapPersonnelWithAssignedBooths(allPersonnel, allBoothsFormatted);
-  const staffingStats = computeTruthfulStaffingStats(allBoothsFormatted, (invitesData || []).length);
+  // 6. Build bi-directional personnelList and truthful staffingStats
+  const personnelList: CampaignPersonnelItem[] = allPersonnel.map((p) => {
+    const rawId = p.inviteId || p.id;
+    const assignedBooths: CampaignPersonnelItem['assignedBooths'] = [];
+
+    allBoothsFormatted.forEach((b) => {
+      if (b.supervisorMemberId === p.id) {
+        assignedBooths.push({
+          boothId: b.id,
+          boothName: b.name,
+          boothCode: b.code,
+          locationId: b.locationId,
+          locationName: b.locationName,
+          role: 'SUPERVISOR',
+        });
+      }
+      if (b.approverMemberId === p.id) {
+        assignedBooths.push({
+          boothId: b.id,
+          boothName: b.name,
+          boothCode: b.code,
+          locationId: b.locationId,
+          locationName: b.locationName,
+          role: 'APPROVER',
+        });
+      }
+    });
+
+    return {
+      id: p.id,
+      rawId,
+      isPending: p.isPending || false,
+      role: p.role,
+      status: p.isPending ? 'PENDING' : 'ACTIVE',
+      email: p.email,
+      fullName: p.fullName,
+      avatarUrl: p.avatarUrl,
+      createdAt: p.createdAt,
+      assignedBooths,
+    };
+  });
+
+  let fullyStaffedActiveCount = 0;
+  let pendingStaffedCount = 0;
+  let missingStaffCount = 0;
+
+  allBoothsFormatted.forEach((b) => {
+    const hasSup = Boolean(b.supervisorMemberId);
+    const hasApp = Boolean(b.approverMemberId);
+
+    if (hasSup && hasApp) {
+      if (b.isSupervisorPending || b.isApproverPending) {
+        pendingStaffedCount++;
+      } else {
+        fullyStaffedActiveCount++;
+      }
+    } else {
+      missingStaffCount++;
+    }
+  });
+
+  const staffingStats: PersonnelStaffingStats = {
+    totalBoothsCount: allBoothsFormatted.length,
+    fullyStaffedActiveCount,
+    pendingStaffedCount,
+    missingStaffCount,
+    totalPersonnelCount: personnelList.length,
+    activePersonnelCount: personnelList.filter((p) => !p.isPending).length,
+    pendingPersonnelCount: personnelList.filter((p) => p.isPending).length,
+  };
 
   return {
     campaign,
