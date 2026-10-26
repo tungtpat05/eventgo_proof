@@ -4,10 +4,11 @@ import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
-import { Briefcase, Building2, Mail, Phone } from 'lucide-react';
+import { Briefcase, Building2, Mail, Phone, Calendar } from 'lucide-react';
 import { Campaign } from '@/domain/entities';
 import { WizardFooter } from './wizard-footer';
 import { saveCampaignStep1Action } from '../../actions/campaign-wizard-actions';
+import { useTranslations } from 'next-intl';
 
 interface Step1InfoProps {
   campaign: Campaign;
@@ -17,6 +18,8 @@ interface Step1InfoProps {
 
 export function Step1Info({ campaign, onNext, onAutoSaveNotify }: Step1InfoProps) {
   const router = useRouter();
+  const t = useTranslations('campaigns.wizard.step1');
+
   const [formData, setFormData] = useState({
     title: campaign.title || '',
     companyName: campaign.companyName || '',
@@ -57,19 +60,19 @@ export function Step1Info({ campaign, onNext, onAutoSaveNotify }: Step1InfoProps
 
   const handleNextClick = async () => {
     if (!formData.title.trim()) {
-      setErrorMsg('Vui lòng nhập tên chiến dịch.');
+      setErrorMsg(t('errNameRequired'));
       return;
     }
     if (!formData.companyName.trim()) {
-      setErrorMsg('Vui lòng nhập tên công ty.');
+      setErrorMsg(t('errCompanyRequired'));
       return;
     }
     if (!formData.brandName.trim()) {
-      setErrorMsg('Vui lòng nhập thương hiệu / nhãn hàng.');
+      setErrorMsg(t('errBrandRequired'));
       return;
     }
     if (formData.startDate && formData.endDate && new Date(formData.endDate) < new Date(formData.startDate)) {
-      setErrorMsg('Ngày kết thúc phải lớn hơn hoặc bằng ngày bắt đầu.');
+      setErrorMsg(t('errDateRange'));
       return;
     }
 
@@ -85,7 +88,7 @@ export function Step1Info({ campaign, onNext, onAutoSaveNotify }: Step1InfoProps
     if (res.success) {
       onNext();
     } else {
-      setErrorMsg(res.error || 'Lỗi khi lưu thông tin chiến dịch.');
+      setErrorMsg(res.error || t('errGeneric'));
     }
   };
 
@@ -101,17 +104,17 @@ export function Step1Info({ campaign, onNext, onAutoSaveNotify }: Step1InfoProps
               </div>
               <div>
                 <CardTitle className="text-base font-bold text-slate-900">
-                  Thông tin chiến dịch
+                  {t('title')}
                 </CardTitle>
                 <CardDescription className="text-xs text-slate-500">
-                  Thiết lập thông tin cơ bản để đội ngũ nhận diện chiến dịch.
+                  {t('subtitle')}
                 </CardDescription>
               </div>
             </div>
 
             <span className="inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-[11px] font-medium bg-slate-100 text-slate-700 border border-slate-200">
               <span className="h-1.5 w-1.5 rounded-full bg-slate-400" />
-              Bản nháp
+              {t('stepBadge')}
             </span>
           </div>
         </CardHeader>
@@ -126,7 +129,7 @@ export function Step1Info({ campaign, onNext, onAutoSaveNotify }: Step1InfoProps
           {/* 1. Tên chiến dịch */}
           <div className="space-y-1.5">
             <label htmlFor="title" className="text-xs font-semibold text-slate-800">
-              Tên chiến dịch <span className="text-red-500">*</span>
+              {t('nameLabel')} <span className="text-red-500">*</span>
             </label>
             <Input
               id="title"
@@ -134,7 +137,7 @@ export function Step1Info({ campaign, onNext, onAutoSaveNotify }: Step1InfoProps
               value={formData.title}
               onChange={handleChange}
               onBlur={handleBlurSave}
-              placeholder="VD: Samsung Galaxy Roadshow 2026"
+              placeholder={t('namePlaceholder')}
               className="h-10 text-sm border-slate-200 focus-visible:ring-blue-600 font-medium"
             />
           </div>
@@ -146,8 +149,8 @@ export function Step1Info({ campaign, onNext, onAutoSaveNotify }: Step1InfoProps
                 <Building2 className="h-3.5 w-3.5" />
               </div>
               <div>
-                <h4 className="text-xs font-bold text-slate-900">Thông tin công ty / khách hàng</h4>
-                <p className="text-[11px] text-slate-500">Thông tin đầu mối phụ trách chiến dịch</p>
+                <h4 className="text-xs font-bold text-slate-900">{t('companyAccordionTitle')}</h4>
+                <p className="text-[11px] text-slate-500">{t('companyAccordionHint')}</p>
               </div>
             </div>
 
@@ -155,7 +158,7 @@ export function Step1Info({ campaign, onNext, onAutoSaveNotify }: Step1InfoProps
               {/* Tên công ty */}
               <div className="space-y-1.5">
                 <label htmlFor="companyName" className="text-xs font-semibold text-slate-700">
-                  Tên công ty <span className="text-red-500">*</span>
+                  {t('companyLabel')} <span className="text-red-500">*</span>
                 </label>
                 <Input
                   id="companyName"
@@ -163,7 +166,7 @@ export function Step1Info({ campaign, onNext, onAutoSaveNotify }: Step1InfoProps
                   value={formData.companyName}
                   onChange={handleChange}
                   onBlur={handleBlurSave}
-                  placeholder="VD: Samsung Vietnam"
+                  placeholder={t('companyPlaceholder')}
                   className="h-9 text-xs border-slate-200 focus-visible:ring-blue-600 bg-white"
                 />
               </div>
@@ -171,7 +174,7 @@ export function Step1Info({ campaign, onNext, onAutoSaveNotify }: Step1InfoProps
               {/* Mã số thuế */}
               <div className="space-y-1.5">
                 <label htmlFor="companyTaxCode" className="text-xs font-semibold text-slate-700">
-                  Mã số thuế
+                  {t('taxCodeLabel')}
                 </label>
                 <Input
                   id="companyTaxCode"
@@ -179,7 +182,7 @@ export function Step1Info({ campaign, onNext, onAutoSaveNotify }: Step1InfoProps
                   value={formData.companyTaxCode}
                   onChange={handleChange}
                   onBlur={handleBlurSave}
-                  placeholder="VD: 0303217354"
+                  placeholder={t('taxCodePlaceholder')}
                   className="h-9 text-xs border-slate-200 focus-visible:ring-blue-600 bg-white"
                 />
               </div>
@@ -187,7 +190,7 @@ export function Step1Info({ campaign, onNext, onAutoSaveNotify }: Step1InfoProps
               {/* Người liên hệ */}
               <div className="space-y-1.5">
                 <label htmlFor="companyContactName" className="text-xs font-semibold text-slate-700">
-                  Người liên hệ <span className="text-red-500">*</span>
+                  {t('contactNameLabel')} <span className="text-red-500">*</span>
                 </label>
                 <Input
                   id="companyContactName"
@@ -195,7 +198,7 @@ export function Step1Info({ campaign, onNext, onAutoSaveNotify }: Step1InfoProps
                   value={formData.companyContactName}
                   onChange={handleChange}
                   onBlur={handleBlurSave}
-                  placeholder="VD: Nguyễn Hoàng Minh"
+                  placeholder={t('contactNamePlaceholder')}
                   className="h-9 text-xs border-slate-200 focus-visible:ring-blue-600 bg-white"
                 />
               </div>
@@ -203,7 +206,7 @@ export function Step1Info({ campaign, onNext, onAutoSaveNotify }: Step1InfoProps
               {/* Email liên hệ */}
               <div className="space-y-1.5">
                 <label htmlFor="companyContactEmail" className="text-xs font-semibold text-slate-700">
-                  Email liên hệ <span className="text-red-500">*</span>
+                  {t('contactEmailLabel')} <span className="text-red-500">*</span>
                 </label>
                 <div className="relative">
                   <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-400" />
@@ -214,7 +217,7 @@ export function Step1Info({ campaign, onNext, onAutoSaveNotify }: Step1InfoProps
                     value={formData.companyContactEmail}
                     onChange={handleChange}
                     onBlur={handleBlurSave}
-                    placeholder="minh.nguyen@samsung.com"
+                    placeholder={t('contactEmailPlaceholder')}
                     className="h-9 pl-9 text-xs border-slate-200 focus-visible:ring-blue-600 bg-white"
                   />
                 </div>
@@ -223,7 +226,7 @@ export function Step1Info({ campaign, onNext, onAutoSaveNotify }: Step1InfoProps
               {/* Số điện thoại */}
               <div className="space-y-1.5">
                 <label htmlFor="companyContactPhone" className="text-xs font-semibold text-slate-700">
-                  Số điện thoại liên hệ
+                  {t('contactPhoneLabel')}
                 </label>
                 <div className="relative">
                   <Phone className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-400" />
@@ -233,7 +236,7 @@ export function Step1Info({ campaign, onNext, onAutoSaveNotify }: Step1InfoProps
                     value={formData.companyContactPhone}
                     onChange={handleChange}
                     onBlur={handleBlurSave}
-                    placeholder="090 123 4567"
+                    placeholder={t('contactPhonePlaceholder')}
                     className="h-9 pl-9 text-xs border-slate-200 focus-visible:ring-blue-600 bg-white"
                   />
                 </div>
@@ -242,7 +245,7 @@ export function Step1Info({ campaign, onNext, onAutoSaveNotify }: Step1InfoProps
               {/* Thương hiệu / Nhãn */}
               <div className="space-y-1.5">
                 <label htmlFor="brandName" className="text-xs font-semibold text-slate-700">
-                  Thương hiệu / Nhãn <span className="text-red-500">*</span>
+                  {t('brandLabel')} <span className="text-red-500">*</span>
                 </label>
                 <Input
                   id="brandName"
@@ -250,7 +253,7 @@ export function Step1Info({ campaign, onNext, onAutoSaveNotify }: Step1InfoProps
                   value={formData.brandName}
                   onChange={handleChange}
                   onBlur={handleBlurSave}
-                  placeholder="VD: Samsung Galaxy"
+                  placeholder={t('brandPlaceholder')}
                   className="h-9 text-xs border-slate-200 focus-visible:ring-blue-600 bg-white"
                 />
               </div>
@@ -259,7 +262,7 @@ export function Step1Info({ campaign, onNext, onAutoSaveNotify }: Step1InfoProps
             {/* Địa chỉ công ty */}
             <div className="space-y-1.5 pt-1">
               <label htmlFor="companyAddress" className="text-xs font-semibold text-slate-700">
-                Địa chỉ công ty
+                {t('addressLabel')}
               </label>
               <Input
                 id="companyAddress"
@@ -267,7 +270,7 @@ export function Step1Info({ campaign, onNext, onAutoSaveNotify }: Step1InfoProps
                 value={formData.companyAddress}
                 onChange={handleChange}
                 onBlur={handleBlurSave}
-                placeholder="2 Hải Triều, Bến Nghé, Quận 1, TP. Hồ Chí Minh"
+                placeholder={t('addressPlaceholder')}
                 className="h-9 text-xs border-slate-200 focus-visible:ring-blue-600 bg-white"
               />
             </div>
@@ -276,8 +279,9 @@ export function Step1Info({ campaign, onNext, onAutoSaveNotify }: Step1InfoProps
           {/* 3. Thời gian triển khai */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="space-y-1.5">
-              <label htmlFor="startDate" className="text-xs font-semibold text-slate-700">
-                Ngày bắt đầu <span className="text-red-500">*</span>
+              <label htmlFor="startDate" className="text-xs font-semibold text-slate-700 flex items-center gap-1.5">
+                <Calendar className="h-3.5 w-3.5 text-blue-600" />
+                <span>{t('startDateLabel')} <span className="text-red-500">*</span></span>
               </label>
               <Input
                 id="startDate"
@@ -286,13 +290,14 @@ export function Step1Info({ campaign, onNext, onAutoSaveNotify }: Step1InfoProps
                 value={formData.startDate}
                 onChange={handleChange}
                 onBlur={handleBlurSave}
-                className="h-10 text-xs border-slate-200 focus-visible:ring-blue-600"
+                className="h-10 text-xs border-slate-200 focus-visible:ring-blue-600 font-medium"
               />
             </div>
 
             <div className="space-y-1.5">
-              <label htmlFor="endDate" className="text-xs font-semibold text-slate-700">
-                Ngày kết thúc <span className="text-red-500">*</span>
+              <label htmlFor="endDate" className="text-xs font-semibold text-slate-700 flex items-center gap-1.5">
+                <Calendar className="h-3.5 w-3.5 text-blue-600" />
+                <span>{t('endDateLabel')} <span className="text-red-500">*</span></span>
               </label>
               <Input
                 id="endDate"
@@ -301,15 +306,16 @@ export function Step1Info({ campaign, onNext, onAutoSaveNotify }: Step1InfoProps
                 value={formData.endDate}
                 onChange={handleChange}
                 onBlur={handleBlurSave}
-                className="h-10 text-xs border-slate-200 focus-visible:ring-blue-600"
+                className="h-10 text-xs border-slate-200 focus-visible:ring-blue-600 font-medium"
               />
             </div>
           </div>
 
           {/* 4. Mô tả / ghi chú chung */}
           <div className="space-y-1.5">
-            <label htmlFor="description" className="text-xs font-semibold text-slate-700">
-              Mô tả chi tiết / Ghi chú chiến dịch
+            <label htmlFor="description" className="text-xs font-semibold text-slate-700 flex items-center justify-between">
+              <span>{t('descLabel')}</span>
+              <span className="text-[11px] text-slate-500 font-normal">{t('descHint')}</span>
             </label>
             <textarea
               id="description"
@@ -318,7 +324,7 @@ export function Step1Info({ campaign, onNext, onAutoSaveNotify }: Step1InfoProps
               value={formData.description}
               onChange={handleChange}
               onBlur={handleBlurSave}
-              placeholder="Nhập ghi chú quy mô, mục tiêu nghiệm thu hoặc quy định đặc thù của chiến dịch..."
+              placeholder={t('descPlaceholder')}
               className="w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-xs focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600"
             />
           </div>

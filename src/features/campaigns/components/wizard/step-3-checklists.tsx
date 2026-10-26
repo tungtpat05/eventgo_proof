@@ -9,10 +9,8 @@ import {
   Copy,
   Plus,
   Trash2,
-  Edit2,
   GripVertical,
   CheckCircle2,
-  Store,
 } from 'lucide-react';
 import { Campaign, Location, Booth, ChecklistItem } from '@/domain/entities';
 import { ChecklistTemplatePreset } from '@/domain/constants/checklist-templates';
@@ -25,6 +23,9 @@ import {
 } from '../../actions/campaign-wizard-actions';
 import { cn } from '@/lib/utils';
 import { useRouter } from 'next/navigation';
+import { useTranslations } from 'next-intl';
+import { getLocalizedTemplatePreset } from '@/lib/i18n/checklist-preset-presenter';
+import { getChecklistCategoryLabel } from '@/lib/i18n/enum-presenters';
 
 interface Step3ChecklistsProps {
   campaign: Campaign;
@@ -54,6 +55,8 @@ export function Step3Checklists({
   onAutoSaveNotify,
 }: Step3ChecklistsProps) {
   const router = useRouter();
+  const t = useTranslations('campaigns.wizard.step3');
+  const tRoot = useTranslations();
 
   // Active booth selector
   const [activeBoothId, setActiveBoothId] = useState<string>(() => {
@@ -73,6 +76,19 @@ export function Step3Checklists({
 
   const [isLoading, setIsLoading] = useState(false);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
+
+  // Localize pre-defined system checklist presets
+  const localizedTemplates = useMemo(() => {
+    return templates.map((tpl) =>
+      getLocalizedTemplatePreset(tpl, (key: string) => {
+        try {
+          return tRoot(`campaigns.wizard.${key}` as any);
+        } catch {
+          return '';
+        }
+      })
+    );
+  }, [templates, tRoot]);
 
   // Find active booth and its items
   const activeBoothData = useMemo(() => {
@@ -104,11 +120,11 @@ export function Step3Checklists({
     setIsLoading(false);
 
     if (res.success) {
-      showToast('Đã áp dụng mẫu checklist vào booth.');
+      showToast(t('toastAppliedSuccess'));
       router.refresh();
       if (onAutoSaveNotify) onAutoSaveNotify();
     } else {
-      alert(res.error || 'Lỗi khi áp dụng mẫu');
+      alert(res.error || t('toastAppliedSuccess'));
     }
   };
 
@@ -133,15 +149,15 @@ export function Step3Checklists({
       setNewDesc('');
       router.refresh();
       if (onAutoSaveNotify) onAutoSaveNotify();
-      showToast('Đã thêm tiêu chí kiểm tra mới.');
+      showToast(t('toastItemAdded'));
     } else {
-      alert(res.error || 'Lỗi khi thêm tiêu chí');
+      alert(res.error || 'Failed');
     }
   };
 
   // 3. Xóa tiêu chí
   const handleDeleteItem = async (itemId: string) => {
-    if (!confirm('Bạn có chắc chắn muốn xóa tiêu chí này khỏi booth?')) return;
+    if (!confirm(t('confirmDeleteItem'))) return;
 
     setIsLoading(true);
     const res = await deleteChecklistItemInWizardAction(campaign.id, itemId);
@@ -151,14 +167,14 @@ export function Step3Checklists({
       router.refresh();
       if (onAutoSaveNotify) onAutoSaveNotify();
     } else {
-      alert(res.error || 'Xóa thất bại');
+      alert(res.error || 'Failed');
     }
   };
 
   // 4. Áp dụng checklist hàng loạt theo 3 lựa chọn
   const handleApplyBatchScope = async () => {
     if (!activeBoothId || activeItems.length === 0) {
-      alert('Vui lòng thiết lập ít nhất 1 tiêu chí cho booth hiện tại trước khi nhân bản.');
+      alert(t('alertNeedItemsToCopy'));
       return;
     }
 
@@ -166,14 +182,13 @@ export function Step3Checklists({
 
     if (batchScope === 'LOCATION') {
       if (!activeBoothData) return;
-      // All booths in current location except self (or including self)
       targetIds = activeBoothData.location.booths.map((b) => b.id);
     } else if (batchScope === 'ALL_CAMPAIGN') {
       targetIds = allBooths.map((b) => b.id);
     } else if (batchScope === 'CUSTOM') {
       targetIds = selectedCustomBoothIds;
       if (targetIds.length === 0) {
-        alert('Vui lòng chọn ít nhất một booth trong danh sách tùy chọn.');
+        alert(t('alertSelectCustomBooths'));
         return;
       }
     }
@@ -187,21 +202,18 @@ export function Step3Checklists({
     setIsLoading(false);
 
     if (res.success) {
-      showToast(`Đã đồng bộ checklist thành công cho ${targetIds.length} booth.`);
+      showToast(t('toastSyncSuccess', { count: targetIds.length }));
       router.refresh();
       if (onAutoSaveNotify) onAutoSaveNotify();
     } else {
-      alert(res.error || 'Đồng bộ thất bại');
+      alert(res.error || 'Failed');
     }
   };
 
   const handleNextCheck = () => {
-    // Check if any booth has 0 checklist items
     const emptyBooths = allBooths.filter((b) => b.checklistCount === 0);
     if (emptyBooths.length > 0) {
-      const confirmProceed = confirm(
-        `Hiện có ${emptyBooths.length} booth chưa có tiêu chí checklist nào. Bạn có muốn tiếp tục sang bước Phân công nhân sự không?`
-      );
+      const confirmProceed = confirm(t('confirmProceedWithoutChecklist', { count: emptyBooths.length }));
       if (!confirmProceed) return;
     }
     onNext();
@@ -228,10 +240,10 @@ export function Step3Checklists({
               </div>
               <div>
                 <CardTitle className="text-base font-bold text-slate-900 leading-tight">
-                  Cấu hình checklist
+                  {t('headerTitle')}
                 </CardTitle>
                 <CardDescription className="text-xs text-slate-500">
-                  Thiết lập các tiêu chí cần kiểm tra tại từng booth.
+                  {t('headerDesc')}
                 </CardDescription>
               </div>
             </div>
@@ -246,7 +258,7 @@ export function Step3Checklists({
               className="text-xs h-8 gap-1.5 border-slate-200 text-slate-700 hover:bg-slate-50 font-medium"
             >
               <Copy className="h-3.5 w-3.5 text-slate-500" />
-              Sao chép sang booth khác
+              {t('copyToOtherBooths')}
             </Button>
           </div>
         </CardHeader>
@@ -258,7 +270,7 @@ export function Step3Checklists({
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 bg-slate-50/70 p-4 rounded-xl border border-slate-200/80">
             {/* Áp dụng cho */}
             <div className="space-y-1.5">
-              <label className="text-xs font-semibold text-slate-700">Áp dụng cho</label>
+              <label className="text-xs font-semibold text-slate-700">{t('applyFor')}</label>
               <select
                 value={activeBoothId}
                 onChange={(e) => setActiveBoothId(e.target.value)}
@@ -266,7 +278,7 @@ export function Step3Checklists({
               >
                 {allBooths.map((b) => (
                   <option key={b.id} value={b.id}>
-                    {b.locationName} / {b.name} ({b.checklistCount} tiêu chí)
+                    {b.locationName} / {b.name} ({t('criteriaCount', { count: b.checklistCount })})
                   </option>
                 ))}
               </select>
@@ -274,7 +286,7 @@ export function Step3Checklists({
 
             {/* Dùng mẫu checklist */}
             <div className="space-y-1.5">
-              <label className="text-xs font-semibold text-slate-700">Dùng mẫu checklist</label>
+              <label className="text-xs font-semibold text-slate-700">{t('useTemplate')}</label>
               <select
                 defaultValue=""
                 onChange={(e) => {
@@ -283,11 +295,11 @@ export function Step3Checklists({
                 className="w-full h-9 rounded-md border border-slate-200 bg-white px-3 text-xs font-medium text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-600"
               >
                 <option value="" disabled>
-                  -- Chọn mẫu tiêu chí có sẵn --
+                  {t('selectTemplatePlaceholder')}
                 </option>
-                {templates.map((tpl) => (
+                {localizedTemplates.map((tpl) => (
                   <option key={tpl.id} value={tpl.code}>
-                    {tpl.name} ({tpl.items.length} tiêu chí)
+                    {tpl.name} ({t('criteriaCount', { count: tpl.items.length })})
                   </option>
                 ))}
               </select>
@@ -301,10 +313,10 @@ export function Step3Checklists({
             <div className="flex items-center justify-between">
               <div>
                 <h4 className="text-xs font-bold uppercase tracking-wider text-slate-800">
-                  Tiêu chí kiểm tra
+                  {t('criteriaSectionTitle')}
                 </h4>
                 <p className="text-[11px] text-slate-500">
-                  {activeItems.length} tiêu chí • {requiredCount} bắt buộc
+                  {t('criteriaSubtitle', { count: activeItems.length, required: requiredCount })}
                 </p>
               </div>
 
@@ -315,7 +327,7 @@ export function Step3Checklists({
                 className="bg-blue-600 hover:bg-blue-700 text-white text-xs h-8 gap-1.5 font-semibold"
               >
                 <Plus className="h-3.5 w-3.5" />
-                Thêm tiêu chí
+                {t('addCriterion')}
               </Button>
             </div>
 
@@ -323,9 +335,9 @@ export function Step3Checklists({
             {activeItems.length === 0 ? (
               <div className="rounded-xl border border-dashed border-slate-200 p-8 text-center bg-slate-50/40">
                 <CheckSquare className="h-8 w-8 text-slate-300 mx-auto mb-2" />
-                <p className="text-xs font-semibold text-slate-700">Booth này chưa có tiêu chí nào</p>
+                <p className="text-xs font-semibold text-slate-700">{t('emptyBoothTitle')}</p>
                 <p className="text-[11px] text-slate-400 mt-0.5">
-                  Chọn mẫu checklist ở trên hoặc bấm "+ Thêm tiêu chí" để bắt đầu.
+                  {t('emptyBoothDesc')}
                 </p>
               </div>
             ) : (
@@ -359,11 +371,11 @@ export function Step3Checklists({
                         {/* Required / Optional Badge */}
                         {item.isRequired ? (
                           <span className="rounded-full px-2 py-0.5 text-[10px] font-semibold bg-blue-50 text-blue-700 border border-blue-200">
-                            Bắt buộc
+                            {t('badgeRequired')}
                           </span>
                         ) : (
                           <span className="rounded-full px-2 py-0.5 text-[10px] font-medium bg-slate-100 text-slate-600">
-                            Tùy chọn
+                            {t('badgeOptional')}
                           </span>
                         )}
 
@@ -372,7 +384,7 @@ export function Step3Checklists({
                           type="button"
                           onClick={() => handleDeleteItem(item.id)}
                           className="p-1 rounded text-slate-400 hover:text-red-600 hover:bg-red-50 transition-colors"
-                          title="Xóa tiêu chí"
+                          title={t('deleteItemTooltip')}
                         >
                           <Trash2 className="h-3.5 w-3.5" />
                         </button>
@@ -389,9 +401,9 @@ export function Step3Checklists({
           {/* ========================================================================= */}
           <div className="rounded-xl border border-slate-200 bg-slate-50/50 p-4 sm:p-5 space-y-3">
             <div>
-              <h4 className="text-xs font-bold text-slate-900">Áp dụng checklist</h4>
+              <h4 className="text-xs font-bold text-slate-900">{t('batchScopeTitle')}</h4>
               <p className="text-[11px] text-slate-500">
-                Chọn phạm vi áp dụng cấu hình checklist này.
+                {t('batchScopeSubtitle')}
               </p>
             </div>
 
@@ -418,12 +430,14 @@ export function Step3Checklists({
                     {batchScope === 'LOCATION' && <div className="h-1.5 w-1.5 rounded-full bg-white" />}
                   </div>
                   <span className="text-xs font-bold text-slate-900">
-                    Tất cả booth tại địa điểm này
+                    {t('batchLocationTitle')}
                   </span>
                 </div>
                 <p className="text-[11px] text-slate-500 mt-1 pl-6">
-                  {activeBoothData?.location.booths.length || 0} booth tại{' '}
-                  {activeBoothData?.location.name || 'địa điểm hiện tại'}
+                  {t('batchLocationDesc', {
+                    count: activeBoothData?.location.booths.length || 0,
+                    location: activeBoothData?.location.name || t('currentLocationFallback'),
+                  })}
                 </p>
               </div>
 
@@ -449,11 +463,14 @@ export function Step3Checklists({
                     {batchScope === 'ALL_CAMPAIGN' && <div className="h-1.5 w-1.5 rounded-full bg-white" />}
                   </div>
                   <span className="text-xs font-bold text-slate-900">
-                    Tất cả booth trong chiến dịch
+                    {t('batchCampaignTitle')}
                   </span>
                 </div>
                 <p className="text-[11px] text-slate-500 mt-1 pl-6">
-                  {allBooths.length} booth tại {locations.length} địa điểm
+                  {t('batchCampaignDesc', {
+                    boothCount: allBooths.length,
+                    locCount: locations.length,
+                  })}
                 </p>
               </div>
 
@@ -478,10 +495,10 @@ export function Step3Checklists({
                   >
                     {batchScope === 'CUSTOM' && <div className="h-1.5 w-1.5 rounded-full bg-white" />}
                   </div>
-                  <span className="text-xs font-bold text-slate-900">Chọn booth cụ thể</span>
+                  <span className="text-xs font-bold text-slate-900">{t('batchCustomTitle')}</span>
                 </div>
                 <p className="text-[11px] text-slate-500 mt-1 pl-6">
-                  Tự chọn một hoặc nhiều booth
+                  {t('batchCustomDesc')}
                 </p>
               </div>
             </div>
@@ -490,7 +507,7 @@ export function Step3Checklists({
             {batchScope === 'CUSTOM' && (
               <div className="pt-2 border-t border-slate-200/80 space-y-2">
                 <span className="text-[11px] font-semibold text-slate-600 block">
-                  Chọn các booth áp dụng tiêu chí:
+                  {t('customSelectPrompt')}
                 </span>
                 <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 max-h-40 overflow-y-auto p-1">
                   {allBooths.map((b) => {
@@ -535,7 +552,7 @@ export function Step3Checklists({
                 isLoading={isLoading}
                 className="bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold h-8 px-4"
               >
-                Áp dụng cấu hình này
+                {t('applyBatchBtn')}
               </Button>
             </div>
           </div>
@@ -549,67 +566,66 @@ export function Step3Checklists({
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-xs p-4">
           <div className="w-full max-w-md bg-white rounded-xl shadow-lg border border-slate-200 overflow-hidden">
             <div className="p-4 border-b border-slate-100 flex items-center justify-between bg-slate-50/60">
-              <h3 className="text-sm font-bold text-slate-900">Thêm tiêu chí kiểm tra</h3>
+              <h3 className="text-sm font-bold text-slate-900">{t('modalTitle')}</h3>
               <button
                 type="button"
                 onClick={() => setShowAddModal(false)}
                 className="text-slate-400 hover:text-slate-600 text-xs"
               >
-                Đóng
+                {t('closeModal')}
               </button>
             </div>
 
             <form onSubmit={handleAddCriterion} className="p-4 space-y-4">
               <div className="space-y-1.5">
                 <label className="text-xs font-semibold text-slate-800">
-                  Tiêu đề kiểm tra <span className="text-red-500">*</span>
+                  {t('fieldTitle')} <span className="text-red-500">*</span>
                 </label>
                 <Input
                   required
                   value={newTitle}
                   onChange={(e) => setNewTitle(e.target.value)}
-                  placeholder="VD: Logo đúng vị trí quy định"
+                  placeholder={t('placeholderTitle')}
                   className="h-9 text-xs"
                 />
               </div>
 
               <div className="space-y-1.5">
-                <label className="text-xs font-semibold text-slate-800">Hướng dẫn / Yêu cầu</label>
+                <label className="text-xs font-semibold text-slate-800">{t('fieldDesc')}</label>
                 <textarea
                   rows={2}
                   value={newDesc}
                   onChange={(e) => setNewDesc(e.target.value)}
-                  placeholder="Chụp ảnh góc nhìn chính diện, ánh sáng rõ nét..."
+                  placeholder={t('placeholderDesc')}
                   className="w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-xs focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600"
                 />
               </div>
 
               <div className="grid grid-cols-2 gap-3">
                 <div className="space-y-1.5">
-                  <label className="text-xs font-semibold text-slate-800">Phân loại</label>
+                  <label className="text-xs font-semibold text-slate-800">{t('fieldCategory')}</label>
                   <select
                     value={newCategory}
                     onChange={(e) => setNewCategory(e.target.value as ChecklistCategory)}
                     className="w-full h-9 rounded-md border border-slate-200 bg-white px-2.5 text-xs text-slate-800"
                   >
-                    <option value={ChecklistCategory.BRANDING}>Thương hiệu (Branding)</option>
-                    <option value={ChecklistCategory.POSM}>Vật phẩm (POSM)</option>
-                    <option value={ChecklistCategory.STRUCTURE}>Kết cấu (Structure)</option>
-                    <option value={ChecklistCategory.STAFFING}>Nhân sự (Staffing)</option>
-                    <option value={ChecklistCategory.CONDITION}>Hiện trạng (Condition)</option>
-                    <option value={ChecklistCategory.OTHER}>Khác (Other)</option>
+                    {Object.values(ChecklistCategory).map((cat) => (
+                      <option key={cat} value={cat}>
+                        {getChecklistCategoryLabel(cat, (k) => tRoot(k as any))}
+                      </option>
+                    ))}
                   </select>
                 </div>
 
                 <div className="space-y-1.5">
-                  <label className="text-xs font-semibold text-slate-800">Mức độ</label>
+                  <label className="text-xs font-semibold text-slate-800">{t('fieldLevel')}</label>
                   <select
                     value={newIsRequired ? 'true' : 'false'}
                     onChange={(e) => setNewIsRequired(e.target.value === 'true')}
                     className="w-full h-9 rounded-md border border-slate-200 bg-white px-2.5 text-xs text-slate-800"
                   >
-                    <option value="true">Bắt buộc (Required)</option>
-                    <option value="false">Tùy chọn (Optional)</option>
+                    <option value="true">{t('badgeRequired')}</option>
+                    <option value="false">{t('badgeOptional')}</option>
                   </select>
                 </div>
               </div>
@@ -621,10 +637,10 @@ export function Step3Checklists({
                   size="sm"
                   onClick={() => setShowAddModal(false)}
                 >
-                  Hủy
+                  {t('btnCancel')}
                 </Button>
                 <Button type="submit" size="sm" isLoading={isLoading} className="bg-blue-600 text-white">
-                  Thêm tiêu chí
+                  {t('btnSubmitAdd')}
                 </Button>
               </div>
             </form>

@@ -6,6 +6,7 @@ import { parseExcelFileAction, confirmImportAction } from '../actions/location-a
 import { Button } from '@/components/ui/button';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
 import { UploadCloud, CheckCircle2, AlertTriangle, FileSpreadsheet, Loader2 } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 
 interface ImportModalProps {
   campaignId: string;
@@ -13,6 +14,8 @@ interface ImportModalProps {
 
 export function LocationImportView({ campaignId }: ImportModalProps) {
   const router = useRouter();
+  const t = useTranslations('locations.import');
+  const tErrors = useTranslations('errors');
   const [previewState, formAction, isParsing] = useActionState(parseExcelFileAction, null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
@@ -27,7 +30,11 @@ export function LocationImportView({ campaignId }: ImportModalProps) {
     setIsSubmitting(false);
 
     if (res.error) {
-      setSubmitError(res.error);
+      if (res.errorCode && tErrors.has(res.errorCode as any)) {
+        setSubmitError(tErrors(res.errorCode as any));
+      } else {
+        setSubmitError(res.error);
+      }
     } else {
       setSubmitSuccess(res.count || 0);
       setTimeout(() => {
@@ -46,10 +53,10 @@ export function LocationImportView({ campaignId }: ImportModalProps) {
             </div>
             <div>
               <CardTitle className="text-xl font-bold text-slate-900">
-                Nhập Danh Sách Địa Điểm Hàng Loạt
+                {t('importTitle')}
               </CardTitle>
               <CardDescription>
-                Tải lên file Excel (.xlsx) hoặc CSV chứa các cột: Tên địa điểm, Địa chỉ, Thành phố
+                {t('importDesc')}
               </CardDescription>
             </div>
           </div>
@@ -59,9 +66,9 @@ export function LocationImportView({ campaignId }: ImportModalProps) {
           {submitSuccess !== null ? (
             <div className="rounded-lg bg-emerald-50 border border-emerald-200 p-6 text-center space-y-2">
               <CheckCircle2 className="mx-auto h-10 w-10 text-emerald-600" />
-              <h4 className="text-base font-bold text-emerald-900">Import thành công!</h4>
+              <h4 className="text-base font-bold text-emerald-900">{t('successTitle')}</h4>
               <p className="text-sm text-emerald-700">
-                Đã thêm thành công {submitSuccess} địa điểm vào chiến dịch. Đang chuyển hướng...
+                {t('successDesc', { count: submitSuccess })}
               </p>
             </div>
           ) : (
@@ -74,7 +81,9 @@ export function LocationImportView({ campaignId }: ImportModalProps) {
 
               {previewState?.error && (
                 <div className="rounded-lg bg-red-50 p-3 text-sm text-red-600 border border-red-200">
-                  {previewState.error}
+                  {previewState.errorCode && tErrors.has(previewState.errorCode as any)
+                    ? tErrors(previewState.errorCode as any)
+                    : previewState.error}
                 </div>
               )}
 
@@ -82,8 +91,8 @@ export function LocationImportView({ campaignId }: ImportModalProps) {
               <form action={formAction} className="space-y-4">
                 <div className="rounded-xl border-2 border-dashed border-slate-200 p-6 text-center hover:border-blue-400 transition-colors bg-slate-50/50">
                   <UploadCloud className="mx-auto h-10 w-10 text-slate-400 mb-2" />
-                  <p className="text-sm font-medium text-slate-700">Chọn file bảng tính</p>
-                  <p className="text-xs text-slate-500 mb-4">Hỗ trợ định dạng .xlsx, .xls, .csv</p>
+                  <p className="text-sm font-medium text-slate-700">{t('chooseFile')}</p>
+                  <p className="text-xs text-slate-500 mb-4">{t('fileSupport')}</p>
                   <input
                     type="file"
                     name="file"
@@ -94,7 +103,7 @@ export function LocationImportView({ campaignId }: ImportModalProps) {
                 </div>
 
                 <Button type="submit" className="w-full" isLoading={isParsing}>
-                  Kiểm tra & Xem trước dữ liệu
+                  {t('btnParse')}
                 </Button>
               </form>
 
@@ -104,22 +113,22 @@ export function LocationImportView({ campaignId }: ImportModalProps) {
                   <div className="flex items-center justify-between text-sm">
                     <span className="flex items-center gap-1.5 text-emerald-700 font-semibold">
                       <CheckCircle2 className="h-4 w-4" />
-                      {previewState.validCount} dòng hợp lệ
+                      {t('validRows', { count: previewState.validCount })}
                     </span>
                     {previewState.errorCount! > 0 && (
                       <span className="flex items-center gap-1.5 text-red-600 font-semibold">
                         <AlertTriangle className="h-4 w-4" />
-                        {previewState.errorCount} dòng có lỗi
+                        {t('invalidRows', { count: previewState.errorCount || 0 })}
                       </span>
                     )}
                   </div>
 
                   {previewState.errorDetails && previewState.errorDetails.length > 0 && (
                     <div className="rounded-lg bg-red-50 p-3 text-xs text-red-700 border border-red-200 space-y-1 max-h-40 overflow-y-auto">
-                      <p className="font-bold">Chi tiết dòng lỗi:</p>
+                      <p className="font-bold">{t('errorDetailsTitle')}</p>
                       {previewState.errorDetails.map((err, i) => (
                         <div key={i}>
-                          Dòng {err.row}: {err.message}
+                          {t('errorRowItem', { row: err.row, message: err.message })}
                         </div>
                       ))}
                     </div>
@@ -128,15 +137,15 @@ export function LocationImportView({ campaignId }: ImportModalProps) {
                   {previewState.previewRows && previewState.previewRows.length > 0 && (
                     <div className="space-y-2">
                       <p className="text-xs font-semibold uppercase text-slate-700">
-                        Xem trước {previewState.previewRows.length} dòng đầu:
+                        {t('previewHeading', { count: previewState.previewRows.length })}
                       </p>
                       <div className="rounded-md border border-slate-200 overflow-hidden text-xs">
                         <table className="w-full text-left">
                           <thead className="bg-slate-50 border-b border-slate-200 text-slate-700">
                             <tr>
-                              <th className="p-2 font-semibold">Tên địa điểm</th>
-                              <th className="p-2 font-semibold">Địa chỉ</th>
-                              <th className="p-2 font-semibold">Thành phố</th>
+                              <th className="p-2 font-semibold">{t('thName')}</th>
+                              <th className="p-2 font-semibold">{t('thAddress')}</th>
+                              <th className="p-2 font-semibold">{t('thCity')}</th>
                             </tr>
                           </thead>
                           <tbody className="divide-y divide-slate-100">
@@ -160,10 +169,10 @@ export function LocationImportView({ campaignId }: ImportModalProps) {
                         {isSubmitting ? (
                           <>
                             <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                            Đang lưu dữ liệu...
+                            {t('saving')}
                           </>
                         ) : (
-                          `Xác nhận Import ${previewState.validCount} địa điểm vào chiến dịch`
+                          t('btnConfirm', { count: previewState.validCount })
                         )}
                       </Button>
                     </div>

@@ -1,19 +1,16 @@
 'use client';
 
 import React from 'react';
-import Link from 'next/link';
 import { signInWithGoogleAction } from '../actions/auth-actions';
-import { Button } from '@/components/ui/button';
 import {
   ShieldCheck,
   CheckCircle,
   MapPin,
-  Clock,
   Sparkles,
   Zap,
   Lock,
-  ArrowRight,
 } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 
 interface LoginFormProps {
   error?: string;
@@ -44,6 +41,8 @@ function GoogleColorIcon({ className = 'h-5 w-5' }: { className?: string }) {
 }
 
 export function LoginForm({ error }: LoginFormProps) {
+  const t = useTranslations('auth.login');
+
   return (
     <div className="w-full min-h-screen grid lg:grid-cols-12 bg-white">
       {/* LEFT COLUMN: Modern SaaS Login Form */}
@@ -58,7 +57,7 @@ export function LoginForm({ error }: LoginFormProps) {
               EventGo Proof
             </span>
             <span className="text-[11px] font-medium text-slate-400 uppercase tracking-wider mt-0.5 block">
-              Nền tảng Nghiệm thu Gian hàng
+              {t('brandSub')}
             </span>
           </div>
         </div>
@@ -67,10 +66,10 @@ export function LoginForm({ error }: LoginFormProps) {
         <div className="my-auto py-10 max-w-sm w-full mx-auto">
           <div className="space-y-2 mb-8">
             <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-slate-900">
-              Đăng nhập hệ thống
+              {t('title')}
             </h1>
             <p className="text-sm text-slate-500 leading-relaxed">
-              Truy cập không gian làm việc để quản lý chiến dịch, giám sát tiến độ booth và duyệt bằng chứng hiện trường.
+              {t('subtitle')}
             </p>
           </div>
 
@@ -91,7 +90,7 @@ export function LoginForm({ error }: LoginFormProps) {
               className="w-full h-12 flex items-center justify-center gap-3 rounded-xl border border-slate-200 bg-white hover:bg-slate-50/90 text-slate-800 font-semibold text-sm shadow-xs hover:border-slate-300 transition-all focus:outline-none focus:ring-2 focus:ring-blue-500/20 active:scale-[0.99] cursor-pointer"
             >
               <GoogleColorIcon className="h-5 w-5 shrink-0" />
-              <span>Đăng nhập bằng Google</span>
+              <span>{t('googleButton')}</span>
             </button>
           </form>
 
@@ -99,18 +98,14 @@ export function LoginForm({ error }: LoginFormProps) {
           <div className="mt-6 pt-6 border-t border-slate-100 space-y-3">
             <div className="flex items-center gap-2 text-xs text-slate-500">
               <Lock className="h-3.5 w-3.5 text-emerald-600 shrink-0" />
-              <span>Xác thực OAuth 2.0 an toàn qua Google Workspace</span>
+              <span>{t('oauthNote')}</span>
             </div>
           </div>
         </div>
 
         {/* Footer Legal Links */}
         <div className="pt-6 border-t border-slate-100 text-center text-xs text-slate-400">
-          <p>
-            Bằng việc tiếp tục, bạn đồng ý với{' '}
-            <span className="text-slate-600 font-medium">Điều khoản Dịch vụ</span> và{' '}
-            <span className="text-slate-600 font-medium">Chính sách Bảo mật</span> của EventGo.
-          </p>
+          <p>{t('termsNotice')}</p>
         </div>
       </div>
 
@@ -124,18 +119,18 @@ export function LoginForm({ error }: LoginFormProps) {
         <div className="relative z-10 flex items-center justify-between">
           <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-slate-800/80 border border-slate-700 text-blue-400 text-xs font-semibold backdrop-blur-xs">
             <Zap className="h-3.5 w-3.5 text-amber-400" />
-            <span>SAAS ACTIVATION & BOOTH COMPLIANCE</span>
+            <span>{t('categoryBadge')}</span>
           </div>
-          <span className="text-xs text-slate-400 font-mono">Phiên bản v1.0</span>
+          <span className="text-xs text-slate-400 font-mono">{t('version')}</span>
         </div>
 
         {/* Center Value Proposition */}
         <div className="relative z-10 my-auto py-8 max-w-xl space-y-6">
           <h2 className="text-3xl xl:text-4xl font-extrabold tracking-tight leading-tight text-white">
-            Nền tảng số hóa nghiệm thu hiện trường minh bạch & chuẩn xác
+            {t('heroTitle')}
           </h2>
           <p className="text-slate-300 text-sm xl:text-base leading-relaxed">
-            Giải quyết triệt để rủi ro gian lận thi công, thất lạc bằng chứng và chậm trễ tiến độ thanh toán cho các chiến dịch Brand Activation toàn quốc.
+            {t('heroSubtitle')}
           </p>
 
           {/* 3 Pillar Feature Cards */}
@@ -146,10 +141,10 @@ export function LoginForm({ error }: LoginFormProps) {
               </div>
               <div>
                 <h4 className="text-xs sm:text-sm font-semibold text-white">
-                  Định vị GPS & Thời gian thực
+                  {t('features.gpsTitle')}
                 </h4>
                 <p className="text-xs text-slate-400 mt-0.5 leading-relaxed">
-                  Ảnh nghiệm thu được gắn tọa độ vị trí và timestamp không thể can thiệp, chống báo cáo khống.
+                  {t('features.gpsDesc')}
                 </p>
               </div>
             </div>
@@ -160,10 +155,10 @@ export function LoginForm({ error }: LoginFormProps) {
               </div>
               <div>
                 <h4 className="text-xs sm:text-sm font-semibold text-white">
-                  Checklist Tiêu chuẩn Đa ngành
+                  {t('features.checklistTitle')}
                 </h4>
                 <p className="text-xs text-slate-400 mt-0.5 leading-relaxed">
-                  Thư viện mẫu kiểm duyệt booth chuẩn hóa theo ngành hàng FMCG, Điện tử tiêu dùng, Ô tô xe máy.
+                  {t('features.checklistDesc')}
                 </p>
               </div>
             </div>
@@ -174,10 +169,10 @@ export function LoginForm({ error }: LoginFormProps) {
               </div>
               <div>
                 <h4 className="text-xs sm:text-sm font-semibold text-white">
-                  Thanh toán PayOS VietQR Tự động
+                  {t('features.payosTitle')}
                 </h4>
                 <p className="text-xs text-slate-400 mt-0.5 leading-relaxed">
-                  Kích hoạt và gia hạn gói dịch vụ tức thì qua cổng VietQR, hạn ngạch cập nhật theo giây.
+                  {t('features.payosDesc')}
                 </p>
               </div>
             </div>
@@ -187,16 +182,16 @@ export function LoginForm({ error }: LoginFormProps) {
         {/* Bottom Feature Capabilities */}
         <div className="relative z-10 pt-6 border-t border-slate-800/80 grid grid-cols-3 gap-4">
           <div>
-            <div className="text-base xl:text-lg font-bold text-white tracking-tight">Real-time</div>
-            <div className="text-[11px] text-slate-400 mt-0.5">Tọa độ GPS & Timestamp</div>
+            <div className="text-base xl:text-lg font-bold text-white tracking-tight">{t('metrics.realtime')}</div>
+            <div className="text-[11px] text-slate-400 mt-0.5">{t('metrics.realtimeSub')}</div>
           </div>
           <div>
-            <div className="text-base xl:text-lg font-bold text-white tracking-tight">Đa Điểm Cầu</div>
-            <div className="text-[11px] text-slate-400 mt-0.5">Chiến dịch phân tán</div>
+            <div className="text-base xl:text-lg font-bold text-white tracking-tight">{t('metrics.multiLocation')}</div>
+            <div className="text-[11px] text-slate-400 mt-0.5">{t('metrics.multiLocationSub')}</div>
           </div>
           <div>
-            <div className="text-base xl:text-lg font-bold text-white tracking-tight">Tự Động Hóa</div>
-            <div className="text-[11px] text-slate-400 mt-0.5">Thanh toán VietQR 24/7</div>
+            <div className="text-base xl:text-lg font-bold text-white tracking-tight">{t('metrics.automation')}</div>
+            <div className="text-[11px] text-slate-400 mt-0.5">{t('metrics.automationSub')}</div>
           </div>
         </div>
       </div>

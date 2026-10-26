@@ -11,7 +11,6 @@ import {
   CheckCircle2,
   Clock,
   AlertCircle,
-  ChevronRight,
   Eye,
 } from 'lucide-react';
 import {
@@ -24,6 +23,7 @@ import {
 import { CameraUploader, CapturedPhoto } from '@/features/evidence/components/camera-uploader';
 import { submitEvidenceAction } from '@/features/submissions/actions/submission-actions';
 import { useRouter } from 'next/navigation';
+import { useTranslations } from 'next-intl';
 
 interface BoothSupervisionCardProps {
   booth: Booth;
@@ -43,6 +43,8 @@ export function BoothSupervisionCard({
   campaignId,
 }: BoothSupervisionCardProps) {
   const router = useRouter();
+  const t = useTranslations('operations.supervision');
+
   const [activeItem, setActiveItem] = useState<ChecklistItem | null>(null);
   const [photos, setPhotos] = useState<CapturedPhoto[]>([]);
   const [notes, setNotes] = useState('');
@@ -69,7 +71,7 @@ export function BoothSupervisionCard({
     e.preventDefault();
     if (!activeItem) return;
     if (photos.length === 0) {
-      setErrorMessage('Vui lòng đính kèm ít nhất 1 ảnh bằng chứng thực tế.');
+      setErrorMessage(t('errNeedAtLeastOnePhoto'));
       return;
     }
 
@@ -90,7 +92,7 @@ export function BoothSupervisionCard({
       setActiveItem(null);
       router.refresh();
     } else {
-      setErrorMessage(res.error || 'Nộp bằng chứng thất bại.');
+      setErrorMessage(res.error || t('errSubmitFailed'));
     }
   };
 
@@ -115,7 +117,7 @@ export function BoothSupervisionCard({
 
           <div className="text-right">
             <span className="text-xs font-bold text-blue-600">
-              {approvedCount}/{totalCount} Đạt
+              {t('boothCardPassed', { approved: approvedCount, total: totalCount })}
             </span>
             <div className="w-20 h-1.5 bg-slate-200 rounded-full mt-1 overflow-hidden">
               <div
@@ -130,7 +132,7 @@ export function BoothSupervisionCard({
       <CardContent className="p-4 space-y-3">
         {checklistItems.length === 0 ? (
           <p className="text-xs text-slate-400 py-3 text-center">
-            Chưa có tiêu chí nào được thiết lập cho gian hàng này.
+            {t('boothCardEmptyChecklist')}
           </p>
         ) : (
           <div className="divide-y divide-slate-100">
@@ -150,22 +152,22 @@ export function BoothSupervisionCard({
                       </span>
                       {status === 'APPROVED' && (
                         <span className="inline-flex items-center gap-1 text-[10px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">
-                          <CheckCircle2 className="h-3 w-3" /> Đã duyệt
+                          <CheckCircle2 className="h-3 w-3" /> {t('statusApproved')}
                         </span>
                       )}
                       {status === 'SUBMITTED' && (
                         <span className="inline-flex items-center gap-1 text-[10px] font-bold text-amber-700 bg-amber-50 px-2 py-0.5 rounded border border-amber-200">
-                          <Clock className="h-3 w-3" /> Chờ duyệt
+                          <Clock className="h-3 w-3" /> {t('statusSubmitted')}
                         </span>
                       )}
                       {status === 'NEEDS_REVISION' && (
                         <span className="inline-flex items-center gap-1 text-[10px] font-bold text-red-700 bg-red-50 px-2 py-0.5 rounded border border-red-200">
-                          <AlertCircle className="h-3 w-3" /> Cần chụp lại
+                          <AlertCircle className="h-3 w-3" /> {t('statusNeedsRevision')}
                         </span>
                       )}
                       {status === 'DRAFT' && (
                         <span className="text-[10px] font-medium text-slate-400 bg-slate-100 px-2 py-0.5 rounded">
-                          Chưa nộp
+                          {t('statusDraft')}
                         </span>
                       )}
                     </div>
@@ -176,7 +178,7 @@ export function BoothSupervisionCard({
                     {/* Show revision notes if needed */}
                     {status === 'NEEDS_REVISION' && sub?.history?.[0]?.notes && (
                       <div className="mt-1 p-2 rounded bg-red-50 border border-red-100 text-[11px] text-red-700">
-                        <strong>Yêu cầu từ Approver:</strong> {sub.history[0].notes}
+                        <strong>{t('approverNotesLabel')}</strong> {sub.history[0].notes}
                       </div>
                     )}
                   </div>
@@ -187,10 +189,10 @@ export function BoothSupervisionCard({
                         variant="ghost"
                         size="sm"
                         onClick={() => setViewSubmission(sub)}
-                        className="h-8 text-xs text-slate-500 hover:text-slate-800 gap-1"
+                        className="h-8 text-xs text-slate-500 hover:text-slate-800 gap-1 cursor-pointer"
                       >
                         <Eye className="h-3.5 w-3.5" />
-                        Xem ảnh ({sub.evidence.length})
+                        {t('btnViewEvidence', { count: sub.evidence.length })}
                       </Button>
                     )}
 
@@ -198,14 +200,14 @@ export function BoothSupervisionCard({
                       <Button
                         size="sm"
                         onClick={() => handleOpenSubmit(item)}
-                        className={`h-8 text-xs gap-1.5 ${
+                        className={`h-8 text-xs gap-1.5 cursor-pointer ${
                           status === 'NEEDS_REVISION'
                             ? 'bg-red-600 hover:bg-red-700 text-white'
                             : 'bg-blue-600 hover:bg-blue-700 text-white'
                         }`}
                       >
                         <Camera className="h-3.5 w-3.5" />
-                        {status === 'DRAFT' ? 'Chụp ảnh' : 'Chụp lại'}
+                        {status === 'DRAFT' ? t('btnCapture') : t('btnRecapture')}
                       </Button>
                     )}
                   </div>
@@ -222,10 +224,10 @@ export function BoothSupervisionCard({
           <DialogHeader>
             <DialogTitle className="text-base font-bold text-slate-900 flex items-center gap-2">
               <Camera className="h-5 w-5 text-blue-600" />
-              Nộp ảnh nghiệm thu — {activeItem?.title}
+              {t('modalSubmitTitle', { title: activeItem?.title || '' })}
             </DialogTitle>
             <DialogDescription className="text-xs text-slate-500">
-              Gian hàng: {booth.name} ({locationName})
+              {t('modalSubmitDesc', { booth: booth.name, location: locationName })}
             </DialogDescription>
           </DialogHeader>
 
@@ -239,26 +241,26 @@ export function BoothSupervisionCard({
 
               {activeItem.description && (
                 <div className="p-3 bg-blue-50/70 border border-blue-100 rounded-lg text-xs text-blue-800">
-                  <strong>Yêu cầu tiêu chuẩn:</strong> {activeItem.description}
+                  <strong>{t('standardRequirementLabel')}</strong> {activeItem.description}
                 </div>
               )}
 
               <div className="space-y-1.5">
                 <label className="text-xs font-semibold uppercase text-slate-700">
-                  Ảnh bằng chứng thực tế * (Tối đa 5 ảnh)
+                  {t('evidencePhotosLabel', { max: 5 })}
                 </label>
                 <CameraUploader photos={photos} onPhotosChange={setPhotos} />
               </div>
 
               <div className="space-y-1.5">
                 <label className="text-xs font-semibold uppercase text-slate-700">
-                  Ghi chú hiện trường (Tùy chọn)
+                  {t('fieldNotesLabel')}
                 </label>
                 <textarea
                   value={notes}
                   onChange={(e) => setNotes(e.target.value)}
                   rows={2}
-                  placeholder="Ghi nhận tình trạng quầy kệ, ánh sáng..."
+                  placeholder={t('fieldNotesPlaceholder')}
                   className="flex w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-xs focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-blue-600"
                 />
               </div>
@@ -270,16 +272,17 @@ export function BoothSupervisionCard({
                   size="sm"
                   onClick={() => setActiveItem(null)}
                   disabled={isSubmitting}
+                  className="cursor-pointer"
                 >
-                  Hủy
+                  {t('btnCancel')}
                 </Button>
                 <Button
                   type="submit"
                   size="sm"
                   disabled={isSubmitting || photos.length === 0}
-                  className="bg-blue-600 hover:bg-blue-700 text-white"
+                  className="bg-blue-600 hover:bg-blue-700 text-white cursor-pointer"
                 >
-                  {isSubmitting ? 'Đang nộp...' : 'Xác nhận nộp bằng chứng'}
+                  {isSubmitting ? t('btnSubmitting') : t('btnConfirmSubmit')}
                 </Button>
               </div>
             </form>
@@ -292,7 +295,7 @@ export function BoothSupervisionCard({
         <DialogContent className="max-w-xl">
           <DialogHeader>
             <DialogTitle className="text-base font-bold text-slate-900">
-              Bằng chứng đã nộp
+              {t('modalViewTitle')}
             </DialogTitle>
           </DialogHeader>
 
@@ -316,7 +319,7 @@ export function BoothSupervisionCard({
 
               {viewSubmission.notes && (
                 <div className="p-3 bg-slate-50 rounded-lg text-xs text-slate-600">
-                  <strong>Ghi chú:</strong> {viewSubmission.notes}
+                  <strong>{t('notesLabel')}</strong> {viewSubmission.notes}
                 </div>
               )}
             </div>

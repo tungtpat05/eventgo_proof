@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react';
 import { CampaignPersonnelItem } from '@/application/use-cases/campaigns/get-campaign-wizard-data';
+import { CampaignRole } from '@/domain/enums';
 import {
   cancelCampaignInviteAction,
   revokeCampaignMemberAction,
@@ -16,6 +17,8 @@ import {
   DialogFooter,
 } from '@/components/ui/dialog';
 import { AlertTriangle, UserX, Store, MapPin, Loader2 } from 'lucide-react';
+import { useTranslations } from 'next-intl';
+import { getRoleLabel } from '@/lib/i18n/enum-presenters';
 
 export interface PersonnelConfirmRevokeModalProps {
   isOpen: boolean;
@@ -32,6 +35,8 @@ export function PersonnelConfirmRevokeModal({
   campaignId,
   onSuccess,
 }: PersonnelConfirmRevokeModalProps) {
+  const t = useTranslations('campaigns.wizard.modals');
+  const tRoles = useTranslations('roles');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -51,7 +56,7 @@ export function PersonnelConfirmRevokeModal({
         if (res.error) {
           setError(res.error);
         } else {
-          onSuccess(res.success || 'Đã thu hồi lời mời thành công.');
+          onSuccess(res.success || 'Revocation successful');
           onClose();
         }
       } else {
@@ -60,12 +65,12 @@ export function PersonnelConfirmRevokeModal({
         if (res.error) {
           setError(res.error);
         } else {
-          onSuccess(res.success || 'Đã xóa thành viên khỏi chiến dịch.');
+          onSuccess(res.success || 'Removal successful');
           onClose();
         }
       }
     } catch (err: any) {
-      setError(err.message || 'Lỗi xử lý yêu cầu.');
+      setError(err.message || 'Operation failed');
     } finally {
       setIsLoading(false);
     }
@@ -81,12 +86,12 @@ export function PersonnelConfirmRevokeModal({
             </div>
             <div>
               <DialogTitle className="text-base font-bold text-slate-900 leading-tight">
-                {isPending ? 'Thu hồi lời mời tham gia' : 'Xóa thành viên khỏi chiến dịch'}
+                {isPending ? t('titleRevokeInvite') : t('titleRemoveMember')}
               </DialogTitle>
               <DialogDescription className="text-xs text-slate-500 mt-0.5">
                 {isPending
-                  ? `Vô hiệu hóa lời mời gửi tới ${personnel.email}`
-                  : `Thu hồi quyền hạn của ${personnel.fullName || personnel.email}`}
+                  ? t('descRevokeInvite', { email: personnel.email })
+                  : t('descRemoveMember', { name: personnel.fullName || personnel.email })}
               </DialogDescription>
             </div>
           </div>
@@ -102,17 +107,17 @@ export function PersonnelConfirmRevokeModal({
 
           <div className="rounded-xl border border-slate-100 bg-slate-50 p-3.5 space-y-2">
             <div className="flex items-center justify-between">
-              <span className="text-slate-500 font-medium">Nhân sự:</span>
+              <span className="text-slate-500 font-medium">{t('labelPersonnel')}</span>
               <span className="font-bold text-slate-900">{personnel.fullName || personnel.email}</span>
             </div>
             <div className="flex items-center justify-between">
-              <span className="text-slate-500 font-medium">Email:</span>
+              <span className="text-slate-500 font-medium">{t('labelEmail')}</span>
               <span className="font-mono text-slate-700">{personnel.email}</span>
             </div>
             <div className="flex items-center justify-between">
-              <span className="text-slate-500 font-medium">Vai trò:</span>
+              <span className="text-slate-500 font-medium">{t('labelRole')}</span>
               <span className="font-semibold text-blue-700 bg-blue-50 px-2 py-0.5 rounded-md border border-blue-100">
-                {personnel.role}
+                {getRoleLabel(personnel.role, (k) => tRoles(k.replace('roles.', '') as any))}
               </span>
             </div>
           </div>
@@ -123,7 +128,7 @@ export function PersonnelConfirmRevokeModal({
               <div className="flex items-start gap-2 text-amber-900 font-bold">
                 <AlertTriangle className="h-4 w-4 text-amber-600 shrink-0 mt-0.5" />
                 <span>
-                  Nhân sự này đang phụ trách {personnel.assignedBooths.length} gian hàng:
+                  {t('warningBoothsAssigned', { count: personnel.assignedBooths.length })}
                 </span>
               </div>
 
@@ -147,21 +152,19 @@ export function PersonnelConfirmRevokeModal({
                       </div>
                     </div>
                     <span className="shrink-0 text-[10px] font-semibold text-amber-800 bg-amber-100/60 px-1.5 py-0.5 rounded">
-                      {b.role}
+                      {getRoleLabel(b.role as CampaignRole, (k) => tRoles(k.replace('roles.', '') as any))}
                     </span>
                   </div>
                 ))}
               </div>
 
               <p className="text-[11px] text-amber-800 leading-relaxed pt-1 border-t border-amber-200/60">
-                Nếu bạn xác nhận, toàn bộ các gian hàng trên sẽ tự động chuyển về trạng thái{' '}
-                <strong>Chưa phân công</strong> và cần được gán nhân sự thay thế.
+                {t('warningBoothsImpact')}
               </p>
             </div>
           ) : (
             <p className="text-slate-500 leading-relaxed">
-              Nhân sự này hiện chưa được phân công phụ trách gian hàng nào. Việc xóa sẽ không làm gián đoạn
-              hoạt động của các gian hàng trong chiến dịch.
+              {t('infoNoBoothsAssigned')}
             </p>
           )}
         </div>
@@ -173,26 +176,26 @@ export function PersonnelConfirmRevokeModal({
             size="sm"
             disabled={isLoading}
             onClick={onClose}
-            className="text-xs"
+            className="text-xs cursor-pointer"
           >
-            Hủy bỏ
+            {t('btnCancel')}
           </Button>
           <Button
             type="button"
             size="sm"
             disabled={isLoading}
             onClick={handleConfirm}
-            className="text-xs bg-red-600 hover:bg-red-700 text-white font-semibold gap-1.5 shadow-xs"
+            className="text-xs bg-red-600 hover:bg-red-700 text-white font-semibold gap-1.5 shadow-xs cursor-pointer"
           >
             {isLoading ? (
               <>
                 <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                Đang xử lý...
+                {t('btnRevoking')}
               </>
             ) : isPending ? (
-              'Xác nhận thu hồi lời mời'
+              t('btnConfirmRevokeInvite')
             ) : (
-              'Xác nhận xóa & Gỡ phân công'
+              t('btnConfirmRemoveMember')
             )}
           </Button>
         </DialogFooter>

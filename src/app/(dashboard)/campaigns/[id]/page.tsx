@@ -18,6 +18,8 @@ import {
 import { CampaignRole, CampaignStatus, SubmissionStatus } from '@/domain/enums';
 import { Badge } from '@/components/ui/badge';
 import { CampaignWorkspace } from '@/features/campaigns/components/workspace/campaign-workspace';
+import { getTranslations, getLocale } from 'next-intl/server';
+import { getRoleLabel } from '@/lib/i18n/enum-presenters';
 
 interface CampaignDetailPageProps {
   params: Promise<{ id: string }>;
@@ -25,6 +27,9 @@ interface CampaignDetailPageProps {
 
 export default async function CampaignDetailPage({ params }: CampaignDetailPageProps) {
   const { id } = await params;
+  const t = await getTranslations('campaigns.detail');
+  const tRoles = await getTranslations('roles');
+  const locale = await getLocale();
 
   let campaign;
   try {
@@ -101,9 +106,9 @@ export default async function CampaignDetailPage({ params }: CampaignDetailPageP
       {/* Back button */}
       <div className="flex items-center gap-2">
         <Link href="/campaigns">
-          <Button variant="ghost" size="sm" className="gap-1 text-slate-600 text-xs">
+          <Button variant="ghost" size="sm" className="gap-1 text-slate-600 text-xs cursor-pointer">
             <ArrowLeft className="h-3.5 w-3.5" />
-            Quay lại danh sách chiến dịch
+            {t('backToList')}
           </Button>
         </Link>
       </div>
@@ -120,7 +125,9 @@ export default async function CampaignDetailPage({ params }: CampaignDetailPageP
                 </span>
               )}
               <StatusBadge status={campaign.status} />
-              <Badge variant="outline" className="text-xs">{campaign.currentUserRole}</Badge>
+              <Badge variant="outline" className="text-xs">
+                {getRoleLabel(campaign.currentUserRole, (k) => tRoles(k.replace('roles.', '') as any))}
+              </Badge>
             </div>
             <h1 className="text-2xl font-bold tracking-tight text-slate-900">{campaign.title}</h1>
             {campaign.description && (
@@ -131,9 +138,9 @@ export default async function CampaignDetailPage({ params }: CampaignDetailPageP
           <div className="flex items-center gap-2 flex-wrap">
             {isManager && isDraft && (
               <Link href={`/campaigns/${campaign.id}/wizard?step=${campaign.wizardStep || 1}`}>
-                <Button size="sm" className="gap-1.5 text-xs bg-amber-600 hover:bg-amber-700 text-white font-semibold">
+                <Button size="sm" className="gap-1.5 text-xs bg-amber-600 hover:bg-amber-700 text-white font-semibold cursor-pointer">
                   <Sparkles className="h-3.5 w-3.5" />
-                  Tiếp tục thiết lập Wizard →
+                  {t('wizardButton')}
                 </Button>
               </Link>
             )}
@@ -144,12 +151,15 @@ export default async function CampaignDetailPage({ params }: CampaignDetailPageP
           <div className="flex items-center gap-2">
             <Calendar className="h-4 w-4 text-slate-400" />
             <span>
-              Thời gian: <strong>{formatDate(campaign.startDate)}</strong> đến <strong>{formatDate(campaign.endDate)}</strong>
+              {t('scheduleRange', {
+                start: formatDate(campaign.startDate, locale),
+                end: formatDate(campaign.endDate, locale),
+              })}
             </span>
           </div>
           <div className="flex items-center gap-2">
             <Building2 className="h-4 w-4 text-slate-400" />
-            <span>Công ty: <strong>{campaign.companyName}</strong></span>
+            <span>{t('companyLabel', { company: campaign.companyName })}</span>
           </div>
         </div>
       </div>

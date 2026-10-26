@@ -37,6 +37,7 @@ import {
 import { cn } from '@/lib/utils';
 import { TablePagination } from '@/components/shared/table-pagination';
 import { DataTableToolbar } from '@/components/shared/data-table-toolbar';
+import { useTranslations } from 'next-intl';
 
 interface UserSubItem {
   userId: string;
@@ -49,6 +50,7 @@ interface UserSubItem {
 }
 
 export default function AdminSubscriptionsPage() {
+  const t = useTranslations('admin.subscriptions');
   const [planConfigs, setPlanConfigs] = useState<PlanConfig[]>([]);
   const [users, setUsers] = useState<UserSubItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -246,28 +248,28 @@ export default function AdminSubscriptionsPage() {
         return (
           <Badge className="bg-emerald-50 text-emerald-700 border-emerald-200 text-xs gap-1.5 font-medium">
             <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
-            Đang hoạt động
+            {t('statusActive')}
           </Badge>
         );
       case 'EXPIRED':
         return (
           <Badge className="bg-rose-50 text-rose-700 border-rose-200 text-xs gap-1.5 font-medium">
             <span className="h-1.5 w-1.5 rounded-full bg-rose-500" />
-            Đã hết hạn
+            {t('statusExpired')}
           </Badge>
         );
       case 'PAST_DUE':
         return (
           <Badge className="bg-amber-50 text-amber-700 border-amber-200 text-xs gap-1.5 font-medium">
             <span className="h-1.5 w-1.5 rounded-full bg-amber-500" />
-            Quá hạn
+            {t('statusPastDue')}
           </Badge>
         );
       case 'CANCELED':
         return (
           <Badge className="bg-slate-100 text-slate-600 border-slate-200 text-xs gap-1.5 font-medium">
             <span className="h-1.5 w-1.5 rounded-full bg-slate-400" />
-            Đã hủy
+            {t('statusCanceled')}
           </Badge>
         );
       default:
@@ -293,22 +295,22 @@ export default function AdminSubscriptionsPage() {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
           <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-slate-900">
-            Quản Lý Đăng Ký Gói Dịch Vụ
+            {t('title')}
           </h1>
           <p className="text-xs sm:text-sm text-slate-500 mt-0.5">
-            Theo dõi danh sách khách hàng, trạng thái hạn ngạch và xử lý thay đổi gói thuê bao.
+            {t('desc')}
           </p>
         </div>
         <div className="flex items-center gap-2">
           <span className="text-xs text-slate-500 font-medium">
-            Tổng: <strong className="text-slate-900">{users.length}</strong> khách hàng
+            {t('totalCustomers', { count: users.length })}
           </span>
         </div>
       </div>
 
       {/* Modern DataTableToolbar */}
       <DataTableToolbar
-        searchPlaceholder="Tìm theo tên hoặc email khách hàng..."
+        searchPlaceholder={t('searchPlaceholder')}
         searchValue={searchQuery}
         onSearchChange={(v) => {
           setSearchQuery(v);
@@ -317,7 +319,7 @@ export default function AdminSubscriptionsPage() {
         filters={[
           {
             id: 'plan',
-            label: 'Gói dịch vụ',
+            label: t('filterPlan'),
             value: filterPlan,
             onChange: (v) => {
               setFilterPlan(v);
@@ -328,23 +330,23 @@ export default function AdminSubscriptionsPage() {
               { value: SubscriptionPlanTier.STARTER, label: 'Gói Starter' },
               { value: SubscriptionPlanTier.PRO, label: 'Gói Pro' },
             ],
-            allLabel: 'Tất cả gói cước',
+            allLabel: t('allPlans'),
           },
           {
             id: 'status',
-            label: 'Trạng thái',
+            label: t('filterStatus'),
             value: filterStatus,
             onChange: (v) => {
               setFilterStatus(v);
               setCurrentPage(1);
             },
             options: [
-              { value: 'ACTIVE', label: 'Đang hoạt động' },
-              { value: 'EXPIRED', label: 'Đã hết hạn' },
-              { value: 'PAST_DUE', label: 'Quá hạn' },
-              { value: 'CANCELED', label: 'Đã hủy' },
+              { value: 'ACTIVE', label: t('statusActive') },
+              { value: 'EXPIRED', label: t('statusExpired') },
+              { value: 'PAST_DUE', label: t('statusPastDue') },
+              { value: 'CANCELED', label: t('statusCanceled') },
             ],
-            allLabel: 'Tất cả trạng thái',
+            allLabel: t('allStatuses'),
           },
         ]}
         activeFiltersCount={activeFiltersCount}
@@ -358,7 +360,7 @@ export default function AdminSubscriptionsPage() {
             className="text-xs bg-blue-600 hover:bg-blue-700 text-white gap-1.5 h-8 px-3 rounded-lg shadow-xs cursor-pointer font-semibold"
           >
             <Layers className="h-3.5 w-3.5" />
-            Đổi gói cho {selectedUserIds.length} tài khoản
+            {t('bulkChangePlan', { count: selectedUserIds.length })}
           </Button>
         }
       />
@@ -367,7 +369,7 @@ export default function AdminSubscriptionsPage() {
       {isLoading ? (
         <div className="py-20 flex flex-col items-center justify-center gap-3">
           <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
-          <p className="text-xs text-slate-500">Đang tải danh sách đăng ký...</p>
+          <p className="text-xs text-slate-500">{t('loading')}</p>
         </div>
       ) : (
         <div className="rounded-2xl border border-slate-200 bg-white shadow-xs overflow-hidden">
@@ -381,23 +383,23 @@ export default function AdminSubscriptionsPage() {
                       checked={allCurrentPageSelected}
                       onChange={toggleSelectAllCurrentPage}
                       className="h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500 cursor-pointer"
-                      aria-label="Chọn tất cả người dùng trang này"
+                      aria-label={t('selectAllCurrentPage')}
                     />
                   </th>
                   <th className="py-3 px-4 min-w-[220px]">
-                    <span className="font-semibold text-slate-800">Khách hàng</span>
+                    <span className="font-semibold text-slate-800">{t('colCustomer')}</span>
                   </th>
                   <th className="py-3 px-4 min-w-[160px]">
-                    <span className="font-semibold text-slate-800">Gói dịch vụ</span>
+                    <span className="font-semibold text-slate-800">{t('colPlan')}</span>
                   </th>
                   <th className="py-3 px-4 min-w-[150px]">
-                    <span className="font-semibold text-slate-800">Trạng thái</span>
+                    <span className="font-semibold text-slate-800">{t('colStatus')}</span>
                   </th>
                   <th className="py-3 px-4 min-w-[170px]">
-                    <span className="font-semibold text-slate-800">Thời hạn hiệu lực</span>
+                    <span className="font-semibold text-slate-800">{t('colExpiresAt')}</span>
                   </th>
                   <th className="py-3 px-4 min-w-[140px] text-right">
-                    <span className="font-semibold text-slate-800">Thao tác</span>
+                    <span className="font-semibold text-slate-800">{t('colAction')}</span>
                   </th>
                 </tr>
               </thead>
@@ -418,7 +420,7 @@ export default function AdminSubscriptionsPage() {
                           checked={isSelected}
                           onChange={() => toggleSelectUser(u.userId)}
                           className="h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500 cursor-pointer"
-                          aria-label={`Chọn khách hàng ${u.fullName}`}
+                          aria-label={t('selectUser', { name: u.fullName })}
                         />
                       </td>
                       <td className="py-3.5 px-4">
@@ -437,12 +439,12 @@ export default function AdminSubscriptionsPage() {
                               {new Date(u.expiresAt).toLocaleDateString('vi-VN')}
                             </span>
                             <p className="text-[11px] text-slate-400">
-                              Hết hạn lúc 23:59
+                              {t('expiresAtDate')}
                             </p>
                           </div>
                         ) : (
                           <span className="inline-flex items-center gap-1 text-slate-500 font-medium">
-                            Vĩnh viễn
+                            {t('lifetime')}
                           </span>
                         )}
                       </td>
@@ -454,7 +456,7 @@ export default function AdminSubscriptionsPage() {
                           className="text-xs h-8 px-3 rounded-lg border-slate-200 text-slate-700 hover:border-blue-600 hover:text-blue-600 hover:bg-blue-50/50 font-medium cursor-pointer transition-colors"
                         >
                           <Edit className="h-3 w-3 mr-1.5" />
-                          Đổi gói
+                          {t('changePlan')}
                         </Button>
                       </td>
                     </tr>
@@ -467,10 +469,10 @@ export default function AdminSubscriptionsPage() {
                       <div className="flex flex-col items-center justify-center gap-2 text-slate-400">
                         <FilterX className="h-9 w-9 text-slate-300 stroke-[1.5]" />
                         <p className="text-sm font-semibold text-slate-700">
-                          Không tìm thấy khách hàng nào phù hợp
+                          {t('noCustomersFound')}
                         </p>
                         <p className="text-xs text-slate-400 max-w-sm">
-                          Thử thay đổi từ khóa tìm kiếm hoặc bấm đặt lại bộ lọc để xem toàn bộ danh sách đăng ký.
+                          {t('noCustomersHelp')}
                         </p>
                         {activeFiltersCount > 0 && (
                           <Button
@@ -480,7 +482,7 @@ export default function AdminSubscriptionsPage() {
                             className="mt-3 text-xs border-slate-200 hover:bg-slate-50 gap-1.5 cursor-pointer rounded-lg"
                           >
                             <RotateCcw className="h-3 w-3" />
-                            Xóa tất cả bộ lọc ({activeFiltersCount})
+                            {t('clearAllFilters', { count: activeFiltersCount })}
                           </Button>
                         )}
                       </div>
@@ -498,7 +500,7 @@ export default function AdminSubscriptionsPage() {
             totalItems={filteredUsers.length}
             itemsPerPage={ITEMS_PER_PAGE}
             onPageChange={setCurrentPage}
-            itemName="khách hàng"
+            itemName={t('itemName')}
           />
         </div>
       )}
@@ -510,17 +512,17 @@ export default function AdminSubscriptionsPage() {
             <DialogHeader>
               <DialogTitle className="text-lg font-bold text-slate-900 flex items-center gap-2">
                 <Sparkles className="h-5 w-5 text-blue-600" />
-                Đổi Gói Dịch Vụ Khách Hàng
+                {t('dialogSingleTitle')}
               </DialogTitle>
               <DialogDescription className="text-xs text-slate-500">
-                Khách hàng: <strong className="text-slate-800">{selectedUser.fullName}</strong> ({selectedUser.email})
+                {t('dialogSingleCustomer', { name: selectedUser.fullName, email: selectedUser.email })}
               </DialogDescription>
             </DialogHeader>
 
             <div className="space-y-4 py-3">
               <div>
                 <label className="text-xs font-semibold text-slate-700 block mb-2">
-                  Chọn gói dịch vụ mới
+                  {t('dialogSingleSelectPlan')}
                 </label>
                 <div className="grid grid-cols-3 gap-2.5">
                   {planConfigs.map((p) => (
@@ -537,7 +539,7 @@ export default function AdminSubscriptionsPage() {
                     >
                       <div>{p.name}</div>
                       <div className="text-[10px] text-slate-500 font-normal mt-0.5">
-                        {p.maxActiveCampaigns} chiến dịch
+                        {t('campaignCount', { count: p.maxActiveCampaigns })}
                       </div>
                     </button>
                   ))}
@@ -547,7 +549,7 @@ export default function AdminSubscriptionsPage() {
               {editPlan !== SubscriptionPlanTier.FREE && (
                 <div>
                   <label className="text-xs font-semibold text-slate-700 block mb-1.5">
-                    Thời hạn hiệu lực (Ngày)
+                    {t('validDays')}
                   </label>
                   <input
                     type="number"
@@ -561,7 +563,7 @@ export default function AdminSubscriptionsPage() {
                     className="w-full px-3.5 py-2 text-sm rounded-xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-blue-500/20 text-slate-900 font-medium"
                   />
                   <p className="text-[11px] text-slate-400 mt-1">
-                    Gói sẽ tự động hết hạn sau {daysValid || 0} ngày kể từ thời điểm này.
+                    {t('autoExpireNotice', { days: daysValid || 0 })}
                   </p>
                 </div>
               )}
@@ -574,7 +576,7 @@ export default function AdminSubscriptionsPage() {
                 onClick={() => setSelectedUser(null)}
                 className="text-xs cursor-pointer"
               >
-                Hủy
+                {t('cancel')}
               </Button>
               <Button
                 size="sm"
@@ -587,7 +589,7 @@ export default function AdminSubscriptionsPage() {
                 ) : (
                   <CheckCircle2 className="h-3.5 w-3.5 mr-1.5" />
                 )}
-                Lưu Thay Đổi
+                {t('saveChanges')}
               </Button>
             </DialogFooter>
           </DialogContent>
@@ -601,17 +603,17 @@ export default function AdminSubscriptionsPage() {
             <DialogHeader>
               <DialogTitle className="text-lg font-bold text-slate-900 flex items-center gap-2">
                 <Layers className="h-5 w-5 text-blue-600" />
-                Cập Nhật Gói Hàng Loạt
+                {t('dialogBatchTitle')}
               </DialogTitle>
               <DialogDescription className="text-xs text-slate-500">
-                Áp dụng thay đổi cho <strong className="text-slate-900">{selectedUserIds.length} khách hàng</strong> đã chọn.
+                {t('dialogBatchDesc', { count: selectedUserIds.length })}
               </DialogDescription>
             </DialogHeader>
 
             <div className="space-y-4 py-3">
               <div>
                 <label className="text-xs font-semibold text-slate-700 block mb-2">
-                  Gói dịch vụ áp dụng chung
+                  {t('batchPlanLabel')}
                 </label>
                 <div className="grid grid-cols-3 gap-2.5">
                   {planConfigs.map((p) => (
@@ -628,7 +630,7 @@ export default function AdminSubscriptionsPage() {
                     >
                       <div>{p.name}</div>
                       <div className="text-[10px] text-slate-500 font-normal mt-0.5">
-                        {p.maxActiveCampaigns} chiến dịch
+                        {t('campaignCount', { count: p.maxActiveCampaigns })}
                       </div>
                     </button>
                   ))}
@@ -638,7 +640,7 @@ export default function AdminSubscriptionsPage() {
               {batchPlan !== SubscriptionPlanTier.FREE && (
                 <div>
                   <label className="text-xs font-semibold text-slate-700 block mb-1.5">
-                    Thời hạn hiệu lực (Ngày)
+                    {t('validDays')}
                   </label>
                   <input
                     type="number"
@@ -652,7 +654,7 @@ export default function AdminSubscriptionsPage() {
                     className="w-full px-3.5 py-2 text-sm rounded-xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-blue-500/20 text-slate-900 font-medium"
                   />
                   <p className="text-[11px] text-slate-400 mt-1">
-                    Gói của tất cả {selectedUserIds.length} tài khoản sẽ hết hạn sau {batchDays || 0} ngày.
+                    {t('batchExpireNotice', { count: selectedUserIds.length, days: batchDays || 0 })}
                   </p>
                 </div>
               )}
@@ -665,7 +667,7 @@ export default function AdminSubscriptionsPage() {
                 onClick={() => setIsBatchModalOpen(false)}
                 className="text-xs cursor-pointer"
               >
-                Hủy
+                {t('cancel')}
               </Button>
               <Button
                 size="sm"
@@ -678,7 +680,7 @@ export default function AdminSubscriptionsPage() {
                 ) : (
                   <Check className="h-3.5 w-3.5 mr-1.5" />
                 )}
-                Xác Nhận Đổi {selectedUserIds.length} Tài Khoản
+                {t('confirmBatch', { count: selectedUserIds.length })}
               </Button>
             </DialogFooter>
           </DialogContent>

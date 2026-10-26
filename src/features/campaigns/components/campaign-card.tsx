@@ -1,3 +1,5 @@
+'use client';
+
 import React from 'react';
 import Link from 'next/link';
 import { Campaign } from '@/domain/entities';
@@ -5,9 +7,11 @@ import { StatusBadge } from '@/components/shared/status-badge';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { formatDate } from '@/lib/utils';
-import { Calendar, Tag, ArrowRight, Sparkles, Building2, Store } from 'lucide-react';
+import { Calendar, Tag, ArrowRight, Sparkles } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { CampaignRole, CampaignStatus } from '@/domain/enums';
+import { useTranslations, useLocale } from 'next-intl';
+import { getRoleLabel } from '@/lib/i18n/enum-presenters';
 
 interface CampaignCardProps {
   campaign: Campaign;
@@ -15,29 +19,33 @@ interface CampaignCardProps {
 }
 
 export function CampaignCard({ campaign, locationsCount = 0 }: CampaignCardProps) {
+  const t = useTranslations('campaigns.card');
+  const tRoles = useTranslations('roles');
+  const locale = useLocale();
+
   const isDraft = campaign.status === CampaignStatus.DRAFT;
   const isManager = campaign.currentUserRole === CampaignRole.MANAGER;
   const isSupervisor = campaign.currentUserRole === CampaignRole.SUPERVISOR;
   const isApprover = campaign.currentUserRole === CampaignRole.APPROVER;
 
-  // Quyết định URL và nhãn nút CTA theo ngữ cảnh (Contextual Navigation)
+  // Quyết định URL và nhãn nút CTA theo ngữ cảnh
   let actionUrl = `/campaigns/${campaign.id}`;
-  let actionLabel = 'Xem chi tiết';
+  let actionLabel = t('btnViewDetails');
   let isPrimaryAction = false;
 
   if (isDraft && isManager) {
     actionUrl = `/campaigns/${campaign.id}/wizard?step=${campaign.wizardStep || 1}`;
-    actionLabel = `Tiếp tục thiết lập (B${campaign.wizardStep || 1}/5)`;
+    actionLabel = t('btnContinueSetup', { step: campaign.wizardStep || 1 });
     isPrimaryAction = true;
   } else if (isSupervisor) {
     actionUrl = '/campaigns/supervision';
-    actionLabel = 'Mở danh sách giám sát';
+    actionLabel = t('btnOpenSupervision');
   } else if (isApprover) {
     actionUrl = '/campaigns/approvals';
-    actionLabel = 'Hàng đợi phê duyệt';
+    actionLabel = t('btnApprovalQueue');
   } else if (isManager) {
     actionUrl = `/campaigns/${campaign.id}`;
-    actionLabel = 'Vào Workspace vận hành';
+    actionLabel = t('btnOpenWorkspace');
   }
 
   return (
@@ -68,16 +76,18 @@ export function CampaignCard({ campaign, locationsCount = 0 }: CampaignCardProps
 
       <CardContent className="pb-3 space-y-2">
         <div className="flex items-center justify-between text-xs">
-          <Badge variant="outline" className="text-[11px] font-medium text-slate-700">{campaign.currentUserRole}</Badge>
-          
+          <Badge variant="outline" className="text-[11px] font-medium text-slate-700">
+            {getRoleLabel(campaign.currentUserRole, (k) => tRoles(k.replace('roles.', '') as any))}
+          </Badge>
+
           {/* Phân biệt rõ loại tiến độ: Setup vs Runtime */}
           {isDraft ? (
             <span className="text-[11px] font-semibold text-amber-700 bg-amber-50 px-2 py-0.5 rounded border border-amber-200">
-              Cấu hình: Bước {campaign.wizardStep || 1}/5
+              {t('configStep', { step: campaign.wizardStep || 1 })}
             </span>
           ) : (
             <span className="text-[11px] font-medium text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">
-              Đang vận hành
+              {t('operating')}
             </span>
           )}
         </div>
@@ -85,14 +95,14 @@ export function CampaignCard({ campaign, locationsCount = 0 }: CampaignCardProps
         <div className="flex items-center gap-2 text-xs text-slate-500">
           <Calendar className="h-3.5 w-3.5 text-slate-400 shrink-0" />
           <span>
-            {formatDate(campaign.startDate)} — {formatDate(campaign.endDate)}
+            {formatDate(campaign.startDate, locale)} — {formatDate(campaign.endDate, locale)}
           </span>
         </div>
       </CardContent>
 
       <CardFooter className="pt-3 border-t border-slate-100 flex items-center justify-between bg-slate-50/40">
         <span className="text-xs text-slate-500">
-          {locationsCount > 0 ? `${locationsCount} địa điểm` : campaign.companyName || 'Chưa có địa điểm'}
+          {locationsCount > 0 ? t('locationsCount', { count: locationsCount }) : campaign.companyName || t('noLocations')}
         </span>
 
         <Link href={actionUrl}>

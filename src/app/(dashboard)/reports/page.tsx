@@ -5,16 +5,21 @@ import { ReportView, LocationAuditStat } from '@/features/reports/components/rep
 import { createServerSupabaseClient } from '@/infrastructure/supabase/server';
 import { SubmissionStatus } from '@/domain/enums';
 import { Metadata } from 'next';
+import { getTranslations } from 'next-intl/server';
 
-export const metadata: Metadata = {
-  title: 'Báo Cáo Nghiệm Thu — EventGo Proof',
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getTranslations('reports.page');
+  return {
+    title: t('metaTitle'),
+  };
+}
 
 interface ReportsPageProps {
   searchParams: Promise<{ campaignId?: string }>;
 }
 
 export default async function ReportsPage({ searchParams }: ReportsPageProps) {
+  const t = await getTranslations('reports.page');
   const { campaignId } = await searchParams;
   const campaigns = await getCampaignsUseCase();
 
@@ -24,7 +29,7 @@ export default async function ReportsPage({ searchParams }: ReportsPageProps) {
   if (!selectedCampaign) {
     return (
       <div className="rounded-xl border border-dashed border-slate-300 p-12 text-center bg-white">
-        <p className="text-sm font-semibold text-slate-700">Chưa có chiến dịch nào để lập biên bản báo cáo.</p>
+        <p className="text-sm font-semibold text-slate-700">{t('empty')}</p>
       </div>
     );
   }

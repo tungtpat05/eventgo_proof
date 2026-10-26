@@ -27,6 +27,7 @@ import {
 } from 'lucide-react';
 import { formatDateTime, cn } from '@/lib/utils';
 import { TransactionStatus } from '@/domain/entities';
+import { useTranslations } from 'next-intl';
 
 interface RecentTransaction {
   id: string;
@@ -67,6 +68,7 @@ interface OverviewData {
 }
 
 export default function AdminDashboardPage() {
+  const t = useTranslations('admin.dashboard');
   const [data, setData] = useState<OverviewData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -81,16 +83,16 @@ export default function AdminDashboardPage() {
     return (
       <div className="flex flex-col items-center justify-center min-h-[50vh] space-y-3">
         <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
-        <p className="text-sm text-slate-500">Đang tải bảng điều khiển quản trị viên...</p>
+        <p className="text-sm text-slate-500">{t('loading')}</p>
       </div>
     );
   }
 
   const kpis = [
     {
-      label: 'Tổng Doanh Thu PayOS',
+      label: t('kpiTotalRevenue'),
       value: `${data.totalRevenue.toLocaleString('vi-VN')} đ`,
-      desc: 'Doanh thu từ các gói Starter & Pro',
+      desc: t('kpiRevenueDesc'),
       icon: DollarSign,
       color: 'text-emerald-600 bg-emerald-50 border-emerald-200',
       badge: `${(data.revenueGrowthRate || 0) >= 0 ? '+' : ''}${data.revenueGrowthRate || 0}%`,
@@ -99,30 +101,30 @@ export default function AdminDashboardPage() {
         : 'bg-rose-50 text-rose-700 border-rose-200',
     },
     {
-      label: 'Tổng Người Dùng',
+      label: t('kpiTotalUsers'),
       value: data.totalUsers.toString(),
-      desc: 'Tài khoản đăng nhập Google',
+      desc: t('kpiUsersDesc'),
       icon: Users,
       color: 'text-blue-600 bg-blue-50 border-blue-200',
-      badge: 'Đang hoạt động',
+      badge: t('kpiUsersActive'),
       badgeColor: 'bg-blue-50 text-blue-700 border-blue-200',
     },
     {
-      label: 'Chiến Dịch Đang Chạy',
+      label: t('kpiActiveCampaigns'),
       value: data.activeCampaigns.toString(),
-      desc: 'Trạng thái ACTIVE trên toàn sàn',
+      desc: t('kpiCampaignsDesc'),
       icon: Flag,
       color: 'text-indigo-600 bg-indigo-50 border-indigo-200',
-      badge: 'Theo dõi GPS',
+      badge: t('kpiGpsTracking'),
       badgeColor: 'bg-indigo-50 text-indigo-700 border-indigo-200',
     },
     {
-      label: 'Tổng Số Gian Hàng',
+      label: t('kpiTotalBooths'),
       value: data.totalBooths.toString(),
-      desc: 'Booths tại các địa điểm kích hoạt',
+      desc: t('kpiBoothsDesc'),
       icon: Store,
       color: 'text-purple-600 bg-purple-50 border-purple-200',
-      badge: `${data.totalBooths} booth`,
+      badge: t('kpiBoothsUnit', { count: data.totalBooths }),
       badgeColor: 'bg-purple-50 text-purple-700 border-purple-200',
     },
   ];
@@ -142,14 +144,14 @@ export default function AdminDashboardPage() {
         return (
           <Badge className="bg-emerald-50 text-emerald-700 border-emerald-200 gap-1 text-[11px] font-medium">
             <CheckCircle2 className="h-3 w-3 text-emerald-600" />
-            Thành công
+            {t('statusSuccess')}
           </Badge>
         );
       case TransactionStatus.PENDING:
         return (
           <Badge className="bg-amber-50 text-amber-700 border-amber-200 gap-1 text-[11px] font-medium">
             <Clock className="h-3 w-3 text-amber-600" />
-            Chờ thanh toán
+            {t('statusPending')}
           </Badge>
         );
       default:
@@ -168,10 +170,10 @@ export default function AdminDashboardPage() {
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <div>
           <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-slate-900">
-            Bảng Điều Hành Trung Tâm (SaaS Overview)
+            {t('title')}
           </h1>
           <p className="text-xs sm:text-sm text-slate-500 mt-0.5">
-            Tổng quan biến động doanh thu VietQR, hiện trạng chiến dịch và hoạt động thuê bao toàn hệ thống.
+            {t('desc')}
           </p>
         </div>
         <div className="flex items-center gap-2">
@@ -179,7 +181,7 @@ export default function AdminDashboardPage() {
             href="/admin/transactions"
             className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-900 text-white text-xs font-semibold hover:bg-slate-800 transition-colors shadow-xs"
           >
-            <span>Đối soát VietQR</span>
+            <span>{t('reconcileVietQR')}</span>
             <ArrowRight className="h-3.5 w-3.5" />
           </Link>
         </div>
@@ -216,10 +218,10 @@ export default function AdminDashboardPage() {
             <div>
               <CardTitle className="text-base font-bold text-slate-900 flex items-center gap-2">
                 <TrendingUp className="h-4 w-4 text-emerald-600" />
-                Xu Hướng Tăng Trưởng Doanh Thu (6 Tháng)
+                {t('revenueGrowthTitle')}
               </CardTitle>
               <CardDescription className="text-xs text-slate-500">
-                Thống kê các đơn hàng nâng cấp gói dịch vụ thanh toán qua VietQR PayOS
+                {t('revenueGrowthDesc')}
               </CardDescription>
             </div>
             <Badge
@@ -232,7 +234,7 @@ export default function AdminDashboardPage() {
                   : 'bg-slate-100 text-slate-700 border-slate-200'
               )}
             >
-              {(data.revenueGrowthRate || 0) > 0 ? `+${data.revenueGrowthRate}%` : `${data.revenueGrowthRate || 0}%`} so với tháng trước
+              {t('vsPreviousMonth', { growth: (data.revenueGrowthRate || 0) > 0 ? `+${data.revenueGrowthRate}%` : `${data.revenueGrowthRate || 0}%` })}
             </Badge>
           </CardHeader>
           <CardContent className="pt-6 pb-5">
@@ -263,9 +265,9 @@ export default function AdminDashboardPage() {
             <div className="mt-4 pt-4 border-t border-slate-100 flex items-center justify-between text-xs text-slate-500">
               <span className="flex items-center gap-1.5">
                 <span className="h-2.5 w-2.5 rounded-full bg-blue-600 inline-block" />
-                Tháng hiện tại ({data.currentMonthLabel || 'Tháng này'})
+                {t('currentMonth', { month: data.currentMonthLabel || 'Tháng này' })}
               </span>
-              <span>Tổng doanh thu lũy kế: <strong className="text-slate-900">{data.totalRevenue.toLocaleString('vi-VN')} đ</strong></span>
+              <span>{t('cumulativeRevenue')}<strong className="text-slate-900">{data.totalRevenue.toLocaleString('vi-VN')} đ</strong></span>
             </div>
           </CardContent>
         </Card>
@@ -275,10 +277,10 @@ export default function AdminDashboardPage() {
           <CardHeader className="pb-3 border-b border-slate-100">
             <CardTitle className="text-base font-bold text-slate-900 flex items-center gap-2">
               <Package className="h-4 w-4 text-blue-600" />
-              Tỷ Lệ Phân Bổ Gói Dịch Vụ
+              {t('planDistTitle')}
             </CardTitle>
             <CardDescription className="text-xs text-slate-500">
-              Cơ cấu khách hàng theo các gói Free, Starter và Pro
+              {t('planDistDesc')}
             </CardDescription>
           </CardHeader>
           <CardContent className="pt-6 pb-5 space-y-5">
@@ -287,9 +289,9 @@ export default function AdminDashboardPage() {
               <div className="flex items-center justify-between text-xs">
                 <span className="font-semibold text-slate-800 flex items-center gap-1.5">
                   <span className="h-2.5 w-2.5 rounded-full bg-purple-600 inline-block" />
-                  Gói Pro (20 slots)
+                  {t('proPlanLabel')}
                 </span>
-                <span className="font-bold text-slate-900">{planDist.pro} khách hàng ({proPct}%)</span>
+                <span className="font-bold text-slate-900">{t('customerCount', { count: planDist.pro, pct: proPct })}</span>
               </div>
               <div className="w-full h-2 rounded-full bg-slate-100 overflow-hidden">
                 <div className="h-full bg-purple-600 rounded-full" style={{ width: `${proPct}%` }} />
@@ -301,9 +303,9 @@ export default function AdminDashboardPage() {
               <div className="flex items-center justify-between text-xs">
                 <span className="font-semibold text-slate-800 flex items-center gap-1.5">
                   <span className="h-2.5 w-2.5 rounded-full bg-blue-600 inline-block" />
-                  Gói Starter (5 slots)
+                  {t('starterPlanLabel')}
                 </span>
-                <span className="font-bold text-slate-900">{planDist.starter} khách hàng ({starterPct}%)</span>
+                <span className="font-bold text-slate-900">{t('customerCount', { count: planDist.starter, pct: starterPct })}</span>
               </div>
               <div className="w-full h-2 rounded-full bg-slate-100 overflow-hidden">
                 <div className="h-full bg-blue-600 rounded-full" style={{ width: `${starterPct}%` }} />
@@ -315,9 +317,9 @@ export default function AdminDashboardPage() {
               <div className="flex items-center justify-between text-xs">
                 <span className="font-semibold text-slate-800 flex items-center gap-1.5">
                   <span className="h-2.5 w-2.5 rounded-full bg-slate-400 inline-block" />
-                  Gói Free (2 slots)
+                  {t('freePlanLabel')}
                 </span>
-                <span className="font-bold text-slate-900">{planDist.free} khách hàng ({freePct}%)</span>
+                <span className="font-bold text-slate-900">{t('customerCount', { count: planDist.free, pct: freePct })}</span>
               </div>
               <div className="w-full h-2 rounded-full bg-slate-100 overflow-hidden">
                 <div className="h-full bg-slate-400 rounded-full" style={{ width: `${freePct}%` }} />
@@ -329,7 +331,7 @@ export default function AdminDashboardPage() {
                 href="/admin/subscriptions"
                 className="text-xs text-blue-600 hover:text-blue-800 font-semibold flex items-center justify-between cursor-pointer"
               >
-                <span>Xem chi tiết danh sách đăng ký</span>
+                <span>{t('viewSubscriptions')}</span>
                 <ArrowRight className="h-3.5 w-3.5" />
               </Link>
             </div>
@@ -345,17 +347,17 @@ export default function AdminDashboardPage() {
             <div>
               <CardTitle className="text-base font-bold text-slate-900 flex items-center gap-2">
                 <CreditCard className="h-4 w-4 text-emerald-600" />
-                Giao Dịch PayOS Gần Nhất
+                {t('recentTxnTitle')}
               </CardTitle>
               <CardDescription className="text-xs text-slate-500">
-                Các giao dịch chuyển khoản VietQR gần đây cần đối soát
+                {t('recentTxnDesc')}
               </CardDescription>
             </div>
             <Link
               href="/admin/transactions"
               className="text-xs text-blue-600 hover:text-blue-800 font-semibold flex items-center gap-1"
             >
-              <span>Xem tất cả</span>
+              <span>{t('viewAll')}</span>
               <ArrowRight className="h-3.5 w-3.5" />
             </Link>
           </CardHeader>
@@ -388,7 +390,7 @@ export default function AdminDashboardPage() {
               </div>
             ) : (
               <div className="p-8 text-center text-xs text-slate-400">
-                Chưa có dữ liệu giao dịch gần đây.
+                {t('noRecentTxns')}
               </div>
             )}
           </CardContent>
@@ -397,7 +399,7 @@ export default function AdminDashboardPage() {
         {/* Right (5 cols): Quick Operational Center */}
         <div className="lg:col-span-5 space-y-4">
           <div className="text-xs font-bold uppercase tracking-wider text-slate-400 px-1">
-            Phím Tắt Điều Hành Hệ Thống
+            {t('quickShortcuts')}
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-1 gap-3.5">
@@ -408,8 +410,8 @@ export default function AdminDashboardPage() {
                     <CreditCard className="h-5 w-5" />
                   </div>
                   <div>
-                    <h4 className="font-bold text-slate-900 text-xs sm:text-sm">Quản Lý Gói Người Dùng</h4>
-                    <p className="text-[11px] text-slate-500 mt-0.5">Đổi gói thủ công hoặc gia hạn hàng loạt</p>
+                    <h4 className="font-bold text-slate-900 text-xs sm:text-sm">{t('manageUserPlans')}</h4>
+                    <p className="text-[11px] text-slate-500 mt-0.5">{t('manageUserPlansDesc')}</p>
                   </div>
                 </div>
                 <ArrowRight className="h-4 w-4 text-slate-400 group-hover:text-blue-600 transition-colors shrink-0" />
@@ -423,8 +425,8 @@ export default function AdminDashboardPage() {
                     <ListChecks className="h-5 w-5" />
                   </div>
                   <div>
-                    <h4 className="font-bold text-slate-900 text-xs sm:text-sm">Thư Viện Mẫu Checklist</h4>
-                    <p className="text-[11px] text-slate-500 mt-0.5">Tiêu chuẩn nghiệm thu FMCG, Roadshow</p>
+                    <h4 className="font-bold text-slate-900 text-xs sm:text-sm">{t('checklistLibrary')}</h4>
+                    <p className="text-[11px] text-slate-500 mt-0.5">{t('checklistLibraryDesc')}</p>
                   </div>
                 </div>
                 <ArrowRight className="h-4 w-4 text-slate-400 group-hover:text-purple-600 transition-colors shrink-0" />
@@ -438,8 +440,8 @@ export default function AdminDashboardPage() {
                     <Landmark className="h-5 w-5" />
                   </div>
                   <div>
-                    <h4 className="font-bold text-slate-900 text-xs sm:text-sm">Cấu Hình Nhận Tiền PayOS</h4>
-                    <p className="text-[11px] text-slate-500 mt-0.5">Thông tin tài khoản ngân hàng & VietQR API</p>
+                    <h4 className="font-bold text-slate-900 text-xs sm:text-sm">{t('paymentConfig')}</h4>
+                    <p className="text-[11px] text-slate-500 mt-0.5">{t('paymentConfigDesc')}</p>
                   </div>
                 </div>
                 <ArrowRight className="h-4 w-4 text-slate-400 group-hover:text-emerald-600 transition-colors shrink-0" />

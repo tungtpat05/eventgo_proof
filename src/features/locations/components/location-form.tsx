@@ -8,6 +8,7 @@ import { Input } from '@/components/ui/input';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from '@/components/ui/card';
 import { ArrowLeft, MapPin } from 'lucide-react';
 import { Campaign } from '@/domain/entities';
+import { useTranslations } from 'next-intl';
 
 interface LocationFormProps {
   campaigns: Campaign[];
@@ -15,6 +16,8 @@ interface LocationFormProps {
 }
 
 export function LocationForm({ campaigns, defaultCampaignId }: LocationFormProps) {
+  const t = useTranslations('locations.form');
+  const tErrors = useTranslations('errors');
   const [state, formAction, isPending] = useActionState(createLocationAction, null);
 
   return (
@@ -23,7 +26,7 @@ export function LocationForm({ campaigns, defaultCampaignId }: LocationFormProps
         <Link href="/locations">
           <Button variant="ghost" size="sm" className="gap-1 text-slate-600">
             <ArrowLeft className="h-4 w-4" />
-            Quay lại danh sách
+            {t('btnBackToList')}
           </Button>
         </Link>
       </div>
@@ -35,9 +38,9 @@ export function LocationForm({ campaigns, defaultCampaignId }: LocationFormProps
               <MapPin className="h-5 w-5" />
             </div>
             <div>
-              <CardTitle className="text-xl font-bold text-slate-900">Thêm Địa Điểm Mới</CardTitle>
+              <CardTitle className="text-xl font-bold text-slate-900">{t('formTitle')}</CardTitle>
               <CardDescription>
-                Thiết lập thông tin gian hàng hoặc điểm kích hoạt cho chiến dịch.
+                {t('formDesc')}
               </CardDescription>
             </div>
           </div>
@@ -47,14 +50,18 @@ export function LocationForm({ campaigns, defaultCampaignId }: LocationFormProps
           <CardContent className="space-y-4">
             {state?.error && (
               <div className="rounded-lg bg-red-50 p-3 text-sm text-red-700 border border-red-200 flex items-start gap-2">
-                <span className="font-semibold shrink-0">Lỗi:</span>
-                <span>{state.error}</span>
+                <span className="font-semibold shrink-0">{t('errorPrefix')}</span>
+                <span>
+                  {state.errorCode && tErrors.has(state.errorCode as any)
+                    ? tErrors(state.errorCode as any)
+                    : state.error}
+                </span>
               </div>
             )}
 
             <div className="space-y-1.5">
               <label className="text-xs font-semibold uppercase text-slate-700" htmlFor="campaignId">
-                Thuộc chiến dịch *
+                {t('fieldCampaign')}
               </label>
               <select
                 id="campaignId"
@@ -80,13 +87,13 @@ export function LocationForm({ campaigns, defaultCampaignId }: LocationFormProps
 
             <div className="space-y-1.5">
               <label className="text-xs font-semibold uppercase text-slate-700" htmlFor="name">
-                Tên địa điểm / gian hàng *
+                {t('fieldName')}
               </label>
               <Input
                 id="name"
                 name="name"
                 required
-                placeholder="VD: Gian Hàng Sảnh A — Vincom Center Bà Triệu"
+                placeholder={t('fieldNamePlaceholder')}
                 className={state?.fieldErrors?.name ? 'border-red-500 focus-visible:ring-red-500' : ''}
               />
               {state?.fieldErrors?.name && (
@@ -97,13 +104,13 @@ export function LocationForm({ campaigns, defaultCampaignId }: LocationFormProps
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
               <div className="sm:col-span-2 space-y-1.5">
                 <label className="text-xs font-semibold uppercase text-slate-700" htmlFor="address">
-                  Địa chỉ chi tiết *
+                  {t('fieldAddress')}
                 </label>
                 <Input
                   id="address"
                   name="address"
                   required
-                  placeholder="VD: 191 Bà Triệu, Lê Đại Hành, Hai Bà Trưng"
+                  placeholder={t('fieldAddressPlaceholder')}
                   className={state?.fieldErrors?.address ? 'border-red-500 focus-visible:ring-red-500' : ''}
                 />
                 {state?.fieldErrors?.address && (
@@ -113,13 +120,13 @@ export function LocationForm({ campaigns, defaultCampaignId }: LocationFormProps
 
               <div className="space-y-1.5">
                 <label className="text-xs font-semibold uppercase text-slate-700" htmlFor="city">
-                  Thành phố *
+                  {t('fieldCity')}
                 </label>
                 <Input
                   id="city"
                   name="city"
                   required
-                  placeholder="VD: Hà Nội / TP.HCM"
+                  placeholder={t('fieldCityPlaceholder')}
                   className={state?.fieldErrors?.city ? 'border-red-500 focus-visible:ring-red-500' : ''}
                 />
                 {state?.fieldErrors?.city && (
@@ -130,7 +137,7 @@ export function LocationForm({ campaigns, defaultCampaignId }: LocationFormProps
 
             <div className="space-y-1.5">
               <label className="text-xs font-semibold uppercase text-slate-700" htmlFor="deadline">
-                Hạn chót hoàn thành nghiệm thu (Deadline)
+                {t('fieldDeadline')}
               </label>
               <Input
                 id="deadline"
@@ -146,10 +153,10 @@ export function LocationForm({ campaigns, defaultCampaignId }: LocationFormProps
 
           <CardFooter className="flex justify-end gap-3 border-t border-slate-100 pt-4">
             <Link href="/locations">
-              <Button variant="outline" type="button">Hủy bỏ</Button>
+              <Button variant="outline" type="button">{t('btnCancel')}</Button>
             </Link>
             <Button type="submit" isLoading={isPending}>
-              Lưu địa điểm
+              {isPending ? t('btnSubmitting') : t('btnSubmit')}
             </Button>
           </CardFooter>
         </form>

@@ -1,0 +1,42 @@
+{
+  "ERR_UNKNOWN": "Đã có lỗi xảy ra. Vui lòng thử lại sau.",
+  "ERR_INVALID_INPUT": "Dữ liệu không hợp lệ. Vui lòng kiểm tra lại các trường thông tin.",
+  "ERR_UNAUTHORIZED": "Phiên đăng nhập đã hết hạn hoặc bạn chưa đăng nhập. Vui lòng đăng nhập lại.",
+  "ERR_FORBIDDEN": "Bạn không có quyền thực hiện thao tác này.",
+  "ERR_NOT_FOUND": "Không tìm thấy dữ liệu yêu cầu.",
+  "ERR_RLS_VIOLATION": "Bạn không có quyền truy cập hoặc chỉnh sửa dữ liệu này theo chính sách bảo mật.",
+  "ERR_CONFLICT": "Dữ liệu đã tồn tại hoặc xảy ra xung đột khi lưu trữ.",
+  "ERR_NETWORK": "Lỗi kết nối mạng. Vui lòng kiểm tra lại đường truyền.",
+  "VAL_TOO_SMALL": "Thông tin nhập quá ngắn hoặc không đạt yêu cầu tối thiểu.",
+  "VAL_TOO_BIG": "Thông tin nhập vượt quá độ dài tối đa cho phép.",
+  "VAL_INVALID_STRING": "Định dạng chuỗi không hợp lệ.",
+  "VAL_INVALID_TYPE": "Kiểu dữ liệu không đúng quy định.",
+  "VAL_CUSTOM": "Dữ liệu không đáp ứng quy tắc nghiệp vụ.",
+  "ERR_QUOTA_EXCEEDED": "Chiến dịch vượt quá hạn ngạch cho phép của gói cước hiện tại.",
+  "ERR_INVITE_EXPIRED": "Liên kết lời mời đã hết hạn hoặc không hợp lệ.",
+  "ERR_SUBMISSION_EMPTY": "Vui lòng đính kèm ít nhất 1 ảnh bằng chứng trước khi nộp.",
+  "ERR_EVIDENCE_PHOTOS_REQUIRED": "Vui lòng đính kèm ít nhất một hình ảnh bằng chứng nghiệm thu.",
+  "ERR_CLOUDINARY_NOT_CONFIGURED": "Cloudinary chưa được cấu hình. Không thể lưu evidence an toàn.",
+  "ERR_CLOUDINARY_UPLOAD_FAILED": "Cloudinary không trả về thông tin ảnh đã tải lên.",
+  "ERR_REVISION_NOTES_REQUIRED": "Bắt buộc phải nhập lý do khi yêu cầu chỉnh sửa.",
+  "ERR_FILE_TOO_LARGE": "Dung lượng ảnh vượt quá kích thước cho phép (tối đa 10MB).",
+  "ERR_INVALID_IMAGE_FORMAT": "Định dạng ảnh không được hỗ trợ. Vui lòng chọn ảnh JPG, PNG hoặc WebP.",
+  "ERR_FILE_REQUIRED": "Vui lòng chọn một file Excel (.xlsx) hoặc CSV hợp lệ.",
+  "ERR_FILE_PARSE_FAILED": "Không thể đọc hoặc xử lý file bảng tính tải lên.",
+  "notFound": {
+    "badge": "Lỗi 404 • Not Found",
+    "title": "Không tìm thấy trang",
+    "description": "Đường dẫn bạn vừa truy cập không tồn tại trên hệ thống EventGo Proof hoặc đã được thay đổi.",
+    "backHome": "Về trang chủ",
+    "backDashboard": "Về Bảng điều khiển",
+    "viewCampaigns": "Xem Chiến dịch"
+  },
+  "serverError": {
+    "badge": "Sự cố hệ thống",
+    "title": "Đã xảy ra lỗi tải trang",
+    "description": "Hệ thống gặp sự cố trong quá trình xử lý yêu cầu. Vui lòng bấm thử lại hoặc quay về trang chủ.",
+    "tryAgain": "Thử tải lại trang",
+    "backDashboard": "Về Bảng điều khiển",
+    "contactSupport": "Liên hệ hỗ trợ"
+  }
+}

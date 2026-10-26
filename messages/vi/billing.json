@@ -1,0 +1,130 @@
+{
+  "page": {
+    "title": "Gói Dịch Vụ & Thanh Toán",
+    "subtitle": "Quản lý hạn mức chiến dịch, gia hạn thuê bao và đối soát lịch sử hóa đơn",
+    "btnRefresh": "Làm mới",
+    "loading": "Đang tải thông tin gói dịch vụ & thanh toán...",
+    "metaTitle": "Gói Dịch Vụ & Thanh Toán — EventGo Proof",
+    "errInitPayment": "Lỗi khởi tạo cổng thanh toán"
+  },
+  "tiers": {
+    "FREE": {
+      "name": "Gói Free",
+      "description": "Cá nhân hoặc chạy thử nghiệm 1-2 chiến dịch song song"
+    },
+    "STARTER": {
+      "name": "Gói Starter",
+      "description": "Dành cho Agency sự kiện vừa & nhỏ chạy đồng thời"
+    },
+    "PRO": {
+      "name": "Gói Pro",
+      "description": "Agency chuyên nghiệp & Nhãn hàng chạy quy mô lớn"
+    }
+  },
+  "plans": {
+    "title": "Chọn Gói Cước Phù Hợp Cho Doanh Nghiệp",
+    "subtitle": "Nâng cấp hoặc gia hạn linh hoạt theo tháng với cổng thanh toán PayOS VietQR tự động.",
+    "currentPlan": "Gói hiện tại",
+    "popularBadge": "Phổ biến nhất",
+    "perMonth": "đ / tháng",
+    "freePrice": "0 đ",
+    "freeLabel": "Miễn phí",
+    "featuresHeading": "Hạn mức & Tính năng:",
+    "featureCampaigns": "Tối đa {count, plural, other{# chiến dịch}} chạy đồng thời",
+    "featureBooths": "Không giới hạn số gian hàng (booths)",
+    "featureGps": "Nghiệm thu ảnh có tọa độ GPS & Timestamp",
+    "featureReview": "Phê duyệt bằng chứng hiện trường 2 bước",
+    "featureSupport": "Hỗ trợ kỹ thuật ưu tiên 24/7 & SLA 99.9%",
+    "btnCurrent": "Đang sử dụng",
+    "btnDefault": "Gói mặc định",
+    "btnLower": "Gói thấp hơn",
+    "btnLowerTooltip": "Bạn đang sử dụng gói cao hơn",
+    "btnRenew": "Gia hạn thêm 30 ngày",
+    "btnUpgrade": "Nâng cấp lên {name}",
+    "btnSubscribe": "Đăng ký {name}"
+  },
+  "quota": {
+    "currentBadge": "Gói Thuê Bao Hiện Tại",
+    "statusExpired": "Đã hết hạn",
+    "statusExpiringSoon": "Sắp hết hạn",
+    "statusActive": "Đang hoạt động",
+    "expiresOn": "Hết hạn vào",
+    "daysRemainingBadge": "(Còn {days, plural, other{# ngày}})",
+    "permanentDuration": "Thời hạn sử dụng",
+    "permanentFree": "Gói Miễn phí vĩnh viễn",
+    "activeCampaigns": "Chiến dịch đang kích hoạt",
+    "slotsUsage": "{count} / {max} slots",
+    "quotaExceeded": "Bạn đã dùng hết hạn mức chiến dịch. Hãy nâng cấp gói để tạo thêm chiến dịch mới.",
+    "slotsRemaining": "Bạn còn {count, plural, other{# vị trí chiến dịch}} có thể chạy đồng thời.",
+    "benefitsHeading": "Quyền lợi gói {name}:",
+    "benefitMaxCampaigns": "• Tối đa {count, plural, other{# chiến dịch đồng thời}}",
+    "benefitUnlimitedBooths": "• Không giới hạn số booth",
+    "benefitGps": "• Định vị GPS & Timestamp chuẩn",
+    "benefitReport": "• Xuất báo cáo Excel / PDF"
+  },
+  "payosModal": {
+    "title": "Thanh toán {plan}",
+    "subtitle": "Quét mã VietQR bằng app bất kỳ ngân hàng nào hoặc MB Bank",
+    "successTitle": "Thanh toán thành công!",
+    "successDesc": "Hệ thống đã xác nhận thanh toán thành công. Gói {plan} của bạn đã được kích hoạt trong 30 ngày.",
+    "reloading": "Đang tải lại giao diện...",
+    "amountLabel": "Số tiền thanh toán",
+    "copyAmountTitle": "Sao chép số tiền",
+    "qrExpiresLabel": "Hết hạn mã QR",
+    "qrSecurity": "VietQR Napas247 • Tự động kích hoạt sau khi quét",
+    "manualCardTitle": "Thông tin chuyển khoản thủ công",
+    "napasBadge": "24/7 Napas",
+    "bankLabel": "Ngân hàng:",
+    "accountNameLabel": "Chủ tài khoản:",
+    "accountNoLabel": "Số tài khoản:",
+    "copyAccTitle": "Sao chép số tài khoản",
+    "copied": "Đã chép",
+    "copy": "Chép",
+    "transferContentLabel": "Nội dung chuyển:",
+    "copyContentTitle": "Sao chép nội dung chuyển khoản",
+    "slaTitle": "Cam kết SLA:",
+    "slaDesc": "Hệ thống tự động ghi nhận thanh toán trong 1–3 phút kể từ khi tài khoản ngân hàng của bạn trừ tiền.",
+    "manualCheckMsg": "Chưa ghi nhận biến động số dư. Cổng VietQR đang đối soát tự động (1–3 phút). Vui lòng đợi trong giây lát.",
+    "btnManualCheck": "Tôi đã chuyển khoản — Kiểm tra lại ngay",
+    "listening": "Đang kết nối cổng PayOS và chờ nhận tiền...",
+    "openPortal": "Mở cổng thanh toán PayOS",
+    "hotline": "Hỗ trợ khẩn cấp: 0988.xxx.xxx",
+    "btnClose": "Đóng / Thanh toán sau"
+  },
+  "transactions": {
+    "title": "Lịch sử Giao dịch",
+    "empty": "Chưa có lịch sử giao dịch nào",
+    "emptyDesc": "Các giao dịch thanh toán nâng gói sẽ được lưu lại tại đây.",
+    "statusSuccess": "Thành công",
+    "statusPending": "Chờ thanh toán",
+    "statusCancelled": "Đã hủy",
+    "statusRefunded": "Đã hoàn tiền",
+    "statusFailed": "Thất bại",
+    "thOrderCode": "Mã đơn",
+    "thPlan": "Gói dịch vụ",
+    "thAmount": "Số tiền",
+    "thGateway": "Cổng",
+    "thStatus": "Trạng thái",
+    "thTime": "Thời gian",
+    "paidAt": "Đã trả: {time}",
+    "gatewayPayos": "VietQR (PayOS)",
+    "gatewayTransfer": "Chuyển khoản"
+  },
+  "upgradeDialog": {
+    "title": "Xác Nhận Nâng Cấp Gói Thuê Bao",
+    "subtitle": "Bạn sắp chuyển đổi tài khoản sang {plan}",
+    "newPlan": "Gói mới:",
+    "priceLabel": "Cước phí thanh toán:",
+    "priceValue": "{price} đ / 30 ngày",
+    "explanation": "Ngay khi thanh toán VietQR thành công, gói cước mới sẽ có hiệu lực tức thì và bắt đầu chu kỳ 30 ngày mới. Hạn mức chiến dịch sẽ được cộng dồn theo thông số của {plan}.",
+    "btnCancel": "Hủy",
+    "btnProceed": "Tiến Hành Thanh Toán"
+  },
+  "expiration": {
+    "expiredTitle": "Gói {plan} của bạn đã hết hạn!",
+    "expiredDesc": "Hệ thống đã chuyển về hạn mức gói Free (tối đa 2 chiến dịch hoạt động). Vui lòng gia hạn để tiếp tục chạy tối đa hạn mức.",
+    "warningTitle": "Gói {plan} của bạn sẽ hết hạn sau {days, plural, other{# ngày nữa!}}",
+    "warningDesc": "Gia hạn ngay hôm nay để cộng dồn thêm 30 ngày mà không làm gián đoạn sự kiện ngoài hiện trường.",
+    "renewNow": "Gia hạn ngay"
+  }
+}

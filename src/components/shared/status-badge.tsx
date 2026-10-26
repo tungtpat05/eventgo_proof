@@ -1,34 +1,49 @@
+'use client';
+
 import React from 'react';
 import { Badge } from '@/components/ui/badge';
 import { CampaignStatus, SubmissionStatus } from '@/domain/enums';
+import { useTranslations } from 'next-intl';
+import { getCampaignStatusLabel, getSubmissionStatusLabel } from '@/lib/i18n/enum-presenters';
 
 interface StatusBadgeProps {
   status: CampaignStatus | SubmissionStatus | string;
+  className?: string;
 }
 
-export function StatusBadge({ status }: StatusBadgeProps) {
-  switch (status) {
-    // Campaign Statuses
-    case CampaignStatus.DRAFT:
-      return <Badge variant="secondary">Bản nháp</Badge>;
-    case CampaignStatus.ACTIVE:
-      return <Badge variant="default">Đang triển khai</Badge>;
-    case CampaignStatus.COMPLETED:
-      return <Badge variant="success">Hoàn thành</Badge>;
-    case CampaignStatus.ARCHIVED:
-      return <Badge variant="outline">Đã lưu trữ</Badge>;
+export function StatusBadge({ status, className }: StatusBadgeProps) {
+  const tRoles = useTranslations('roles');
 
-    // Submission Statuses
-    case SubmissionStatus.DRAFT:
-      return <Badge variant="secondary">Chưa nộp</Badge>;
-    case SubmissionStatus.SUBMITTED:
-      return <Badge variant="warning">Chờ phê duyệt</Badge>;
-    case SubmissionStatus.NEEDS_REVISION:
-      return <Badge variant="destructive">Cần chỉnh sửa</Badge>;
-    case SubmissionStatus.APPROVED:
-      return <Badge variant="success">Đã duyệt đạt</Badge>;
+  const getVariant = (s: string) => {
+    switch (s) {
+      case CampaignStatus.DRAFT:
+      case SubmissionStatus.DRAFT:
+        return 'secondary';
+      case CampaignStatus.ACTIVE:
+        return 'default';
+      case CampaignStatus.COMPLETED:
+      case SubmissionStatus.APPROVED:
+        return 'success';
+      case SubmissionStatus.SUBMITTED:
+        return 'warning';
+      case SubmissionStatus.NEEDS_REVISION:
+        return 'destructive';
+      case CampaignStatus.ARCHIVED:
+      default:
+        return 'outline';
+    }
+  };
 
-    default:
-      return <Badge variant="outline">{status}</Badge>;
+  let label: string = status;
+  if (Object.values(CampaignStatus).includes(status as CampaignStatus)) {
+    label = getCampaignStatusLabel(status as CampaignStatus, (k: string) => tRoles(k));
+  } else if (Object.values(SubmissionStatus).includes(status as SubmissionStatus)) {
+    label = getSubmissionStatusLabel(status as SubmissionStatus, (k: string) => tRoles(k));
   }
+
+  return (
+    <Badge variant={getVariant(status)} className={className}>
+      {label}
+    </Badge>
+  );
 }

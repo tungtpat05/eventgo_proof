@@ -1,7 +1,10 @@
+'use client';
+
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { useTranslations } from 'next-intl';
 
 export interface TablePaginationProps {
   currentPage: number;
@@ -19,13 +22,15 @@ export function TablePagination({
   totalItems,
   itemsPerPage = 8,
   onPageChange,
-  itemName = 'mục',
+  itemName,
   className,
 }: TablePaginationProps) {
+  const t = useTranslations('common.pagination');
   if (totalItems === 0) return null;
 
   const startItem = Math.min(totalItems, (currentPage - 1) * itemsPerPage + 1);
   const endItem = Math.min(totalItems, currentPage * itemsPerPage);
+  const displayItemName = itemName || t('defaultItemName');
 
   // Smart page numbers calculation with ellipsis
   const getPageNumbers = () => {
@@ -66,10 +71,12 @@ export function TablePagination({
       )}
     >
       <div>
-        Hiển thị{' '}
-        <span className="font-semibold text-slate-900">{startItem}</span> -{' '}
-        <span className="font-semibold text-slate-900">{endItem}</span> trong tổng số{' '}
-        <span className="font-semibold text-slate-900">{totalItems}</span> {itemName}
+        {t('showing', {
+          start: startItem,
+          end: endItem,
+          total: totalItems,
+          item: displayItemName,
+        })}
       </div>
 
       <div className="flex items-center gap-1 self-end sm:self-auto">
@@ -79,7 +86,7 @@ export function TablePagination({
           className="h-8 w-8 text-slate-600 border-slate-200 hover:bg-slate-100 disabled:opacity-40"
           disabled={currentPage <= 1}
           onClick={() => onPageChange(Math.max(1, currentPage - 1))}
-          title="Trang trước"
+          title={t('prevPage')}
         >
           <ChevronLeft className="h-4 w-4" />
         </Button>
@@ -122,7 +129,7 @@ export function TablePagination({
           className="h-8 w-8 text-slate-600 border-slate-200 hover:bg-slate-100 disabled:opacity-40"
           disabled={currentPage >= totalPages}
           onClick={() => onPageChange(Math.min(totalPages, currentPage + 1))}
-          title="Trang sau"
+          title={t('nextPage')}
         >
           <ChevronRight className="h-4 w-4" />
         </Button>

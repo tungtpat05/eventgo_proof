@@ -58,6 +58,7 @@ export function CampaignPersonnelSection({
 }: CampaignPersonnelSectionProps) {
   const tRoles = useTranslations('roles');
   const tCamp = useTranslations('campaigns');
+  const tPersonnel = useTranslations('campaigns.personnelSection');
 
   const [isExpanded, setIsExpanded] = useState(true);
   const [viewMode, setViewMode] = useState<'table' | 'grid'>('table');
@@ -215,14 +216,14 @@ export function CampaignPersonnelSection({
             <div>
               <div className="flex items-center gap-2">
                 <CardTitle className="text-base font-bold text-slate-900 leading-tight">
-                  Nhân sự chiến dịch
+                  {tPersonnel('title')}
                 </CardTitle>
                 <span className="rounded-full bg-slate-100 text-slate-600 font-bold px-2 py-0.5 text-[11px]">
-                  {personnelList.length} nhân sự
+                  {tPersonnel('staffCount', { count: personnelList.length })}
                 </span>
               </div>
               <CardDescription className="text-xs text-slate-500 mt-0.5">
-                Quản lý danh sách thành viên và phân quyền trong chiến dịch
+                {tPersonnel('subtitle')}
               </CardDescription>
             </div>
           </div>
@@ -236,7 +237,7 @@ export function CampaignPersonnelSection({
               className="gap-1.5 text-xs bg-blue-600 hover:bg-blue-700 text-white font-medium shadow-xs h-8 px-3"
             >
               <UserPlus className="h-3.5 w-3.5" />
-              Mời nhân sự
+              {tPersonnel('inviteButton')}
             </Button>
 
             <Button
@@ -245,7 +246,7 @@ export function CampaignPersonnelSection({
               size="sm"
               onClick={() => setIsExpanded(!isExpanded)}
               className="h-8 px-2.5 text-xs text-slate-600 border-slate-200"
-              title={isExpanded ? 'Thu gọn danh sách' : 'Mở rộng danh sách'}
+              title={isExpanded ? 'Collapse' : 'Expand'}
             >
               {isExpanded ? (
                 <ChevronUp className="h-4 w-4" />
@@ -284,7 +285,7 @@ export function CampaignPersonnelSection({
                       : 'text-slate-500 hover:text-slate-800'
                   )}
                 >
-                  Tất cả ({personnelList.length})
+                  {tPersonnel('tabAll', { count: personnelList.length })}
                 </button>
 
                 <button
@@ -298,7 +299,7 @@ export function CampaignPersonnelSection({
                   )}
                 >
                   <span className="flex h-1.5 w-1.5 rounded-full bg-emerald-500" />
-                  Đã kích hoạt ({activeCount})
+                  {tPersonnel('tabActive', { count: activeCount })}
                 </button>
 
                 <button
@@ -312,7 +313,7 @@ export function CampaignPersonnelSection({
                   )}
                 >
                   <span className="flex h-1.5 w-1.5 rounded-full bg-blue-500" />
-                  Chờ xác nhận ({pendingCount})
+                  {tPersonnel('tabPending', { count: pendingCount })}
                 </button>
               </div>
 
@@ -378,7 +379,7 @@ export function CampaignPersonnelSection({
               <div className="relative w-full sm:w-56">
                 <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-400" />
                 <Input
-                  placeholder="Tìm theo tên/email..."
+                  placeholder={tPersonnel('searchPlaceholder')}
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   className="pl-8 h-8 text-xs border-slate-200 focus-visible:ring-blue-600 bg-white"
@@ -396,7 +397,7 @@ export function CampaignPersonnelSection({
                       ? 'bg-white text-slate-900 shadow-2xs font-semibold'
                       : 'hover:text-slate-900'
                   )}
-                  title="Dạng bảng gọn (Table view)"
+                  title="Table view"
                 >
                   <List className="h-3.5 w-3.5" />
                 </button>
@@ -410,7 +411,7 @@ export function CampaignPersonnelSection({
                       ? 'bg-white text-slate-900 shadow-2xs font-semibold'
                       : 'hover:text-slate-900'
                   )}
-                  title="Dạng thẻ trực quan (Card view)"
+                  title="Card view"
                 >
                   <LayoutGrid className="h-3.5 w-3.5" />
                 </button>
@@ -422,8 +423,8 @@ export function CampaignPersonnelSection({
           {filteredList.length === 0 ? (
             <div className="p-8 text-center text-slate-400 text-xs border border-dashed border-slate-200 rounded-xl">
               {searchQuery || roleFilter !== 'ALL' || statusFilter !== 'ALL'
-                ? 'Không tìm thấy nhân sự nào khớp với bộ lọc hiện tại.'
-                : 'Chưa có nhân sự nào trong danh sách. Hãy bấm "Mời nhân sự" để thêm mới.'}
+                ? tPersonnel('emptyFiltered')
+                : tPersonnel('emptyPersonnel')}
             </div>
           ) : viewMode === 'table' ? (
             /* COMPACT TABLE VIEW */
@@ -431,11 +432,11 @@ export function CampaignPersonnelSection({
               <table className="w-full text-left text-xs">
                 <thead className="bg-slate-50 text-[11px] font-bold text-slate-500 uppercase border-b border-slate-200 tracking-wider">
                   <tr>
-                    <th className="px-4 py-2.5">Thành viên</th>
-                    <th className="px-3 py-2.5">Vai trò</th>
-                    <th className="px-3 py-2.5">Trạng thái</th>
-                    <th className="px-3 py-2.5">Gian hàng phụ trách</th>
-                    <th className="px-4 py-2.5 text-right">Thao tác</th>
+                    <th className="px-4 py-2.5">{tPersonnel('thMember')}</th>
+                    <th className="px-3 py-2.5">{tPersonnel('thRole')}</th>
+                    <th className="px-3 py-2.5">{tPersonnel('thStatus')}</th>
+                    <th className="px-3 py-2.5">{tPersonnel('thBooths')}</th>
+                    <th className="px-4 py-2.5 text-right">{tPersonnel('thActions')}</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100 bg-white">
@@ -480,12 +481,12 @@ export function CampaignPersonnelSection({
                           {isPending ? (
                             <span className="inline-flex items-center gap-1 text-[11px] font-medium text-blue-700 bg-blue-50 px-2 py-0.5 rounded-full border border-blue-200/80">
                               <Clock className="h-2.5 w-2.5" />
-                              Chờ xác nhận (Google)
+                              {tPersonnel('statusPendingGoogle')}
                             </span>
                           ) : (
                             <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200/80">
                               <CheckCircle2 className="h-2.5 w-2.5" />
-                              Đã kích hoạt
+                              {tPersonnel('statusActive')}
                             </span>
                           )}
                         </td>
@@ -495,10 +496,10 @@ export function CampaignPersonnelSection({
                           {assignedCount > 0 ? (
                             <span className="inline-flex items-center gap-1 rounded-md px-2 py-0.5 text-[11px] font-semibold bg-indigo-50 text-indigo-700 border border-indigo-200/60">
                               <Store className="h-3 w-3" />
-                              {assignedCount} booth
+                              {tPersonnel('assignedBoothCount', { count: assignedCount })}
                             </span>
                           ) : (
-                            <span className="text-[11px] text-slate-400">Chưa gán booth</span>
+                            <span className="text-[11px] text-slate-400">{tPersonnel('unassignedBooths')}</span>
                           )}
                         </td>
 
@@ -514,7 +515,7 @@ export function CampaignPersonnelSection({
                                   disabled={resendingInviteId === p.rawId}
                                   onClick={() => handleResend(p)}
                                   className="h-7 px-2 text-[11px] text-slate-600 hover:text-blue-600 gap-1"
-                                  title="Gửi lại email mời"
+                                  title="Resend invite"
                                 >
                                   <RotateCw
                                     className={cn(
@@ -522,7 +523,7 @@ export function CampaignPersonnelSection({
                                       resendingInviteId === p.rawId && 'animate-spin text-blue-600'
                                     )}
                                   />
-                                  Gửi lại
+                                  {tPersonnel('btnResend')}
                                 </Button>
 
                                 <Button
@@ -531,17 +532,17 @@ export function CampaignPersonnelSection({
                                   size="sm"
                                   onClick={() => handleCopyLink(p)}
                                   className="h-7 px-2 text-[11px] text-slate-600 hover:text-slate-900 gap-1"
-                                  title="Sao chép link mời trực tiếp"
+                                  title="Copy invite link"
                                 >
                                   {copiedInviteId === p.rawId ? (
                                     <>
                                       <Check className="h-3 w-3 text-emerald-600" />
-                                      <span className="text-emerald-600">Đã chép</span>
+                                      <span className="text-emerald-600">{tCamp('team.copied')}</span>
                                     </>
                                   ) : (
                                     <>
                                       <Copy className="h-3 w-3" />
-                                      Link mời
+                                      {tPersonnel('btnInviteLink')}
                                     </>
                                   )}
                                 </Button>
@@ -552,10 +553,10 @@ export function CampaignPersonnelSection({
                                   size="sm"
                                   onClick={() => setRevokingPersonnel(p)}
                                   className="h-7 px-2 text-[11px] text-red-600 hover:bg-red-50 hover:text-red-700 gap-1"
-                                  title="Thu hồi lời mời"
+                                  title="Revoke invite"
                                 >
                                   <Trash2 className="h-3 w-3" />
-                                  Thu hồi
+                                  {tPersonnel('btnRevoke')}
                                 </Button>
                               </>
                             ) : (
@@ -565,10 +566,10 @@ export function CampaignPersonnelSection({
                                 size="sm"
                                 onClick={() => setRevokingPersonnel(p)}
                                 className="h-7 px-2 text-[11px] text-red-600 hover:bg-red-50 hover:text-red-700 gap-1"
-                                title="Xóa thành viên khỏi chiến dịch"
+                                title="Remove member"
                               >
                                 <Trash2 className="h-3 w-3" />
-                                Xóa khỏi chiến dịch
+                                {tPersonnel('btnRemove')}
                               </Button>
                             )}
                           </div>
@@ -617,12 +618,12 @@ export function CampaignPersonnelSection({
                           {isPending ? (
                             <span className="shrink-0 inline-flex items-center gap-1 rounded-md bg-blue-50 text-blue-700 border border-blue-200/80 px-1.5 py-0.5 text-[10px] font-medium">
                               <Clock className="h-2.5 w-2.5" />
-                              Chờ xác nhận
+                              {tPersonnel('statusPendingGoogle')}
                             </span>
                           ) : (
                             <span className="shrink-0 inline-flex items-center gap-1 rounded-md bg-emerald-50 text-emerald-700 border border-emerald-200/80 px-1.5 py-0.5 text-[10px] font-semibold">
                               <CheckCircle2 className="h-2.5 w-2.5" />
-                              Đã kích hoạt
+                              {tPersonnel('statusActive')}
                             </span>
                           )}
                         </div>
@@ -643,8 +644,8 @@ export function CampaignPersonnelSection({
                           >
                             <Store className="h-2.5 w-2.5" />
                             {assignedCount > 0
-                              ? `${assignedCount} booth phụ trách`
-                              : 'Chưa gán booth'}
+                              ? tPersonnel('assignedBoothCount', { count: assignedCount })
+                              : tPersonnel('unassignedBooths')}
                           </span>
                         </div>
                       </div>
@@ -661,7 +662,7 @@ export function CampaignPersonnelSection({
                             disabled={resendingInviteId === p.rawId}
                             onClick={() => handleResend(p)}
                             className="h-7 px-2 text-[11px] text-slate-600 hover:text-blue-600 gap-1"
-                            title="Gửi lại email mời"
+                            title="Resend invite"
                           >
                             <RotateCw
                               className={cn(
@@ -669,7 +670,7 @@ export function CampaignPersonnelSection({
                                 resendingInviteId === p.rawId && 'animate-spin text-blue-600'
                               )}
                             />
-                            Gửi lại
+                            {tPersonnel('btnResend')}
                           </Button>
 
                           <Button
@@ -678,17 +679,17 @@ export function CampaignPersonnelSection({
                             size="sm"
                             onClick={() => handleCopyLink(p)}
                             className="h-7 px-2 text-[11px] text-slate-600 hover:text-slate-900 gap-1"
-                            title="Sao chép link mời trực tiếp"
+                            title="Copy invite link"
                           >
                             {copiedInviteId === p.rawId ? (
                               <>
                                 <Check className="h-3 w-3 text-emerald-600" />
-                                <span className="text-emerald-600">Đã chép</span>
+                                <span className="text-emerald-600">{tCamp('team.copied')}</span>
                               </>
                             ) : (
                               <>
                                 <Copy className="h-3 w-3" />
-                                Link mời
+                                {tPersonnel('btnInviteLink')}
                               </>
                             )}
                           </Button>
@@ -699,10 +700,10 @@ export function CampaignPersonnelSection({
                             size="sm"
                             onClick={() => setRevokingPersonnel(p)}
                             className="h-7 px-2 text-[11px] text-red-600 hover:bg-red-50 hover:text-red-700 gap-1"
-                            title="Thu hồi lời mời"
+                            title="Revoke invite"
                           >
                             <Trash2 className="h-3 w-3" />
-                            Thu hồi
+                            {tPersonnel('btnRevoke')}
                           </Button>
                         </>
                       ) : (
@@ -712,10 +713,10 @@ export function CampaignPersonnelSection({
                           size="sm"
                           onClick={() => setRevokingPersonnel(p)}
                           className="h-7 px-2 text-[11px] text-red-600 hover:bg-red-50 hover:text-red-700 gap-1"
-                          title="Xóa thành viên khỏi chiến dịch"
+                          title="Remove member"
                         >
                           <Trash2 className="h-3 w-3" />
-                          Xóa khỏi chiến dịch
+                          {tPersonnel('btnRemove')}
                         </Button>
                       )}
                     </div>
@@ -730,11 +731,15 @@ export function CampaignPersonnelSection({
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-3 border-t border-slate-100 text-xs text-slate-500">
               <div className="flex items-center gap-2 flex-wrap">
                 <span>
-                  Hiển thị <span className="font-semibold text-slate-800">{(currentPage - 1) * pageSize + 1}</span> - <span className="font-semibold text-slate-800">{Math.min(currentPage * pageSize, filteredList.length)}</span> trong số <span className="font-semibold text-slate-800">{filteredList.length}</span> nhân sự
+                  {tPersonnel('showingRange', {
+                    from: (currentPage - 1) * pageSize + 1,
+                    to: Math.min(currentPage * pageSize, filteredList.length),
+                    total: filteredList.length,
+                  })}
                 </span>
                 {/* Page Size Selector */}
                 <div className="flex items-center gap-1 ml-2 pl-2 border-l border-slate-200">
-                  <span className="text-[11px] text-slate-400">Xem:</span>
+                  <span className="text-[11px] text-slate-400">View:</span>
                   {[5, 10, 20].map((size) => (
                     <button
                       key={size}
@@ -766,7 +771,7 @@ export function CampaignPersonnelSection({
                   className="h-7 px-2.5 text-xs gap-1 text-slate-600 border-slate-200 cursor-pointer"
                 >
                   <ChevronLeft className="h-3.5 w-3.5" />
-                  Trước
+                  {tPersonnel('pagePrevious')}
                 </Button>
 
                 <div className="flex items-center gap-1 px-1">
@@ -795,7 +800,7 @@ export function CampaignPersonnelSection({
                   onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
                   className="h-7 px-2.5 text-xs gap-1 text-slate-600 border-slate-200 cursor-pointer"
                 >
-                  Sau
+                  {tPersonnel('pageNext')}
                   <ChevronRight className="h-3.5 w-3.5" />
                 </Button>
               </div>

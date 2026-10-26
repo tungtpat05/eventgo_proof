@@ -1,10 +1,14 @@
 import { getCurrentUserSession } from '@/application/use-cases/auth/get-current-user';
 import { AdminProfileView } from '@/features/admin/components/admin-profile-view';
 import { Metadata } from 'next';
+import { getTranslations } from 'next-intl/server';
 
-export const metadata: Metadata = {
-  title: 'Thông tin tài khoản — EventGo Admin',
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getTranslations('admin.profile');
+  return {
+    title: t('metaTitle'),
+  };
+}
 
 import { redirect } from 'next/navigation';
 

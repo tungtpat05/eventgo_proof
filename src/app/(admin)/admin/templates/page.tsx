@@ -2,12 +2,14 @@
 
 import React, { useState, useEffect, useTransition } from 'react';
 import Link from 'next/link';
+import { useTranslations, useLocale } from 'next-intl';
 import {
   getChecklistTemplatesAction,
   deleteChecklistTemplateAction,
 } from '@/features/admin/actions/admin-actions';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { formatDate } from '@/lib/utils';
 import {
   Plus,
   Trash2,
@@ -18,6 +20,9 @@ import {
 } from 'lucide-react';
 
 export default function AdminTemplatesPage() {
+  const t = useTranslations('admin.templates');
+  const locale = useLocale();
+
   const [templates, setTemplates] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isPending, startTransition] = useTransition();
@@ -38,13 +43,13 @@ export default function AdminTemplatesPage() {
   }, []);
 
   const handleDelete = (id: string, name: string) => {
-    if (!confirm(`Bạn có chắc muốn xóa bộ mẫu "${name}"?`)) return;
+    if (!confirm(t('deleteConfirm', { name }))) return;
     startTransition(async () => {
       try {
         await deleteChecklistTemplateAction(id);
         await loadData();
       } catch (err: any) {
-        alert(err.message || 'Lỗi xóa mẫu');
+        alert(err.message || 'Error deleting template');
       }
     });
   };
@@ -56,7 +61,7 @@ export default function AdminTemplatesPage() {
         <Link href="/admin/templates/new">
           <Button size="sm" className="bg-purple-600 hover:bg-purple-700 text-white text-xs gap-1.5 shadow-xs h-8 px-3">
             <Plus className="h-3.5 w-3.5" />
-            Tạo Mẫu Mới
+            {t('createNew')}
           </Button>
         </Link>
       </div>
@@ -69,13 +74,13 @@ export default function AdminTemplatesPage() {
       ) : templates.length === 0 ? (
         <div className="py-12 text-center bg-white rounded-xl border border-slate-200 p-8 space-y-3">
           <Layers className="h-12 w-12 text-slate-300 mx-auto" />
-          <p className="text-base font-semibold text-slate-700">Chưa có bộ mẫu checklist nào</p>
+          <p className="text-base font-semibold text-slate-700">{t('emptyTitle')}</p>
           <p className="text-xs text-slate-400 max-w-sm mx-auto">
-            Hãy tạo các bộ mẫu chuẩn hóa (Siêu thị, Roadshow, TTTM) để người dùng có thể áp dụng ngay trong Wizard.
+            {t('emptyDesc')}
           </p>
           <Link href="/admin/templates/new">
             <Button size="sm" className="bg-purple-600 hover:bg-purple-700 text-white text-xs gap-1 mt-2">
-              <Plus className="h-4 w-4" /> Tạo mẫu đầu tiên
+              <Plus className="h-4 w-4" /> {t('createFirst')}
             </Button>
           </Link>
         </div>
@@ -113,12 +118,12 @@ export default function AdminTemplatesPage() {
                 {/* Checklist Items Preview */}
                 <div className="mt-4 pt-3 border-t border-slate-100 space-y-2">
                   <p className="text-xs font-semibold text-slate-700 flex items-center justify-between">
-                    <span>Danh sách tiêu chí kiểm tra:</span>
-                    <span className="text-slate-400 font-normal">{tpl.items.length} tiêu chí</span>
+                    <span>{t('criteriaHeader')}</span>
+                    <span className="text-slate-400 font-normal">{t('criteriaUnit', { count: tpl.items.length })}</span>
                   </p>
 
                   <ul className="space-y-1.5 max-h-40 overflow-y-auto pr-1">
-                    {tpl.items.map((item: any, i: number) => (
+                    {tpl.items.map((item: any) => (
                       <li key={item.id} className="text-xs text-slate-600 flex items-center justify-between bg-slate-50 p-2 rounded-lg">
                         <span className="flex items-center gap-1.5 font-medium truncate max-w-[200px] sm:max-w-[260px]">
                           <CheckCircle2 className="h-3.5 w-3.5 text-purple-600 shrink-0" />
@@ -128,7 +133,7 @@ export default function AdminTemplatesPage() {
                           <span className="text-[10px] text-slate-500 font-mono">[{item.category}]</span>
                           {item.is_required && (
                             <span className="text-[10px] font-semibold text-amber-700 bg-amber-50 px-1.5 py-0.5 rounded">
-                              Bắt buộc
+                              {t('required')}
                             </span>
                           )}
                         </div>
@@ -139,8 +144,8 @@ export default function AdminTemplatesPage() {
               </div>
 
               <div className="pt-2 flex items-center justify-between text-xs text-slate-400 border-t border-slate-100">
-                <span>Trạng thái: <strong className="text-emerald-600">Đang áp dụng</strong></span>
-                <span>Tạo lúc: {new Date(tpl.created_at).toLocaleDateString('vi-VN')}</span>
+                <span>{t('statusLabel')} <strong className="text-emerald-600">{t('statusActive')}</strong></span>
+                <span>{t('createdAtLabel', { date: formatDate(tpl.created_at, locale) })}</span>
               </div>
             </div>
           ))}

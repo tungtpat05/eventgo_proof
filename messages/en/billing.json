@@ -1,0 +1,130 @@
+{
+  "page": {
+    "title": "Subscription Plans & Billing",
+    "subtitle": "Manage campaign quotas, renew subscriptions, and reconcile invoice history",
+    "btnRefresh": "Refresh",
+    "loading": "Loading plan details & billing info...",
+    "metaTitle": "Subscription Plans & Billing — EventGo Proof",
+    "errInitPayment": "Failed to initialize payment gateway"
+  },
+  "tiers": {
+    "FREE": {
+      "name": "Free Plan",
+      "description": "Individuals or testing 1-2 parallel campaigns"
+    },
+    "STARTER": {
+      "name": "Starter Plan",
+      "description": "For small & medium event agencies running parallel activations"
+    },
+    "PRO": {
+      "name": "Pro Plan",
+      "description": "Professional agencies & large-scale brand campaigns"
+    }
+  },
+  "plans": {
+    "title": "Choose the Right Plan for Your Business",
+    "subtitle": "Flexible monthly upgrade or renewal powered by automated PayOS VietQR gateway.",
+    "currentPlan": "Current Plan",
+    "popularBadge": "Most Popular",
+    "perMonth": "VND / month",
+    "freePrice": "0 VND",
+    "freeLabel": "Free",
+    "featuresHeading": "Quotas & Features:",
+    "featureCampaigns": "Max {count, plural, one{# active campaign} other{# active campaigns}} running simultaneously",
+    "featureBooths": "Unlimited booths",
+    "featureGps": "Photo acceptance with GPS coordinates & Timestamp",
+    "featureReview": "2-step field evidence review",
+    "featureSupport": "24/7 Priority technical support & 99.9% SLA",
+    "btnCurrent": "Current Plan",
+    "btnDefault": "Default Plan",
+    "btnLower": "Lower Plan",
+    "btnLowerTooltip": "You are currently on a higher tier",
+    "btnRenew": "Renew for 30 days",
+    "btnUpgrade": "Upgrade to {name}",
+    "btnSubscribe": "Subscribe to {name}"
+  },
+  "quota": {
+    "currentBadge": "Current Subscription",
+    "statusExpired": "Expired",
+    "statusExpiringSoon": "Expiring Soon",
+    "statusActive": "Active",
+    "expiresOn": "Expires on",
+    "daysRemainingBadge": "({days, plural, one{# day left} other{# days left}})",
+    "permanentDuration": "Validity",
+    "permanentFree": "Permanent Free Plan",
+    "activeCampaigns": "Active Campaigns",
+    "slotsUsage": "{count} / {max} slots",
+    "quotaExceeded": "You have reached your maximum campaign limit. Please upgrade to create more campaigns.",
+    "slotsRemaining": "You have {count, plural, one{# campaign slot} other{# campaign slots}} remaining.",
+    "benefitsHeading": "Benefits of {name}:",
+    "benefitMaxCampaigns": "• Max {count, plural, one{# simultaneous campaign} other{# simultaneous campaigns}}",
+    "benefitUnlimitedBooths": "• Unlimited booths",
+    "benefitGps": "• Standard GPS & Timestamp tagging",
+    "benefitReport": "• Excel / PDF report export"
+  },
+  "payosModal": {
+    "title": "Payment for {plan}",
+    "subtitle": "Scan VietQR with any banking app or MB Bank",
+    "successTitle": "Payment Successful!",
+    "successDesc": "System confirmed payment successfully. Your {plan} has been activated for 30 days.",
+    "reloading": "Reloading dashboard...",
+    "amountLabel": "Payment Amount",
+    "copyAmountTitle": "Copy amount",
+    "qrExpiresLabel": "QR Code Expiry",
+    "qrSecurity": "VietQR Napas247 • Instant automated activation after scan",
+    "manualCardTitle": "Manual Bank Transfer Details",
+    "napasBadge": "24/7 Napas",
+    "bankLabel": "Bank:",
+    "accountNameLabel": "Account Holder:",
+    "accountNoLabel": "Account Number:",
+    "copyAccTitle": "Copy account number",
+    "copied": "Copied",
+    "copy": "Copy",
+    "transferContentLabel": "Transfer Note:",
+    "copyContentTitle": "Copy transfer note",
+    "slaTitle": "SLA Commitment:",
+    "slaDesc": "System automatically records payments within 1–3 minutes after your bank account is debited.",
+    "manualCheckMsg": "Balance deduction not detected yet. VietQR gateway is reconciling automatically (1–3 mins). Please wait a moment.",
+    "btnManualCheck": "I have transferred — Check Now",
+    "listening": "Connecting to PayOS and waiting for payment...",
+    "openPortal": "Open PayOS Checkout Page",
+    "hotline": "Urgent Support: 0988.xxx.xxx",
+    "btnClose": "Close / Pay Later"
+  },
+  "transactions": {
+    "title": "Transaction History",
+    "empty": "No transactions recorded yet",
+    "emptyDesc": "Subscription upgrades and renewal payments will appear here.",
+    "statusSuccess": "Successful",
+    "statusPending": "Pending Payment",
+    "statusCancelled": "Cancelled",
+    "statusRefunded": "Refunded",
+    "statusFailed": "Failed",
+    "thOrderCode": "Order Code",
+    "thPlan": "Plan",
+    "thAmount": "Amount",
+    "thGateway": "Gateway",
+    "thStatus": "Status",
+    "thTime": "Time",
+    "paidAt": "Paid: {time}",
+    "gatewayPayos": "VietQR (PayOS)",
+    "gatewayTransfer": "Bank Transfer"
+  },
+  "upgradeDialog": {
+    "title": "Confirm Subscription Upgrade",
+    "subtitle": "You are about to switch your account to {plan}",
+    "newPlan": "New Plan:",
+    "priceLabel": "Billing Amount:",
+    "priceValue": "{price} VND / 30 days",
+    "explanation": "Once VietQR payment succeeds, the new plan takes effect immediately for a fresh 30-day cycle. Campaign quotas will reflect {plan} specifications.",
+    "btnCancel": "Cancel",
+    "btnProceed": "Proceed to Payment"
+  },
+  "expiration": {
+    "expiredTitle": "Your {plan} has expired!",
+    "expiredDesc": "Your account has reverted to Free tier limits (max 2 active campaigns). Please renew to restore full quotas.",
+    "warningTitle": "Your {plan} expires in {days, plural, one{# day!} other{# days!}}",
+    "warningDesc": "Renew today to carry over and add 30 more days without interrupting on-site activations.",
+    "renewNow": "Renew Now"
+  }
+}

@@ -1,6 +1,9 @@
+'use client';
+
 import React from 'react';
 import { Search, X, Filter } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { useTranslations } from 'next-intl';
 
 export interface ColumnSearchInputProps {
   value: string;
@@ -12,10 +15,12 @@ export interface ColumnSearchInputProps {
 export function ColumnSearchInput({
   value,
   onChange,
-  placeholder = 'Tìm kiếm...',
+  placeholder,
   className,
 }: ColumnSearchInputProps) {
+  const t = useTranslations('common.filters');
   const isFiltered = Boolean(value && value.trim().length > 0);
+  const placeholderText = placeholder || t('searchPlaceholder');
 
   return (
     <div className={cn('relative w-full min-w-[120px]', className)}>
@@ -29,7 +34,7 @@ export function ColumnSearchInput({
         type="text"
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        placeholder={placeholder}
+        placeholder={placeholderText}
         className={cn(
           'w-full pl-8 pr-7 py-1.5 text-xs rounded-lg border transition-all text-slate-800 placeholder:text-slate-400 font-normal focus:outline-none focus:ring-2',
           isFiltered
@@ -42,7 +47,7 @@ export function ColumnSearchInput({
           type="button"
           onClick={() => onChange('')}
           className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 p-0.5 rounded transition-colors"
-          title="Xóa tìm kiếm"
+          title={t('clearSearch')}
         >
           <X className="h-3 w-3" />
         </button>
@@ -68,10 +73,12 @@ export function ColumnSelect({
   value,
   onChange,
   options,
-  allLabel = 'Tất cả',
+  allLabel,
   className,
 }: ColumnSelectProps) {
+  const t = useTranslations('common.filters');
   const isFiltered = Boolean(value && value !== 'ALL' && value !== '');
+  const displayAllLabel = allLabel || t('allOption');
 
   return (
     <div className={cn('relative w-full min-w-[120px]', className)}>
@@ -85,7 +92,7 @@ export function ColumnSelect({
             : 'border-slate-200 bg-white/80 hover:bg-white focus:bg-white focus:border-blue-500 focus:ring-blue-500/20 text-slate-700'
         )}
       >
-        <option value="ALL">{allLabel}</option>
+        <option value="ALL">{displayAllLabel}</option>
         {options.map((opt) => (
           <option key={opt.value} value={opt.value}>
             {opt.label}
@@ -122,13 +129,15 @@ export function ColumnHeaderTitle({
   isFiltered = false,
   className,
 }: ColumnHeaderTitleProps) {
+  const t = useTranslations('common.filters');
+
   return (
     <div className={cn('flex items-center gap-1.5 font-semibold text-slate-700', className)}>
       <span>{label}</span>
       {isFiltered && (
         <span
           className="inline-flex items-center justify-center p-0.5 rounded-full bg-blue-100 text-blue-600 text-[10px]"
-          title="Đang áp dụng bộ lọc cột này"
+          title={t('filterApplied')}
         >
           <Filter className="h-2.5 w-2.5" />
         </span>

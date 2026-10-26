@@ -1,22 +1,28 @@
+'use client';
+
 import React from 'react';
 import Link from 'next/link';
 import { Location } from '@/domain/entities';
 import { Button } from '@/components/ui/button';
 import { formatDate } from '@/lib/utils';
 import { MapPin, Calendar, Store, ArrowRight } from 'lucide-react';
+import { useTranslations, useLocale } from 'next-intl';
 
 interface LocationListProps {
   locations: Location[];
 }
 
 export function LocationList({ locations }: LocationListProps) {
+  const t = useTranslations('locations.list');
+  const locale = useLocale();
+
   if (locations.length === 0) {
     return (
       <div className="rounded-xl border border-dashed border-slate-300 p-8 text-center bg-white">
         <MapPin className="mx-auto h-8 w-8 text-slate-400 mb-2" />
-        <p className="text-sm font-medium text-slate-700">Chưa có địa điểm nào</p>
+        <p className="text-sm font-medium text-slate-700">{t('emptyTitle')}</p>
         <p className="text-xs text-slate-500 mt-1 mb-4">
-          Thêm địa điểm đầu tiên hoặc nhập danh sách hàng loạt bằng file Excel.
+          {t('emptyDesc')}
         </p>
       </div>
     );
@@ -47,19 +53,19 @@ export function LocationList({ locations }: LocationListProps) {
             {loc.deadline && (
               <div className="flex items-center gap-1.5">
                 <Calendar className="h-3.5 w-3.5 text-slate-400" />
-                <span>Hạn chót: {formatDate(loc.deadline)}</span>
+                <span>{t('deadline', { date: formatDate(loc.deadline, locale) })}</span>
               </div>
             )}
 
             <div className="flex items-center justify-between pt-1">
               <span className="text-[11px] text-slate-500 flex items-center gap-1">
                 <Store className="h-3.5 w-3.5 text-slate-400" />
-                {loc.booths?.length || 0} gian hàng (booths)
+                {t('boothCount', { count: loc.booths?.length || 0 })}
               </span>
 
               <Link href={`/campaigns/${loc.campaignId}`}>
                 <Button size="sm" variant="outline" className="text-xs h-8 px-2.5 flex items-center gap-1">
-                  Xem chi tiết
+                  {t('btnViewDetail')}
                   <ArrowRight className="h-3.5 w-3.5" />
                 </Button>
               </Link>

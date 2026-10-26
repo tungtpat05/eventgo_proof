@@ -21,17 +21,18 @@ import {
   Calendar,
   ChevronDown,
   AlertTriangle,
-  Sparkles,
-  Info,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { WizardHeader } from './wizard-header';
 import { WizardStepper } from './wizard-stepper';
 import { WizardFooter } from './wizard-footer';
 import { createDraftCampaignAction } from '../../actions/campaign-wizard-actions';
+import { useTranslations } from 'next-intl';
 
 export function NewCampaignStep1() {
   const router = useRouter();
+  const t = useTranslations('campaigns.wizard.step1');
+  const tWizard = useTranslations('campaigns.wizard');
 
   const today = new Date().toISOString().split('T')[0];
   const nextMonth = new Date(Date.now() + 30 * 86400000).toISOString().split('T')[0];
@@ -66,15 +67,15 @@ export function NewCampaignStep1() {
 
   const handleNextClick = async () => {
     if (!formData.title.trim()) {
-      setErrorMessage('Vui lòng nhập tên chiến dịch.');
+      setErrorMessage(t('errNameRequired'));
       return;
     }
     if (!formData.brandName.trim()) {
-      setErrorMessage('Vui lòng nhập thương hiệu / nhãn hàng.');
+      setErrorMessage(t('errBrandRequired'));
       return;
     }
     if (formData.startDate && formData.endDate && new Date(formData.endDate) < new Date(formData.startDate)) {
-      setErrorMessage('Ngày kết thúc phải lớn hơn hoặc bằng ngày bắt đầu.');
+      setErrorMessage(t('errDateRange'));
       return;
     }
 
@@ -96,7 +97,7 @@ export function NewCampaignStep1() {
     if (res.success && res.data) {
       router.push(`/campaigns/${res.data.id}/wizard?step=2`);
     } else {
-      setErrorMessage(res.error || 'Lỗi khi khởi tạo chiến dịch.');
+      setErrorMessage(res.error || t('errGeneric'));
     }
   };
 
@@ -111,7 +112,7 @@ export function NewCampaignStep1() {
   return (
     <div className="space-y-6 max-w-6xl mx-auto pb-12">
       {/* 1. Header with Breadcrumb & Auto-save status */}
-      <WizardHeader campaignTitle="Tạo chiến dịch mới" isSaved={true} />
+      <WizardHeader campaignTitle={tWizard('title')} isSaved={true} />
 
       {/* 2. Stepper */}
       <WizardStepper currentStep={1} maxAccessibleStep={1} />
@@ -127,17 +128,17 @@ export function NewCampaignStep1() {
               </div>
               <div>
                 <CardTitle className="text-base sm:text-lg font-bold text-slate-900">
-                  Thông tin chiến dịch cốt lõi
+                  {t('title')}
                 </CardTitle>
                 <CardDescription className="text-xs text-slate-500">
-                  Chỉ cần 3 thông tin thiết yếu để bắt đầu thiết lập gian hàng và tiêu chuẩn nghiệm thu.
+                  {t('subtitle')}
                 </CardDescription>
               </div>
             </div>
 
             <span className="inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] font-semibold bg-slate-100 text-slate-700 border border-slate-200">
               <span className="h-1.5 w-1.5 rounded-full bg-slate-400" />
-              Bước 1/5 • Bản nháp
+              {t('stepBadge')}
             </span>
           </div>
         </CardHeader>
@@ -155,15 +156,15 @@ export function NewCampaignStep1() {
             {/* 1. Tên chiến dịch */}
             <div className="space-y-1.5 md:col-span-2">
               <label htmlFor="title" className="text-xs font-semibold text-slate-800 flex items-center justify-between">
-                <span>Tên chiến dịch <span className="text-rose-500">*</span></span>
-                <span className="text-[11px] text-slate-500 font-normal">Tên hiển thị trên toàn hệ thống</span>
+                <span>{t('nameLabel')} <span className="text-rose-500">*</span></span>
+                <span className="text-[11px] text-slate-500 font-normal">{t('nameHint')}</span>
               </label>
               <Input
                 id="title"
                 name="title"
                 value={formData.title}
                 onChange={handleChange}
-                placeholder="VD: Samsung Galaxy Roadshow 2026 — Activation Miền Bắc"
+                placeholder={t('namePlaceholder')}
                 className="h-11 text-sm border-slate-200 focus-visible:ring-blue-600 font-medium rounded-xl"
               />
             </div>
@@ -171,14 +172,14 @@ export function NewCampaignStep1() {
             {/* 2. Thương hiệu / Nhãn hàng */}
             <div className="space-y-1.5">
               <label htmlFor="brandName" className="text-xs font-semibold text-slate-800">
-                Nhãn hàng / Thương hiệu <span className="text-rose-500">*</span>
+                {t('brandLabel')} <span className="text-rose-500">*</span>
               </label>
               <Input
                 id="brandName"
                 name="brandName"
                 value={formData.brandName}
                 onChange={handleChange}
-                placeholder="VD: Samsung Galaxy, Coca-Cola, VinFast"
+                placeholder={t('brandPlaceholder')}
                 className="h-10 text-xs sm:text-sm border-slate-200 focus-visible:ring-blue-600 rounded-xl"
               />
             </div>
@@ -186,15 +187,15 @@ export function NewCampaignStep1() {
             {/* 3. Tên công ty / Khách hàng (Tùy chọn) */}
             <div className="space-y-1.5">
               <label htmlFor="companyName" className="text-xs font-semibold text-slate-800 flex items-center justify-between">
-                <span>Đơn vị tổ chức / Công ty</span>
-                <span className="text-[11px] text-slate-500 font-normal">Mặc định theo nhãn hàng</span>
+                <span>{t('companyLabel')}</span>
+                <span className="text-[11px] text-slate-500 font-normal">{t('companyHint')}</span>
               </label>
               <Input
                 id="companyName"
                 name="companyName"
                 value={formData.companyName}
                 onChange={handleChange}
-                placeholder="VD: Công ty TNHH Samsung Electronics VN"
+                placeholder={t('companyPlaceholder')}
                 className="h-10 text-xs sm:text-sm border-slate-200 focus-visible:ring-blue-600 rounded-xl"
               />
             </div>
@@ -205,7 +206,7 @@ export function NewCampaignStep1() {
             <div className="space-y-1.5">
               <label htmlFor="startDate" className="text-xs font-semibold text-slate-800 flex items-center gap-1.5">
                 <Calendar className="h-3.5 w-3.5 text-blue-600" />
-                <span>Ngày bắt đầu kích hoạt <span className="text-rose-500">*</span></span>
+                <span>{t('startDateLabel')} <span className="text-rose-500">*</span></span>
               </label>
               <Input
                 id="startDate"
@@ -220,7 +221,7 @@ export function NewCampaignStep1() {
             <div className="space-y-1.5">
               <label htmlFor="endDate" className="text-xs font-semibold text-slate-800 flex items-center gap-1.5">
                 <Calendar className="h-3.5 w-3.5 text-blue-600" />
-                <span>Ngày kết thúc dự kiến <span className="text-rose-500">*</span></span>
+                <span>{t('endDateLabel')} <span className="text-rose-500">*</span></span>
               </label>
               <Input
                 id="endDate"
@@ -236,8 +237,8 @@ export function NewCampaignStep1() {
           {/* 5. Mô tả ngắn */}
           <div className="space-y-1.5 pt-1">
             <label htmlFor="description" className="text-xs font-semibold text-slate-800 flex items-center justify-between">
-              <span>Mô tả tóm tắt mục tiêu chiến dịch</span>
-              <span className="text-[11px] text-slate-500 font-normal">Tùy chọn</span>
+              <span>{t('descLabel')}</span>
+              <span className="text-[11px] text-slate-500 font-normal">{t('descHint')}</span>
             </label>
             <textarea
               id="description"
@@ -245,7 +246,7 @@ export function NewCampaignStep1() {
               rows={2}
               value={formData.description}
               onChange={handleChange}
-              placeholder="VD: Nghiệm thu booth trưng bày, sampling sản phẩm và PG tương tác tại 15 siêu thị toàn quốc..."
+              placeholder={t('descPlaceholder')}
               className="w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-xs sm:text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600 transition-colors"
             />
           </div>
@@ -263,10 +264,10 @@ export function NewCampaignStep1() {
                 </div>
                 <div>
                   <span className="text-xs font-bold text-slate-800 block">
-                    Thông tin pháp nhân & xuất hóa đơn (Tùy chọn bổ sung)
+                    {t('companyAccordionTitle')}
                   </span>
                   <span className="text-[11px] text-slate-500 font-normal">
-                    Mã số thuế, địa chỉ trụ sở và đầu mối kế toán đối soát
+                    {t('companyAccordionHint')}
                   </span>
                 </div>
               </div>
@@ -284,14 +285,14 @@ export function NewCampaignStep1() {
                   {/* Mã số thuế */}
                   <div className="space-y-1.5">
                     <label htmlFor="companyTaxCode" className="text-xs font-semibold text-slate-700">
-                      Mã số thuế
+                      {t('taxCodeLabel')}
                     </label>
                     <Input
                       id="companyTaxCode"
                       name="companyTaxCode"
                       value={formData.companyTaxCode}
                       onChange={handleChange}
-                      placeholder="VD: 0303217354"
+                      placeholder={t('taxCodePlaceholder')}
                       className="h-9 text-xs border-slate-200 focus-visible:ring-blue-600 bg-white rounded-lg"
                     />
                   </div>
@@ -299,14 +300,14 @@ export function NewCampaignStep1() {
                   {/* Người liên hệ */}
                   <div className="space-y-1.5">
                     <label htmlFor="companyContactName" className="text-xs font-semibold text-slate-700">
-                      Đầu mối liên hệ phụ trách
+                      {t('contactNameLabel')}
                     </label>
                     <Input
                       id="companyContactName"
                       name="companyContactName"
                       value={formData.companyContactName}
                       onChange={handleChange}
-                      placeholder="VD: Nguyễn Thanh Tùng"
+                      placeholder={t('contactNamePlaceholder')}
                       className="h-9 text-xs border-slate-200 focus-visible:ring-blue-600 bg-white rounded-lg"
                     />
                   </div>
@@ -314,7 +315,7 @@ export function NewCampaignStep1() {
                   {/* Email liên hệ */}
                   <div className="space-y-1.5">
                     <label htmlFor="companyContactEmail" className="text-xs font-semibold text-slate-700">
-                      Email đối soát hóa đơn
+                      {t('contactEmailLabel')}
                     </label>
                     <div className="relative">
                       <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-400" />
@@ -324,7 +325,7 @@ export function NewCampaignStep1() {
                         type="email"
                         value={formData.companyContactEmail}
                         onChange={handleChange}
-                        placeholder="VD: ketoan@samsung.com"
+                        placeholder={t('contactEmailPlaceholder')}
                         className="h-9 pl-9 text-xs border-slate-200 focus-visible:ring-blue-600 bg-white rounded-lg"
                       />
                     </div>
@@ -333,7 +334,7 @@ export function NewCampaignStep1() {
                   {/* Số điện thoại */}
                   <div className="space-y-1.5">
                     <label htmlFor="companyContactPhone" className="text-xs font-semibold text-slate-700">
-                      Số điện thoại hotline
+                      {t('contactPhoneLabel')}
                     </label>
                     <div className="relative">
                       <Phone className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-400" />
@@ -342,7 +343,7 @@ export function NewCampaignStep1() {
                         name="companyContactPhone"
                         value={formData.companyContactPhone}
                         onChange={handleChange}
-                        placeholder="VD: 090 123 4567"
+                        placeholder={t('contactPhonePlaceholder')}
                         className="h-9 pl-9 text-xs border-slate-200 focus-visible:ring-blue-600 bg-white rounded-lg"
                       />
                     </div>
@@ -352,14 +353,14 @@ export function NewCampaignStep1() {
                 {/* Địa chỉ công ty */}
                 <div className="space-y-1.5 pt-1">
                   <label htmlFor="companyAddress" className="text-xs font-semibold text-slate-700">
-                    Địa chỉ đăng ký kinh doanh
+                    {t('addressLabel')}
                   </label>
                   <Input
                     id="companyAddress"
                     name="companyAddress"
                     value={formData.companyAddress}
                     onChange={handleChange}
-                    placeholder="VD: Tòa nhà Bitexco, 2 Hải Triều, Bến Nghé, Quận 1, TP. Hồ Chí Minh"
+                    placeholder={t('addressPlaceholder')}
                     className="h-9 text-xs border-slate-200 focus-visible:ring-blue-600 bg-white rounded-lg"
                   />
                 </div>
@@ -377,16 +378,16 @@ export function NewCampaignStep1() {
         onCancel={handleCancel}
       />
 
-      {/* Confirm Cancel Dialog (replacing window.confirm) */}
+      {/* Confirm Cancel Dialog */}
       <Dialog open={isCancelDialogOpen} onOpenChange={setIsCancelDialogOpen}>
         <DialogContent className="sm:max-w-md bg-white rounded-2xl p-6">
           <DialogHeader>
             <DialogTitle className="text-lg font-bold text-slate-900 flex items-center gap-2 text-amber-700">
               <AlertTriangle className="h-5 w-5 text-amber-600" />
-              Hủy Khởi Tạo Chiến Dịch?
+              {t('cancelTitle')}
             </DialogTitle>
             <DialogDescription className="text-xs sm:text-sm text-slate-600 pt-1 leading-relaxed">
-              Các thông tin bạn vừa nhập sẽ không được lưu vào hệ thống dưới dạng bản nháp. Bạn có chắc chắn muốn rời khỏi luồng tạo mới?
+              {t('cancelDesc')}
             </DialogDescription>
           </DialogHeader>
 
@@ -398,7 +399,7 @@ export function NewCampaignStep1() {
               onClick={() => setIsCancelDialogOpen(false)}
               className="text-xs cursor-pointer font-medium"
             >
-              Tiếp tục chỉnh sửa
+              {t('cancelContinue')}
             </Button>
             <Button
               type="button"
@@ -406,7 +407,7 @@ export function NewCampaignStep1() {
               onClick={() => router.push('/campaigns')}
               className="text-xs bg-rose-600 hover:bg-rose-700 text-white cursor-pointer font-semibold"
             >
-              Hủy & Thoát ra
+              {t('cancelExit')}
             </Button>
           </DialogFooter>
         </DialogContent>

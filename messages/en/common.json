@@ -45,5 +45,50 @@
     "adminView": "Admin Mode",
     "clientView": "Client Mode",
     "language": "Language"
+  },
+  "header": {
+    "breadcrumbs": {
+      "overview": "Overview",
+      "campaigns": "Campaigns",
+      "supervision": "Field Supervision",
+      "approvals": "Evidence Approvals",
+      "newCampaign": "Create New Campaign",
+      "campaignDetail": "Campaign Details",
+      "managedCampaigns": "Managed Campaigns",
+      "billing": "Billing & Plans",
+      "account": "Account Profile"
+    },
+    "controls": {
+      "clientModeLabel": "Client Mode —",
+      "backToAdmin": "To Admin",
+      "billingButton": "Pricing & Plans",
+      "defaultUser": "User",
+      "planBadge": "Plan: {plan}",
+      "systemAdminBadge": "System Administrator",
+      "toAdminWorkspace": "To Admin Workspace",
+      "accountInfo": "Account Profile",
+      "billingSettings": "Billing & Subscriptions",
+      "signOut": "Log Out"
+    }
+  },
+  "pagination": {
+    "showing": "Showing {start} - {end} of {total} {item}",
+    "defaultItemName": "items",
+    "prevPage": "Previous page",
+    "nextPage": "Next page"
+  },
+  "toolbar": {
+    "searchPlaceholder": "Search data...",
+    "clearSearch": "Clear search",
+    "selectedRows": "Selected {count} rows",
+    "clearSelection": "Clear all selections",
+    "allPrefix": "All {label}",
+    "resetFilters": "Reset filters ({count})"
+  },
+  "filters": {
+    "searchPlaceholder": "Search...",
+    "clearSearch": "Clear search",
+    "allOption": "All",
+    "filterApplied": "Filter applied on this column"
   }
 }

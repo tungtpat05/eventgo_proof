@@ -2,22 +2,30 @@ import { ZodError } from 'zod';
 import { AppError, ValidationError } from '@/domain/errors';
 
 export interface ActionErrorResult {
-  error: string;
+  success: false;
+  errorCode: string;
+  params?: Record<string, string | number>;
   fieldErrors?: Record<string, string[]>;
+  error: string;
 }
 
 /**
- * Normalizes any error thrown during Server Action execution into user-friendly messages.
- * Prevents raw PostgreSQL RLS errors or stringified Zod JSON from being exposed to the user.
+ * Normalizes any error thrown during Server Action execution into a standardized machine-readable error contract.
+ * Remains strictly synchronous and decoupled from next-intl.
  */
 export function formatActionError(
   err: unknown,
-  defaultMessage = 'Đã có lỗi xảy ra. Vui lòng thử lại.'
+  defaultCodeOrMessage: string = 'ERR_UNKNOWN',
+  fallbackMessage = 'Đã có lỗi xảy ra. Vui lòng thử lại.'
 ): ActionErrorResult {
   if (err && typeof err === 'object' && 'digest' in err) {
     // Next.js redirect throw - must rethrow
     throw err;
   }
+
+  const isCustomCode = defaultCodeOrMessage.startsWith('ERR_') || defaultCodeOrMessage.startsWith('VAL_');
+  const defaultCode = isCustomCode ? defaultCodeOrMessage : 'ERR_UNKNOWN';
+  const defaultFallback = isCustomCode ? fallbackMessage : defaultCodeOrMessage;
 
   // Direct ZodError instance
   if (err instanceof ZodError) {
@@ -29,24 +37,41 @@ export function formatActionError(
       }
     }
 
-    const firstIssue = err.issues[0]?.message;
+    const firstIssue = err.issues[0];
+    const errorCode = firstIssue ? `VAL_${firstIssue.code.toUpperCase()}` : 'ERR_INVALID_INPUT';
     return {
-      error: firstIssue || 'Dữ liệu không hợp lệ. Vui lòng kiểm tra các trường thông tin.',
+      success: false,
+      errorCode,
       fieldErrors: Object.keys(fieldErrors).length > 0 ? fieldErrors : undefined,
+      error: firstIssue?.message || 'Dữ liệu không hợp lệ. Vui lòng kiểm tra các trường thông tin.',
     };
   }
 
   // App-specific ValidationError
   if (err instanceof ValidationError) {
     return {
-      error: err.message,
+      success: false,
+      errorCode: 'ERR_INVALID_INPUT',
       fieldErrors: err.errors,
+      error: err.message,
     };
   }
 
   // App-specific domain errors (AuthorizationError, NotFoundError, etc.)
   if (err instanceof AppError) {
+    let errorCode = 'ERR_UNKNOWN';
+    if (
+      err.name === 'AuthorizationError' ||
+      err.message.toLowerCase().includes('quyền') ||
+      err.message.toLowerCase().includes('unauthorized')
+    ) {
+      errorCode = 'ERR_FORBIDDEN';
+    } else if (err.name === 'NotFoundError' || err.message.toLowerCase().includes('không tìm thấy')) {
+      errorCode = 'ERR_NOT_FOUND';
+    }
     return {
+      success: false,
+      errorCode,
       error: err.message,
     };
   }
@@ -57,6 +82,8 @@ export function formatActionError(
     // Check for PostgreSQL Row-Level Security policy violations
     if (msg.includes('violates row-level security policy') || msg.includes('row-level security')) {
       return {
+        success: false,
+        errorCode: 'ERR_RLS_VIOLATION',
         error:
           'Bạn không có quyền thực hiện thao tác này trên dữ liệu đã chọn (chỉ Quản lý chiến dịch mới có quyền), hoặc phiên đăng nhập đã hết hạn. Vui lòng kiểm tra lại quyền hoặc đăng nhập lại.',
       };
@@ -73,10 +100,14 @@ export function formatActionError(
             if (!fieldErrors[key]) fieldErrors[key] = [];
             if (item.message) fieldErrors[key].push(item.message);
           }
-          const firstMessage = parsed[0]?.message || 'Dữ liệu không hợp lệ. Vui lòng kiểm tra lại.';
+          const firstItem = parsed[0];
+          const firstMessage = firstItem?.message || 'Dữ liệu không hợp lệ. Vui lòng kiểm tra lại.';
+          const errorCode = firstItem?.code ? `VAL_${String(firstItem.code).toUpperCase()}` : 'ERR_INVALID_INPUT';
           return {
-            error: firstMessage,
+            success: false,
+            errorCode,
             fieldErrors: Object.keys(fieldErrors).length > 0 ? fieldErrors : undefined,
+            error: firstMessage,
           };
         }
       } catch {
@@ -85,11 +116,15 @@ export function formatActionError(
     }
 
     return {
+      success: false,
+      errorCode: defaultCode,
       error: msg,
     };
   }
 
   return {
-    error: defaultMessage,
+    success: false,
+    errorCode: defaultCode,
+    error: defaultFallback,
   };
 }

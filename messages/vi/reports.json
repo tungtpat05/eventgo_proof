@@ -1,0 +1,51 @@
+{
+  "page": {
+    "metaTitle": "Báo Cáo Nghiệm Thu — EventGo Proof",
+    "empty": "Chưa có chiến dịch nào để lập biên bản báo cáo."
+  },
+  "view": {
+    "title": "Biên Bản Nghiệm Thu Chiến Dịch",
+    "subtitle": "Hồ sơ kiểm soát tuân thủ và đối soát thanh toán cho đối tác & nhãn hàng",
+    "btnExportExcel": "Xuất Excel (.xlsx)",
+    "btnPrint": "In / Xuất PDF",
+    "systemSub": "Hệ thống nghiệm thu số hóa chiến dịch đa địa điểm",
+    "reportCode": "Mã biên bản: PROOF-{code}",
+    "issueDate": "Ngày lập: {date}",
+    "campaignName": "Tên chiến dịch:",
+    "brand": "Nhãn hàng / Brand:",
+    "period": "Thời gian triển khai:",
+    "totalScale": "Tổng quy mô:",
+    "scaleCount": "{count, plural, other{# điểm kích hoạt}}",
+    "tableTitle": "Danh Sách Điểm Kích Hoạt & Kết Quả Nghiệm Thu",
+    "thIndex": "STT",
+    "thLocation": "Tên Địa Điểm / Gian Hàng",
+    "thAddress": "Địa Chỉ & Thành Phố",
+    "thCriteria": "Tiêu Chí Đạt",
+    "thStatus": "Trạng Thái",
+    "statusCompleted": "Đã nghiệm thu (100%)",
+    "statusInProgress": "Đang tiến hành ({percent}%)",
+    "statusNoCriteria": "Chưa có tiêu chí (0/0)",
+    "statusNotAccepted": "Chưa nghiệm thu (0%)",
+    "criteriaCount": "{approved} / {total} Tiêu chí đạt",
+    "zeroCriteria": "0 / 0 Tiêu chí",
+    "agencyRep": "ĐẠI DIỆN ĐƠN VỊ THỰC HIỆN (AGENCY)",
+    "clientRep": "ĐẠI DIỆN NHÃN HÀNG / ĐỐI TÁC (CLIENT)",
+    "signNote": "(Ký và ghi rõ họ tên)"
+  },
+  "excel": {
+    "sheetName": "Bien_Ban_Nghiem_Thu",
+    "colSTT": "STT",
+    "colCampaign": "Chiến Dịch",
+    "colBrand": "Thương Hiệu",
+    "colBoothName": "Tên Gian Hàng",
+    "colAddress": "Địa Chỉ",
+    "colCity": "Thành Phố",
+    "colDeadline": "Hạn Chót",
+    "colPassed": "Tiêu Chí Đạt",
+    "colStatus": "Trạng Thái Nghiệm Thu",
+    "statusNotConfigured": "Chưa thiết lập",
+    "statusExcelCompleted": "Hoàn thành 100%",
+    "statusExcelInProgress": "Đang tiến hành ({percent}% - {approved}/{total} đạt)",
+    "statusExcelNoCriteria": "Chưa có tiêu chí (0/0)"
+  }
+}

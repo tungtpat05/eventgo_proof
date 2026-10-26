@@ -7,16 +7,21 @@ import { Button } from '@/components/ui/button';
 import { PlusCircle, FileSpreadsheet } from 'lucide-react';
 import { Metadata } from 'next';
 import { CampaignRole } from '@/domain/enums';
+import { getTranslations } from 'next-intl/server';
 
-export const metadata: Metadata = {
-  title: 'Quản lý Địa điểm — EventGo Proof',
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getTranslations('locations.page');
+  return {
+    title: t('metaTitle'),
+  };
+}
 
 interface LocationsPageProps {
   searchParams: Promise<{ campaignId?: string }>;
 }
 
 export default async function LocationsPage({ searchParams }: LocationsPageProps) {
+  const t = await getTranslations('locations.page');
   const { campaignId } = await searchParams;
   const [locations, campaigns] = await Promise.all([
     getLocationsUseCase(campaignId),
@@ -32,11 +37,11 @@ export default async function LocationsPage({ searchParams }: LocationsPageProps
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight text-slate-900">Địa Điểm Triển Khai</h1>
+          <h1 className="text-2xl font-bold tracking-tight text-slate-900">{t('pageTitle')}</h1>
           <p className="text-sm text-slate-500">
             {selectedCampaign
-              ? `Các gian hàng thuộc chiến dịch: ${selectedCampaign.title}`
-              : 'Các location bạn được quyền truy cập'}
+              ? t('campaignSubtitle', { title: selectedCampaign.title })
+              : t('accessibleSubtitle')}
           </p>
         </div>
 
@@ -44,14 +49,14 @@ export default async function LocationsPage({ searchParams }: LocationsPageProps
           <Link href={campaignId ? `/locations/import?campaignId=${campaignId}` : '/locations/import'}>
             <Button variant="secondary" className="flex items-center gap-1.5 text-xs">
               <FileSpreadsheet className="h-4 w-4 text-emerald-600" />
-              Import Excel
+              {t('btnImport')}
             </Button>
           </Link>
 
           <Link href={campaignId ? `/locations/new?campaignId=${campaignId}` : '/locations/new'}>
             <Button className="flex items-center gap-1.5 text-xs">
               <PlusCircle className="h-4 w-4" />
-              Thêm địa điểm
+              {t('btnCreate')}
             </Button>
           </Link>
         </div>}

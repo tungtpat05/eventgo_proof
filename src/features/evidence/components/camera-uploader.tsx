@@ -3,6 +3,7 @@
 import React, { useRef, useState } from 'react';
 import { Camera, X, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { useTranslations } from 'next-intl';
 
 export interface CapturedPhoto {
   id: string;
@@ -17,6 +18,7 @@ interface CameraUploaderProps {
 }
 
 export function CameraUploader({ photos, onPhotosChange, maxPhotos = 5 }: CameraUploaderProps) {
+  const t = useTranslations('operations.camera');
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [isCompressing, setIsCompressing] = useState(false);
 
@@ -111,17 +113,17 @@ export function CameraUploader({ photos, onPhotosChange, maxPhotos = 5 }: Camera
           type="button"
           onClick={() => fileInputRef.current?.click()}
           disabled={isCompressing || photos.length >= maxPhotos}
-          className="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white flex items-center justify-center gap-2 h-11 text-sm font-semibold"
+          className="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white flex items-center justify-center gap-2 h-11 text-sm font-semibold cursor-pointer"
         >
           {isCompressing ? (
             <>
               <Loader2 className="h-4 w-4 animate-spin" />
-              Đang tối ưu ảnh...
+              {t('optimizing')}
             </>
           ) : (
             <>
               <Camera className="h-4 w-4" />
-              Chụp / Chọn ảnh ({photos.length}/{maxPhotos})
+              {t('captureButton', { count: photos.length, max: maxPhotos })}
             </>
           )}
         </Button>
@@ -138,7 +140,7 @@ export function CameraUploader({ photos, onPhotosChange, maxPhotos = 5 }: Camera
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
                 src={photo.dataUrl}
-                alt={`Bằng chứng #${index + 1}`}
+                alt={t('photoAlt', { index: index + 1 })}
                 className="w-full h-full object-cover"
               />
               <span className="absolute bottom-1 left-1 bg-black/60 text-white text-[10px] px-1 rounded font-medium">
@@ -147,7 +149,7 @@ export function CameraUploader({ photos, onPhotosChange, maxPhotos = 5 }: Camera
               <button
                 type="button"
                 onClick={() => handleRemovePhoto(photo.id)}
-                className="absolute top-1 right-1 h-6 w-6 rounded-full bg-red-600 text-white flex items-center justify-center shadow-md hover:bg-red-700"
+                className="absolute top-1 right-1 h-6 w-6 rounded-full bg-red-600 text-white flex items-center justify-center shadow-md hover:bg-red-700 cursor-pointer"
               >
                 <X className="h-3.5 w-3.5" />
               </button>

@@ -34,6 +34,7 @@ import {
 } from '@/application/use-cases/campaigns/get-campaign-wizard-data';
 import { PersonnelCombobox } from './personnel-combobox';
 import { CampaignPersonnelSection } from './campaign-personnel-section';
+import { useTranslations } from 'next-intl';
 
 interface Step4AssignmentsProps {
   campaign: Campaign;
@@ -59,6 +60,10 @@ export function Step4Assignments({
   onAutoSaveNotify,
 }: Step4AssignmentsProps) {
   const router = useRouter();
+  const t = useTranslations('campaigns.assignments');
+  const tCommon = useTranslations('common');
+  const tRoles = useTranslations('roles');
+
   const [selectedLocationId, setSelectedLocationId] = useState<string>(
     locations[0]?.id || ''
   );
@@ -130,14 +135,14 @@ export function Step4Assignments({
       router.refresh();
       if (onAutoSaveNotify) onAutoSaveNotify();
     } else {
-      alert(res.error || 'Lỗi khi phân công nhân sự');
+      alert(res.error || t('errorAssign'));
     }
   };
 
   const handleApplyBatchLocation = async () => {
     if (!activeLocation) return;
     if (batchSupervisorId === undefined && batchApproverId === undefined) {
-      alert('Vui lòng chọn ít nhất một Supervisor hoặc Approver để áp dụng hàng loạt.');
+      alert(t('batchSelectWarning'));
       return;
     }
 
@@ -154,14 +159,14 @@ export function Step4Assignments({
       router.refresh();
       if (onAutoSaveNotify) onAutoSaveNotify();
     } else {
-      alert(res.error || 'Lỗi khi áp dụng hàng loạt');
+      alert(res.error || t('errorBatch'));
     }
   };
 
   const handleNextCheck = () => {
     if (missingStaffCount > 0) {
       const confirmProceed = confirm(
-        `Hiện còn ${missingStaffCount} gian hàng chưa phân công đủ Supervisor hoặc Approver. Bạn có muốn tiếp tục sang bước Xem lại & Kiểm tra điều kiện không?`
+        t('confirmIncomplete', { count: missingStaffCount })
       );
       if (!confirmProceed) return;
     }
@@ -180,10 +185,10 @@ export function Step4Assignments({
               </div>
               <div>
                 <CardTitle className="text-base font-bold text-slate-900 leading-tight">
-                  Phân công nhân sự theo địa điểm
+                  {t('title')}
                 </CardTitle>
                 <CardDescription className="text-xs text-slate-500">
-                  Gán Giám sát viên (Supervisor) và Người duyệt (Approver) phụ trách từng gian hàng.
+                  {t('subtitle')}
                 </CardDescription>
               </div>
             </div>
@@ -193,12 +198,14 @@ export function Step4Assignments({
         {/* Staffing KPI Highlights - Tách bạch trung thực */}
         <div className="grid grid-cols-2 sm:grid-cols-5 divide-x divide-y sm:divide-y-0 divide-slate-100 border-b border-slate-100 text-xs bg-white">
           <div className="p-3.5 flex flex-col justify-center">
-            <span className="text-slate-400 font-medium text-[11px]">Tổng số gian hàng</span>
-            <span className="text-base font-bold text-slate-900 mt-0.5">{totalBoothsCount} booth</span>
+            <span className="text-slate-400 font-medium text-[11px]">{t('totalBooths')}</span>
+            <span className="text-base font-bold text-slate-900 mt-0.5">
+              {t('boothUnit', { count: totalBoothsCount })}
+            </span>
           </div>
 
           <div className="p-3.5 flex flex-col justify-center">
-            <span className="text-slate-400 font-medium text-[11px]">Sẵn sàng hoạt động</span>
+            <span className="text-slate-400 font-medium text-[11px]">{t('fullyStaffed')}</span>
             <div className="flex items-center gap-1.5 mt-0.5">
               <span className="text-base font-bold text-emerald-600">{fullyStaffedActiveCount}</span>
               <span className="text-slate-400">/{totalBoothsCount}</span>
@@ -209,27 +216,29 @@ export function Step4Assignments({
           </div>
 
           <div className="p-3.5 flex flex-col justify-center">
-            <span className="text-slate-400 font-medium text-[11px]">Chờ kích hoạt</span>
+            <span className="text-slate-400 font-medium text-[11px]">{t('pendingActivation')}</span>
             <div className="flex items-center gap-1 mt-0.5">
               <span className={`text-base font-bold ${pendingStaffedCount > 0 ? 'text-blue-600' : 'text-slate-600'}`}>
                 {pendingStaffedCount}
               </span>
-              <span className="text-slate-400">booth (⏳)</span>
+              <span className="text-slate-400">({t('pendingActivation')})</span>
             </div>
           </div>
 
           <div className="p-3.5 flex flex-col justify-center">
-            <span className="text-slate-400 font-medium text-[11px]">Chưa phân công</span>
+            <span className="text-slate-400 font-medium text-[11px]">{t('unassigned')}</span>
             <span className={`text-base font-bold mt-0.5 ${missingStaffCount > 0 ? 'text-amber-600' : 'text-slate-600'}`}>
-              {missingStaffCount} booth
+              {t('boothUnit', { count: missingStaffCount })}
             </span>
           </div>
 
           <div className="p-3.5 flex flex-col justify-center col-span-2 sm:col-span-1">
-            <span className="text-slate-400 font-medium text-[11px]">Nhân sự chờ xác nhận</span>
+            <span className="text-slate-400 font-medium text-[11px]">{t('pendingInvites')}</span>
             <div className="flex items-center gap-1 mt-0.5">
               <span className="text-base font-bold text-blue-600">{pendingInvitesCount}</span>
-              <span className="text-slate-400">lời mời</span>
+              <span className="text-slate-400">
+                {t('invitesUnit', { count: pendingInvitesCount })}
+              </span>
             </div>
           </div>
         </div>
@@ -252,7 +261,7 @@ export function Step4Assignments({
       {/* 3. Master–Detail Layout Container (Phân công theo địa điểm) */}
       {locations.length === 0 ? (
         <Card className="p-12 text-center text-slate-500 border border-dashed border-slate-200">
-          Chưa có địa điểm nào được tạo. Vui lòng quay lại Bước 2 để thêm địa điểm và gian hàng.
+          {t('emptyLocations')}
         </Card>
       ) : (
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
@@ -260,7 +269,7 @@ export function Step4Assignments({
           <div className="lg:col-span-4 space-y-3">
             <div className="flex items-center justify-between">
               <span className="text-xs font-bold uppercase tracking-wider text-slate-500">
-                Địa điểm ({locations.length})
+                {t('locationsCount', { count: locations.length })}
               </span>
             </div>
 
@@ -269,7 +278,7 @@ export function Step4Assignments({
               <div className="relative">
                 <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-400" />
                 <Input
-                  placeholder="Tìm địa điểm..."
+                  placeholder={t('searchLocation')}
                   value={searchLocationQuery}
                   onChange={(e) => setSearchLocationQuery(e.target.value)}
                   className="pl-8 h-8 text-xs border-slate-200 focus-visible:ring-blue-600 bg-white"
@@ -316,22 +325,22 @@ export function Step4Assignments({
                       {/* Status Badges */}
                       <div className="flex items-center gap-1.5 mt-2 flex-wrap">
                         <span className="rounded-md bg-slate-100 px-1.5 py-0.5 text-[10px] font-semibold text-slate-600">
-                          {booths.length} booth
+                          {t('boothUnit', { count: booths.length })}
                         </span>
 
                         {locMissing === 0 ? (
                           <span className="rounded-md bg-emerald-50 text-emerald-700 border border-emerald-200/80 px-1.5 py-0.5 text-[10px] font-semibold flex items-center gap-0.5">
-                            <Check className="h-2.5 w-2.5" /> Đủ
+                            <Check className="h-2.5 w-2.5" /> {t('badgeStaffed')}
                           </span>
                         ) : (
                           <span className="rounded-md bg-amber-50 text-amber-700 border border-amber-200 px-1.5 py-0.5 text-[10px] font-semibold">
-                            Thiếu {locMissing}
+                            {t('badgeMissing', { count: locMissing })}
                           </span>
                         )}
 
                         {locPending > 0 && (
                           <span className="rounded-md bg-blue-50 text-blue-700 border border-blue-200 px-1.5 py-0.5 text-[10px] font-medium flex items-center gap-0.5">
-                            <Clock className="h-2.5 w-2.5" /> {locPending} chờ
+                            <Clock className="h-2.5 w-2.5" /> {t('badgePending', { count: locPending })}
                           </span>
                         )}
                       </div>
@@ -362,7 +371,7 @@ export function Step4Assignments({
                           {activeLocation.name}
                         </h3>
                         <span className="rounded-full bg-blue-100 text-blue-700 px-2 py-0.2 text-[10px] font-bold">
-                          {activeLocation.booths.length} gian hàng
+                          {t('boothUnit', { count: activeLocation.booths.length })}
                         </span>
                       </div>
                       <p className="text-xs text-slate-500 mt-0.5">{activeLocation.address}</p>
@@ -373,19 +382,19 @@ export function Step4Assignments({
                   <div className="mt-4 pt-3.5 border-t border-slate-200/80 rounded-xl bg-white p-3 border border-slate-200 shadow-2xs">
                     <div className="flex items-center gap-2 mb-2 text-xs font-bold text-slate-700">
                       <Layers className="h-3.5 w-3.5 text-blue-600" />
-                      <span>Gán nhanh cho TẤT CẢ {activeLocation.booths.length} gian hàng tại địa điểm này:</span>
+                      <span>{t('batchTitle', { count: activeLocation.booths.length })}</span>
                     </div>
 
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
                       {/* Chọn Supervisor hàng loạt */}
                       <div>
                         <label className="block text-[10px] font-bold text-slate-400 uppercase mb-1">
-                          Supervisor hàng loạt:
+                          {t('batchSupervisor')}
                         </label>
                         <PersonnelCombobox
                           value={batchSupervisorId}
                           options={supervisors}
-                          placeholder="-- Giữ nguyên Supervisor --"
+                          placeholder={t('keepSupervisor')}
                           isBatchMode
                           roleLabel="Supervisor"
                           onChange={(val) => setBatchSupervisorId(val)}
@@ -399,12 +408,12 @@ export function Step4Assignments({
                       {/* Chọn Approver hàng loạt */}
                       <div>
                         <label className="block text-[10px] font-bold text-slate-400 uppercase mb-1">
-                          Approver hàng loạt:
+                          {t('batchApprover')}
                         </label>
                         <PersonnelCombobox
                           value={batchApproverId}
                           options={approvers}
-                          placeholder="-- Giữ nguyên Approver --"
+                          placeholder={t('keepApprover')}
                           isBatchMode
                           roleLabel="Approver"
                           onChange={(val) => setBatchApproverId(val)}
@@ -427,7 +436,7 @@ export function Step4Assignments({
                         onClick={handleApplyBatchLocation}
                         className="text-xs h-7 px-3 bg-slate-800 hover:bg-slate-900 text-white font-medium"
                       >
-                        {isBatchApplying ? 'Đang áp dụng...' : 'Áp dụng cho tất cả booth'}
+                        {isBatchApplying ? t('applyingBatch') : t('applyBatch')}
                       </Button>
                     </div>
                   </div>
@@ -437,7 +446,7 @@ export function Step4Assignments({
                 <CardContent className="p-0">
                   {activeLocation.booths.length === 0 ? (
                     <div className="p-8 text-center text-slate-400 italic text-xs">
-                      Địa điểm này chưa có gian hàng nào.
+                      {t('emptyBoothsAtLocation')}
                     </div>
                   ) : (
                     <div className="divide-y divide-slate-100">
@@ -460,7 +469,7 @@ export function Step4Assignments({
                               </div>
                               {b.code && (
                                 <span className="text-[10px] text-slate-400 font-mono">
-                                  Mã: {b.code}
+                                  {t('codeLabel', { code: b.code })}
                                 </span>
                               )}
                             </div>
@@ -468,13 +477,13 @@ export function Step4Assignments({
                             {/* Cột 2: Supervisor Select với Combobox */}
                             <div className="md:w-1/3">
                               <label className="block text-[10px] font-bold text-slate-400 uppercase mb-1">
-                                Supervisor:
+                                {t('supervisorLabel')}
                               </label>
                               <PersonnelCombobox
                                 value={b.supervisorMemberId || null}
                                 disabled={loadingBoothId === b.id}
                                 options={supervisors}
-                                placeholder="-- Chưa gán Supervisor --"
+                                placeholder={t('unassignedSupervisor')}
                                 roleLabel="Supervisor"
                                 onChange={(val) =>
                                   handleAssignBooth(b.id, val || null, b.approverMemberId || null)
@@ -489,13 +498,13 @@ export function Step4Assignments({
                             {/* Cột 3: Approver Select với Combobox */}
                             <div className="md:w-1/3">
                               <label className="block text-[10px] font-bold text-slate-400 uppercase mb-1">
-                                Approver:
+                                {t('approverLabel')}
                               </label>
                               <PersonnelCombobox
                                 value={b.approverMemberId || null}
                                 disabled={loadingBoothId === b.id}
                                 options={approvers}
-                                placeholder="-- Chưa gán Approver --"
+                                placeholder={t('unassignedApprover')}
                                 roleLabel="Approver"
                                 onChange={(val) =>
                                   handleAssignBooth(b.id, b.supervisorMemberId || null, val || null)
@@ -513,18 +522,18 @@ export function Step4Assignments({
                                 isPending ? (
                                   <span className="inline-flex items-center gap-1 text-[11px] font-medium text-blue-700 bg-blue-50 px-2 py-0.5 rounded-full border border-blue-200">
                                     <Clock className="h-3 w-3" />
-                                    Chờ kích hoạt
+                                    {t('pendingActivation')}
                                   </span>
                                 ) : (
                                   <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">
                                     <CheckCircle2 className="h-3 w-3" />
-                                    Sẵn sàng
+                                    {t('badgeReady')}
                                   </span>
                                 )
                               ) : (
                                 <span className="inline-flex items-center gap-1 text-[11px] font-medium text-amber-700 bg-amber-50 px-2 py-0.5 rounded-full border border-amber-200">
                                   <AlertTriangle className="h-3 w-3" />
-                                  Thiếu nhân sự
+                                  {t('badgeMissingStaff')}
                                 </span>
                               )}
                             </div>
@@ -544,7 +553,7 @@ export function Step4Assignments({
       <div className="rounded-xl border border-slate-200 bg-slate-50/70 p-3.5 flex items-start gap-2.5 text-xs text-slate-600">
         <Sparkles className="h-4 w-4 text-blue-600 shrink-0 mt-0.5" />
         <p>
-          <strong className="text-slate-800">Mẹo vận hành:</strong> Bạn có thể phân công cả nhân sự chưa kích hoạt tài khoản Google (Pending Invite). Nhân sự sẽ nhận email mời và tự động kích hoạt quyền ngay khi đăng nhập.
+          {t('operationalTip')}
         </p>
       </div>
 

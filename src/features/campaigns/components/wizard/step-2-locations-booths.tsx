@@ -27,6 +27,7 @@ import {
 } from '../../actions/campaign-wizard-actions';
 import { cn } from '@/lib/utils';
 import { useRouter } from 'next/navigation';
+import { useTranslations } from 'next-intl';
 
 interface Step2LocationsBoothsProps {
   campaign: Campaign;
@@ -46,6 +47,8 @@ export function Step2LocationsBooths({
   onAutoSaveNotify,
 }: Step2LocationsBoothsProps) {
   const router = useRouter();
+  const t = useTranslations('campaigns.wizard.step2');
+  const tActions = useTranslations('common.actions');
 
   // Find first booth to select by default, or null
   const firstBooth = locations[0]?.booths[0] || null;
@@ -132,13 +135,13 @@ export function Step2LocationsBooths({
       router.refresh();
       if (onAutoSaveNotify) onAutoSaveNotify();
     } else {
-      setErrorMessage(res.error || 'Lỗi khi thêm địa điểm');
+      setErrorMessage(res.error || t('errLocationNameRequired'));
     }
   };
 
   // Delete location
   const handleDeleteLocation = async (locId: string, locName: string) => {
-    if (!confirm(`Bạn có chắc chắn muốn xóa địa điểm "${locName}" cùng tất cả các booth trực thuộc?`)) return;
+    if (!confirm(t('confirmDeleteLocation'))) return;
 
     setIsLoading(true);
     const res = await deleteLocationInWizardAction(campaign.id, locId);
@@ -151,7 +154,7 @@ export function Step2LocationsBooths({
       }
       if (onAutoSaveNotify) onAutoSaveNotify();
     } else {
-      alert(res.error || 'Xóa thất bại');
+      alert(res.error || t('deleteFailed'));
     }
   };
 
@@ -179,7 +182,7 @@ export function Step2LocationsBooths({
       router.refresh();
       if (onAutoSaveNotify) onAutoSaveNotify();
     } else {
-      setErrorMessage(res.error || 'Lỗi khi tạo booth');
+      setErrorMessage(res.error || t('errBoothNameRequired'));
     }
   };
 
@@ -207,7 +210,7 @@ export function Step2LocationsBooths({
       campaign.id,
       selectedBooth.id,
       selectedBooth.locationId,
-      `${selectedBooth.name} (Bản sao)`,
+      `${selectedBooth.name} ${t('duplicateSuffix')}`,
       selectedBooth.code ? `${selectedBooth.code}-COPY` : null
     );
     setIsLoading(false);
@@ -217,14 +220,14 @@ export function Step2LocationsBooths({
       router.refresh();
       if (onAutoSaveNotify) onAutoSaveNotify();
     } else {
-      alert(res.error || 'Nhân bản thất bại');
+      alert(res.error || t('duplicateFailed'));
     }
   };
 
   // Delete booth
   const handleDeleteBooth = async () => {
     if (!selectedBooth) return;
-    if (!confirm(`Bạn có chắc chắn muốn xóa "${selectedBooth.name}"?`)) return;
+    if (!confirm(t('confirmDeleteBooth'))) return;
 
     setIsLoading(true);
     const res = await deleteBoothInWizardAction(campaign.id, selectedBooth.id);
@@ -235,17 +238,17 @@ export function Step2LocationsBooths({
       router.refresh();
       if (onAutoSaveNotify) onAutoSaveNotify();
     } else {
-      alert(res.error || 'Xóa thất bại');
+      alert(res.error || t('deleteFailed'));
     }
   };
 
   const handleNextCheck = () => {
     if (locations.length === 0) {
-      alert('Vui lòng thêm ít nhất một địa điểm triển khai trước khi tiếp tục.');
+      alert(t('errNeedLocation'));
       return;
     }
     if (totalBooths === 0) {
-      alert('Vui lòng thêm ít nhất một booth cho các địa điểm.');
+      alert(t('errNeedBooth'));
       return;
     }
     onNext();
@@ -262,7 +265,7 @@ export function Step2LocationsBooths({
       {/* Master-Detail Split Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
         {/* ========================================================================= */}
-        {/* CỘT TRÁI: MASTER TREE VIEW (4/12 hoặc 5/12) */}
+        {/* CỘT TRÁI: MASTER TREE VIEW */}
         {/* ========================================================================= */}
         <div className="lg:col-span-5 space-y-4">
           <Card className="border border-slate-200 shadow-xs bg-white overflow-hidden">
@@ -270,10 +273,10 @@ export function Step2LocationsBooths({
               <div className="flex items-center justify-between">
                 <div>
                   <CardTitle className="text-sm font-bold text-slate-900">
-                    Cấu trúc chiến dịch
+                    {t('structureTitle')}
                   </CardTitle>
                   <p className="text-xs text-slate-500 mt-0.5">
-                    {locations.length} địa điểm • {totalBooths} booth
+                    {t('locationCount', { count: locations.length })} • {t('boothCount', { count: totalBooths })}
                   </p>
                 </div>
               </div>
@@ -290,9 +293,9 @@ export function Step2LocationsBooths({
               {locations.length === 0 ? (
                 <div className="text-center py-8 px-4 border border-dashed border-slate-200 rounded-lg">
                   <Building2 className="h-8 w-8 text-slate-300 mx-auto mb-2" />
-                  <p className="text-xs font-semibold text-slate-700">Chưa có địa điểm nào</p>
+                  <p className="text-xs font-semibold text-slate-700">{t('emptyLocations')}</p>
                   <p className="text-[11px] text-slate-400 mt-0.5">
-                    Bấm nút "Thêm địa điểm" bên dưới để khởi tạo.
+                    {t('emptyLocationHint')}
                   </p>
                 </div>
               ) : (
@@ -309,7 +312,7 @@ export function Step2LocationsBooths({
                         <button
                           type="button"
                           onClick={() => toggleLocationExpand(loc.id)}
-                          className="flex items-center gap-2 min-w-0 flex-1 text-left"
+                          className="flex items-center gap-2 min-w-0 flex-1 text-left cursor-pointer"
                         >
                           {isExpanded ? (
                             <ChevronDown className="h-3.5 w-3.5 text-slate-400 shrink-0" />
@@ -328,21 +331,21 @@ export function Step2LocationsBooths({
                         <div className="flex items-center gap-1 shrink-0 ml-2">
                           <button
                             type="button"
-                            title="Thêm booth vào địa điểm này"
+                            title={t('addBoothTooltip')}
                             onClick={() => {
                               setAddBoothForLocationId(loc.id);
                               setNewBoothName(`Booth ${loc.booths.length + 1}`);
                               setNewBoothCode(`B0${loc.booths.length + 1}`);
                             }}
-                            className="p-1 rounded text-blue-600 hover:bg-blue-50"
+                            className="p-1 rounded text-blue-600 hover:bg-blue-50 cursor-pointer"
                           >
                             <Plus className="h-3.5 w-3.5" />
                           </button>
                           <button
                             type="button"
-                            title="Xóa địa điểm"
+                            title={t('deleteLocationTooltip')}
                             onClick={() => handleDeleteLocation(loc.id, loc.name)}
-                            className="p-1 rounded text-slate-400 hover:text-red-600 hover:bg-red-50"
+                            className="p-1 rounded text-slate-400 hover:text-red-600 hover:bg-red-50 cursor-pointer"
                           >
                             <Trash2 className="h-3.5 w-3.5" />
                           </button>
@@ -354,7 +357,7 @@ export function Step2LocationsBooths({
                         <div className="p-1.5 pl-6 space-y-1">
                           {loc.booths.length === 0 ? (
                             <div className="py-2 px-2 text-[11px] text-slate-400 italic">
-                              Chưa có booth. Bấm dấu (+) để thêm.
+                              {t('noBoothsInLocation')}
                             </div>
                           ) : (
                             loc.booths.map((b) => {
@@ -366,7 +369,7 @@ export function Step2LocationsBooths({
                                   type="button"
                                   onClick={() => setSelectedBoothId(b.id)}
                                   className={cn(
-                                    'w-full flex items-center justify-between px-3 py-2 rounded-md text-xs transition-all text-left',
+                                    'w-full flex items-center justify-between px-3 py-2 rounded-md text-xs transition-all text-left cursor-pointer',
                                     isSelected
                                       ? 'bg-blue-50 text-blue-700 font-semibold border-l-2 border-blue-600 shadow-2xs'
                                       : 'text-slate-700 hover:bg-slate-50'
@@ -403,17 +406,17 @@ export function Step2LocationsBooths({
                 type="button"
                 variant="outline"
                 onClick={() => setShowAddLocationModal(true)}
-                className="w-full mt-2 h-9 text-xs font-semibold text-blue-600 hover:bg-blue-50 hover:text-blue-700 border-dashed border-blue-300 gap-1.5"
+                className="w-full mt-2 h-9 text-xs font-semibold text-blue-600 hover:bg-blue-50 hover:text-blue-700 border-dashed border-blue-300 gap-1.5 cursor-pointer"
               >
                 <Plus className="h-4 w-4" />
-                Thêm địa điểm
+                {t('addLocation')}
               </Button>
             </CardContent>
           </Card>
         </div>
 
         {/* ========================================================================= */}
-        {/* CỘT PHẢI: DETAIL EDITOR (7/12) */}
+        {/* CỘT PHẢI: DETAIL EDITOR */}
         {/* ========================================================================= */}
         <div className="lg:col-span-7">
           {selectedBooth ? (
@@ -443,10 +446,10 @@ export function Step2LocationsBooths({
                       size="sm"
                       onClick={handleDuplicateBooth}
                       isLoading={isLoading}
-                      className="text-xs h-8 gap-1.5 border-slate-200 text-slate-700 hover:bg-slate-50"
+                      className="text-xs h-8 gap-1.5 border-slate-200 text-slate-700 hover:bg-slate-50 cursor-pointer"
                     >
                       <Copy className="h-3.5 w-3.5 text-slate-500" />
-                      Nhân bản booth
+                      {t('btnDuplicateBooth')}
                     </Button>
                     <Button
                       type="button"
@@ -454,10 +457,10 @@ export function Step2LocationsBooths({
                       size="sm"
                       onClick={handleDeleteBooth}
                       isLoading={isLoading}
-                      className="text-xs h-8 gap-1.5 border-slate-200 text-red-600 hover:bg-red-50 hover:text-red-700 hover:border-red-300"
+                      className="text-xs h-8 gap-1.5 border-slate-200 text-red-600 hover:bg-red-50 hover:text-red-700 hover:border-red-300 cursor-pointer"
                     >
                       <Trash2 className="h-3.5 w-3.5" />
-                      Xóa
+                      {t('btnDeleteBooth')}
                     </Button>
                   </div>
                 </div>
@@ -469,7 +472,7 @@ export function Step2LocationsBooths({
                   {/* Tên booth */}
                   <div className="space-y-1.5">
                     <label className="text-xs font-semibold text-slate-800">
-                      Tên booth <span className="text-red-500">*</span>
+                      {t('boothNameLabel')} <span className="text-red-500">*</span>
                     </label>
                     <Input
                       value={boothFormData.name}
@@ -477,7 +480,7 @@ export function Step2LocationsBooths({
                         setBoothFormData((prev) => ({ ...prev, name: e.target.value }))
                       }
                       onBlur={handleBoothFormBlur}
-                      placeholder="VD: Booth A01"
+                      placeholder={t('boothNamePlaceholder')}
                       className="h-9 text-xs border-slate-200 focus-visible:ring-blue-600"
                     />
                   </div>
@@ -485,7 +488,7 @@ export function Step2LocationsBooths({
                   {/* Mã booth */}
                   <div className="space-y-1.5">
                     <label className="text-xs font-semibold text-slate-800">
-                      Mã booth <span className="text-red-500">*</span>
+                      {t('boothCodeLabel')} <span className="text-red-500">*</span>
                     </label>
                     <Input
                       value={boothFormData.code}
@@ -493,7 +496,7 @@ export function Step2LocationsBooths({
                         setBoothFormData((prev) => ({ ...prev, code: e.target.value }))
                       }
                       onBlur={handleBoothFormBlur}
-                      placeholder="VD: A01"
+                      placeholder={t('boothCodePlaceholder')}
                       className="h-9 text-xs border-slate-200 focus-visible:ring-blue-600"
                     />
                   </div>
@@ -501,7 +504,7 @@ export function Step2LocationsBooths({
 
                 {/* Mô tả / ghi chú */}
                 <div className="space-y-1.5">
-                  <label className="text-xs font-semibold text-slate-800">Mô tả / ghi chú</label>
+                  <label className="text-xs font-semibold text-slate-800">{t('boothDescLabel')}</label>
                   <textarea
                     rows={4}
                     value={boothFormData.description}
@@ -509,7 +512,7 @@ export function Step2LocationsBooths({
                       setBoothFormData((prev) => ({ ...prev, description: e.target.value }))
                     }
                     onBlur={handleBoothFormBlur}
-                    placeholder="VD: Booth trưng bày sản phẩm Galaxy tại khu vực sảnh chính, tầng 1."
+                    placeholder={t('boothDescPlaceholder')}
                     className="w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-xs focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600"
                   />
                 </div>
@@ -521,10 +524,10 @@ export function Step2LocationsBooths({
                   </div>
                   <div>
                     <span className="text-[11px] font-medium text-slate-400 block">
-                      Thuộc địa điểm
+                      {t('belongsToLocation')}
                     </span>
                     <span className="text-xs font-bold text-slate-800">
-                      {selectedBoothLocation?.name || 'Không rõ địa điểm'}
+                      {selectedBoothLocation?.name || t('unknownLocation')}
                     </span>
                   </div>
                 </div>
@@ -533,58 +536,56 @@ export function Step2LocationsBooths({
           ) : (
             <div className="rounded-xl border border-dashed border-slate-200 bg-white p-12 text-center">
               <Store className="h-10 w-10 text-slate-300 mx-auto mb-2" />
-              <h3 className="text-sm font-semibold text-slate-700">Chưa chọn gian hàng nào</h3>
+              <h3 className="text-sm font-semibold text-slate-700">{t('noBoothSelected')}</h3>
               <p className="text-xs text-slate-400 mt-1 max-w-sm mx-auto">
-                Bấm vào một gian hàng ở danh mục bên trái hoặc thêm địa điểm và booth mới để chỉnh sửa chi tiết.
+                {t('noBoothSelectedHint')}
               </p>
             </div>
           )}
         </div>
       </div>
 
-      {/* ========================================================================= */}
       {/* MODAL: THÊM ĐỊA ĐIỂM */}
-      {/* ========================================================================= */}
       {showAddLocationModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-xs p-4">
           <div className="w-full max-w-md bg-white rounded-xl shadow-lg border border-slate-200 overflow-hidden">
             <div className="p-4 border-b border-slate-100 flex items-center justify-between bg-slate-50/60">
-              <h3 className="text-sm font-bold text-slate-900">Thêm địa điểm triển khai</h3>
+              <h3 className="text-sm font-bold text-slate-900">{t('addLocationModalTitle')}</h3>
               <button
                 type="button"
                 onClick={() => setShowAddLocationModal(false)}
-                className="text-slate-400 hover:text-slate-600 text-xs"
+                className="text-slate-400 hover:text-slate-600 text-xs cursor-pointer"
               >
-                Đóng
+                {tActions('close')}
               </button>
             </div>
 
             <form onSubmit={handleAddLocation} className="p-4 space-y-4">
               <div className="space-y-1.5">
                 <label className="text-xs font-semibold text-slate-800">
-                  Tên địa điểm <span className="text-red-500">*</span>
+                  {t('locationName')} <span className="text-red-500">*</span>
                 </label>
                 <Input
                   required
                   value={newLocationName}
                   onChange={(e) => setNewLocationName(e.target.value)}
-                  placeholder="VD: AEON Mall Hà Đông"
+                  placeholder={t('newLocationPlaceholder')}
                   className="h-9 text-xs"
                 />
               </div>
 
               <div className="space-y-1.5">
-                <label className="text-xs font-semibold text-slate-800">Địa chỉ</label>
+                <label className="text-xs font-semibold text-slate-800">{t('address')}</label>
                 <Input
                   value={newLocationAddress}
                   onChange={(e) => setNewLocationAddress(e.target.value)}
-                  placeholder="VD: Dương Nội, Hà Đông"
+                  placeholder={t('addressPlaceholder')}
                   className="h-9 text-xs"
                 />
               </div>
 
               <div className="space-y-1.5">
-                <label className="text-xs font-semibold text-slate-800">Thành phố</label>
+                <label className="text-xs font-semibold text-slate-800">{t('city')}</label>
                 <Input
                   value={newLocationCity}
                   onChange={(e) => setNewLocationCity(e.target.value)}
@@ -599,11 +600,12 @@ export function Step2LocationsBooths({
                   variant="outline"
                   size="sm"
                   onClick={() => setShowAddLocationModal(false)}
+                  className="cursor-pointer"
                 >
-                  Hủy
+                  {t('btnCancelLocation')}
                 </Button>
-                <Button type="submit" size="sm" isLoading={isLoading} className="bg-blue-600 text-white">
-                  Thêm địa điểm
+                <Button type="submit" size="sm" isLoading={isLoading} className="bg-blue-600 text-white cursor-pointer">
+                  {t('btnCreateLocation')}
                 </Button>
               </div>
             </form>
@@ -611,43 +613,41 @@ export function Step2LocationsBooths({
         </div>
       )}
 
-      {/* ========================================================================= */}
       {/* MODAL: THÊM BOOTH VÀO ĐỊA ĐIỂM */}
-      {/* ========================================================================= */}
       {addBoothForLocationId && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-xs p-4">
           <div className="w-full max-w-sm bg-white rounded-xl shadow-lg border border-slate-200 overflow-hidden">
             <div className="p-4 border-b border-slate-100 flex items-center justify-between bg-slate-50/60">
-              <h3 className="text-sm font-bold text-slate-900">Thêm booth mới</h3>
+              <h3 className="text-sm font-bold text-slate-900">{t('addBoothModalTitle')}</h3>
               <button
                 type="button"
                 onClick={() => setAddBoothForLocationId(null)}
-                className="text-slate-400 hover:text-slate-600 text-xs"
+                className="text-slate-400 hover:text-slate-600 text-xs cursor-pointer"
               >
-                Đóng
+                {tActions('close')}
               </button>
             </div>
 
             <form onSubmit={handleAddBooth} className="p-4 space-y-4">
               <div className="space-y-1.5">
                 <label className="text-xs font-semibold text-slate-800">
-                  Tên booth <span className="text-red-500">*</span>
+                  {t('boothNameLabel')} <span className="text-red-500">*</span>
                 </label>
                 <Input
                   required
                   value={newBoothName}
                   onChange={(e) => setNewBoothName(e.target.value)}
-                  placeholder="VD: Booth A01"
+                  placeholder={t('boothNamePlaceholder')}
                   className="h-9 text-xs"
                 />
               </div>
 
               <div className="space-y-1.5">
-                <label className="text-xs font-semibold text-slate-800">Mã booth</label>
+                <label className="text-xs font-semibold text-slate-800">{t('boothCodeLabel')}</label>
                 <Input
                   value={newBoothCode}
                   onChange={(e) => setNewBoothCode(e.target.value)}
-                  placeholder="VD: A01"
+                  placeholder={t('boothCodePlaceholder')}
                   className="h-9 text-xs"
                 />
               </div>
@@ -658,11 +658,12 @@ export function Step2LocationsBooths({
                   variant="outline"
                   size="sm"
                   onClick={() => setAddBoothForLocationId(null)}
+                  className="cursor-pointer"
                 >
-                  Hủy
+                  {tActions('cancel')}
                 </Button>
-                <Button type="submit" size="sm" isLoading={isLoading} className="bg-blue-600 text-white">
-                  Tạo booth
+                <Button type="submit" size="sm" isLoading={isLoading} className="bg-blue-600 text-white cursor-pointer">
+                  {t('createBooth')}
                 </Button>
               </div>
             </form>

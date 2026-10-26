@@ -45,5 +45,50 @@
     "adminView": "Chế độ Quản trị",
     "clientView": "Chế độ Khách hàng",
     "language": "Ngôn ngữ"
+  },
+  "header": {
+    "breadcrumbs": {
+      "overview": "Tổng quan",
+      "campaigns": "Chiến dịch",
+      "supervision": "Giám sát hiện trường",
+      "approvals": "Phê duyệt bằng chứng",
+      "newCampaign": "Tạo chiến dịch mới",
+      "campaignDetail": "Chi tiết chiến dịch",
+      "managedCampaigns": "Chiến dịch quản lý",
+      "billing": "Gói dịch vụ & Thanh toán",
+      "account": "Thông tin tài khoản"
+    },
+    "controls": {
+      "clientModeLabel": "Chế độ Khách hàng —",
+      "backToAdmin": "Về Admin",
+      "billingButton": "Gói dịch vụ",
+      "defaultUser": "Người dùng",
+      "planBadge": "Gói {plan}",
+      "systemAdminBadge": "Quản trị viên Hệ thống",
+      "toAdminWorkspace": "Về Không gian Quản trị",
+      "accountInfo": "Thông tin tài khoản",
+      "billingSettings": "Gói dịch vụ & Thanh toán",
+      "signOut": "Đăng xuất"
+    }
+  },
+  "pagination": {
+    "showing": "Hiển thị {start} - {end} trong tổng số {total} {item}",
+    "defaultItemName": "mục",
+    "prevPage": "Trang trước",
+    "nextPage": "Trang sau"
+  },
+  "toolbar": {
+    "searchPlaceholder": "Tìm kiếm dữ liệu...",
+    "clearSearch": "Xóa tìm kiếm",
+    "selectedRows": "Đang chọn {count} hàng dữ liệu",
+    "clearSelection": "Bỏ chọn tất cả",
+    "allPrefix": "Tất cả {label}",
+    "resetFilters": "Xóa lọc ({count})"
+  },
+  "filters": {
+    "searchPlaceholder": "Tìm kiếm...",
+    "clearSearch": "Xóa tìm kiếm",
+    "allOption": "Tất cả",
+    "filterApplied": "Đang áp dụng bộ lọc cột này"
   }
 }

@@ -3,6 +3,7 @@
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft, ArrowRight, CheckCircle, X } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 
 interface WizardFooterProps {
   currentStep: number;
@@ -21,12 +22,18 @@ export function WizardFooter({
   onBack,
   onNext,
   isNextLoading = false,
-  nextText = 'Tiếp tục',
+  nextText,
   showSaveDraft = false,
   onSaveDraft,
   onCancel,
-  cancelText = 'Hủy',
+  cancelText,
 }: WizardFooterProps) {
+  const t = useTranslations('campaigns.wizard.footer');
+  const tActions = useTranslations('common.actions');
+
+  const resolvedNextText = nextText || (currentStep === 5 ? t('activateCampaign') : t('continue'));
+  const resolvedCancelText = cancelText || tActions('cancel');
+
   return (
     <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 py-4 pt-6 border-t border-slate-200 mt-8">
       {/* Left controls: Back button or Cancel button */}
@@ -36,20 +43,20 @@ export function WizardFooter({
             type="button"
             variant="outline"
             onClick={onBack}
-            className="text-xs font-medium text-slate-700 h-9 px-4 gap-1.5 border-slate-200"
+            className="text-xs font-medium text-slate-700 h-9 px-4 gap-1.5 border-slate-200 cursor-pointer"
           >
             <ArrowLeft className="h-4 w-4" />
-            Quay lại
+            {t('back')}
           </Button>
         ) : onCancel ? (
           <Button
             type="button"
             variant="outline"
             onClick={onCancel}
-            className="text-xs font-medium text-slate-600 hover:text-red-600 hover:border-red-200 hover:bg-red-50/50 h-9 px-4 gap-1.5 border-slate-200 transition-colors"
+            className="text-xs font-medium text-slate-600 hover:text-red-600 hover:border-red-200 hover:bg-red-50/50 h-9 px-4 gap-1.5 border-slate-200 transition-colors cursor-pointer"
           >
             <X className="h-4 w-4 text-slate-400 group-hover:text-red-500" />
-            {cancelText}
+            {resolvedCancelText}
           </Button>
         ) : (
           <div />
@@ -59,7 +66,7 @@ export function WizardFooter({
       {/* Right controls: Notice & Next button */}
       <div className="flex items-center justify-between sm:justify-end gap-4">
         <span className="text-xs text-slate-400 hidden md:inline-block">
-          Mọi thay đổi đã được tự động lưu
+          {t('autoSaved')}
         </span>
 
         {showSaveDraft && onSaveDraft && (
@@ -67,9 +74,9 @@ export function WizardFooter({
             type="button"
             variant="outline"
             onClick={onSaveDraft}
-            className="text-xs font-semibold text-slate-700 h-10 px-4 border-slate-200"
+            className="text-xs font-semibold text-slate-700 h-10 px-4 border-slate-200 cursor-pointer"
           >
-            Lưu bản nháp & Thoát
+            {t('saveDraftExit')}
           </Button>
         )}
 
@@ -78,9 +85,9 @@ export function WizardFooter({
             type="button"
             onClick={onNext}
             isLoading={isNextLoading}
-            className="bg-blue-600 hover:bg-blue-700 text-white font-semibold text-xs sm:text-sm h-10 px-5 gap-1.5 shadow-sm"
+            className="bg-blue-600 hover:bg-blue-700 text-white font-semibold text-xs sm:text-sm h-10 px-5 gap-1.5 shadow-sm cursor-pointer"
           >
-            {nextText}
+            {resolvedNextText}
             {currentStep === 5 ? (
               <CheckCircle className="h-4 w-4 ml-0.5" />
             ) : (

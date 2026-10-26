@@ -18,18 +18,20 @@ import {
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useAdminLayout } from '../context/admin-layout-context';
+import { useTranslations } from 'next-intl';
 
 export function AdminSidebar() {
   const pathname = usePathname();
+  const t = useTranslations('admin.sidebar');
   const { sidebarOpen, closeSidebar } = useAdminLayout();
   const mobileDrawerRef = useRef<HTMLDivElement>(null);
 
   // Nhóm các route liên quan đến tiền & thanh toán
   const billingSubRoutes = [
-    { href: '/admin/plans', label: 'Gói dịch vụ', icon: Package },
-    { href: '/admin/subscriptions', label: 'Quản lý đăng ký', icon: RefreshCw },
-    { href: '/admin/transactions', label: 'Lịch sử giao dịch', icon: Receipt },
-    { href: '/admin/payment-settings', label: 'Cấu hình nhận tiền', icon: Landmark },
+    { href: '/admin/plans', label: t('plans'), icon: Package },
+    { href: '/admin/subscriptions', label: t('subscriptions'), icon: RefreshCw },
+    { href: '/admin/transactions', label: t('transactions'), icon: Receipt },
+    { href: '/admin/payment-settings', label: t('paymentSettings'), icon: Landmark },
   ];
 
   const isBillingActive = billingSubRoutes.some((item) =>
@@ -67,7 +69,7 @@ export function AdminSidebar() {
           <div>
             <span className="font-bold text-sm tracking-tight text-white block">EventGo Admin</span>
             <span className="text-[10px] text-slate-400 block uppercase tracking-wider font-medium">
-              Hệ Thống Quản Trị
+              {t('systemSubtitle')}
             </span>
           </div>
         </div>
@@ -76,7 +78,7 @@ export function AdminSidebar() {
             type="button"
             onClick={closeSidebar}
             className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition-colors cursor-pointer"
-            aria-label="Đóng menu quản trị"
+            aria-label={t('closeMenu')}
           >
             <X className="h-5 w-5" />
           </button>
@@ -104,7 +106,7 @@ export function AdminSidebar() {
                 : 'text-blue-400'
             )}
           />
-          <span>Tổng quan</span>
+          <span>{t('dashboard')}</span>
         </Link>
 
         {/* 2. Nhóm: Thanh toán & Gói dịch vụ (Collapsible Dropdown) */}
@@ -121,7 +123,7 @@ export function AdminSidebar() {
           >
             <div className="flex items-center gap-3">
               <Wallet className={cn('h-4 w-4', isBillingActive ? 'text-blue-400' : 'text-slate-400')} />
-              <span>Thanh toán</span>
+              <span>{t('billing')}</span>
             </div>
             <ChevronDown
               className={cn(
@@ -181,7 +183,7 @@ export function AdminSidebar() {
               pathname.startsWith('/admin/templates') ? 'text-white' : 'text-blue-400'
             )}
           />
-          <span>Mẫu Checklist</span>
+          <span>{t('checklistTemplates')}</span>
         </Link>
 
         {/* 4. Quản trị viên */}
@@ -201,14 +203,14 @@ export function AdminSidebar() {
               pathname.startsWith('/admin/admins') ? 'text-white' : 'text-blue-400'
             )}
           />
-          <span>Quản trị viên</span>
+          <span>{t('admins')}</span>
         </Link>
       </nav>
 
       {/* Footer / System Status */}
       <div className="p-4 border-t border-slate-800/80 shrink-0">
         <div className="rounded-xl bg-slate-800/60 p-2.5 text-xs text-slate-400 text-center border border-slate-700/50">
-          Phiên bản <span className="font-semibold text-slate-200">v1.0 (Admin)</span>
+          {t('version', { version: 'v1.0 (Admin)' })}
         </div>
       </div>
     </div>
@@ -223,7 +225,7 @@ export function AdminSidebar() {
 
       {/* 2. Mobile Drawer Sidebar (Slide-in sheet on screens < md) */}
       {sidebarOpen && (
-        <div className="fixed inset-0 z-50 md:hidden" role="dialog" aria-modal="true" aria-label="Menu quản trị viên">
+        <div className="fixed inset-0 z-50 md:hidden" role="dialog" aria-modal="true" aria-label={t('adminMenu')}>
           {/* Backdrop */}
           <div
             className="fixed inset-0 bg-slate-950/70 backdrop-blur-xs transition-opacity duration-300 animate-in fade-in"

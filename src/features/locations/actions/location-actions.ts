@@ -15,6 +15,7 @@ import { formatActionError } from '@/lib/action-error';
 
 export interface LocationActionState {
   error?: string;
+  errorCode?: string;
   fieldErrors?: Record<string, string[]>;
   success?: boolean;
 }
@@ -48,6 +49,7 @@ export async function createLocationAction(
 
 export interface ImportPreviewState {
   error?: string;
+  errorCode?: string;
   validCount?: number;
   errorCount?: number;
   previewRows?: Array<{ name: string; address: string; city: string }>;
@@ -60,13 +62,13 @@ export async function parseExcelFileAction(
 ): Promise<ImportPreviewState> {
   const file = formData.get('file') as File | null;
   if (!file || file.size === 0) {
-    return { error: 'Vui lòng chọn một file Excel (.xlsx) hoặc CSV hợp lệ.' };
+    return { error: 'Vui lòng chọn một file Excel (.xlsx) hoặc CSV hợp lệ.', errorCode: 'ERR_FILE_REQUIRED' };
   }
 
   try {
     const session = await getCurrentUserSession();
     if (!session?.user) {
-      return { error: 'Yêu cầu đăng nhập trước khi import file.' };
+      return { error: 'Yêu cầu đăng nhập trước khi import file.', errorCode: 'ERR_UNAUTHORIZED' };
     }
     const buffer = await file.arrayBuffer();
     const result = ExcelImportService.parseLocations(buffer);
@@ -79,14 +81,14 @@ export async function parseExcelFileAction(
     };
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : 'Không thể đọc file bảng tính.';
-    return { error: message };
+    return { error: message, errorCode: 'ERR_FILE_PARSE_FAILED' };
   }
 }
 
 export async function confirmImportAction(
   campaignId: string,
   rowsJson: string
-): Promise<{ error?: string; success?: boolean; count?: number }> {
+): Promise<{ error?: string; errorCode?: string; success?: boolean; count?: number }> {
   try {
     const rows = JSON.parse(rowsJson);
     const result = await bulkImportLocationsUseCase(campaignId, rows);
@@ -95,7 +97,7 @@ export async function confirmImportAction(
     return { success: true, count: result.count };
   } catch (err: unknown) {
     const formatted = formatActionError(err, 'Lỗi khi lưu dữ liệu import.');
-    return { error: formatted.error };
+    return { error: formatted.error, errorCode: formatted.errorCode };
   }
 }
 

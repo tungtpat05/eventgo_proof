@@ -12,10 +12,14 @@ import { StatusBadge } from '@/components/shared/status-badge';
 import { ArrowLeft, Tag, ScanEye, Store } from 'lucide-react';
 import { BoothSupervisionCard } from '@/features/supervision/components/booth-supervision-card';
 import { Metadata } from 'next';
+import { getTranslations } from 'next-intl/server';
 
-export const metadata: Metadata = {
-  title: 'Giám Sát Chiến Dịch — EventGo Proof',
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getTranslations('operations.supervision');
+  return {
+    title: t('detailMetaTitle'),
+  };
+}
 
 interface SupervisionDetailPageProps {
   params: Promise<{ id: string }>;
@@ -23,6 +27,8 @@ interface SupervisionDetailPageProps {
 
 export default async function SupervisionDetailPage({ params }: SupervisionDetailPageProps) {
   const { id } = await params;
+  const t = await getTranslations('operations.supervision');
+
   const session = await getCurrentUserSession();
   if (!session) redirect('/login');
 
@@ -92,9 +98,9 @@ export default async function SupervisionDetailPage({ params }: SupervisionDetai
     <div className="space-y-6">
       <div className="flex items-center gap-2">
         <Link href="/campaigns/supervision">
-          <Button variant="ghost" size="sm" className="gap-1 text-slate-600">
+          <Button variant="ghost" size="sm" className="gap-1 text-slate-600 cursor-pointer">
             <ArrowLeft className="h-4 w-4" />
-            Quay lại danh sách giám sát
+            {t('btnBackToSupervisionList')}
           </Button>
         </Link>
       </div>
@@ -110,12 +116,12 @@ export default async function SupervisionDetailPage({ params }: SupervisionDetai
               </span>
               <StatusBadge status={campaign.status} />
               <span className="inline-flex items-center gap-1 text-xs font-semibold text-indigo-700 bg-indigo-50 px-2 py-0.5 rounded">
-                <ScanEye className="h-3 w-3" /> Quyền Supervisor
+                <ScanEye className="h-3 w-3" /> {t('roleBadge')}
               </span>
             </div>
             <h1 className="text-2xl font-bold text-slate-900">{campaign.title}</h1>
             <p className="mt-1 text-xs text-slate-500">
-              Bạn đang phụ trách {boothsWithData.length} gian hàng kích hoạt tại chiến dịch này.
+              {t('detailAssignedBooths', { count: boothsWithData.length })}
             </p>
           </div>
         </div>
@@ -126,16 +132,16 @@ export default async function SupervisionDetailPage({ params }: SupervisionDetai
         <div className="rounded-xl border border-dashed border-slate-300 p-12 text-center bg-white">
           <Store className="h-10 w-10 text-slate-300 mx-auto mb-2" />
           <h3 className="text-sm font-semibold text-slate-800">
-            Chưa có gian hàng nào được phân công cho bạn
+            {t('emptyBoothsTitle')}
           </h3>
           <p className="text-xs text-slate-500 max-w-sm mx-auto mt-1">
-            Vui lòng liên hệ Quản lý chiến dịch (Manager) để được gán phụ trách booth tại các địa điểm.
+            {t('emptyBoothsDesc')}
           </p>
         </div>
       ) : (
         <div className="space-y-4">
           <h2 className="text-base font-bold text-slate-900">
-            Gian Hàng Được Phân Công ({boothsWithData.length})
+            {t('assignedBoothsHeading', { count: boothsWithData.length })}
           </h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {boothsWithData.map((item) => (

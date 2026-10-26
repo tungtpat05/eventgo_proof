@@ -3,6 +3,7 @@
 import React from 'react';
 import { Check } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { useTranslations } from 'next-intl';
 
 export interface WizardStepperProps {
   currentStep: number;
@@ -10,23 +11,25 @@ export interface WizardStepperProps {
   maxAccessibleStep?: number;
 }
 
-const STEPS = [
-  { step: 1, label: 'Thông tin' },
-  { step: 2, label: 'Địa điểm & Booth' },
-  { step: 3, label: 'Checklist' },
-  { step: 4, label: 'Phân công' },
-  { step: 5, label: 'Xem lại' },
-];
-
 export function WizardStepper({
   currentStep,
   onStepClick,
   maxAccessibleStep = 5,
 }: WizardStepperProps) {
+  const t = useTranslations('campaigns.wizard.stepper');
+
+  const steps = [
+    { step: 1, label: t('step1') },
+    { step: 2, label: t('step2') },
+    { step: 3, label: t('step3') },
+    { step: 4, label: t('step4') },
+    { step: 5, label: t('step5') },
+  ];
+
   return (
     <div className="w-full bg-white rounded-xl border border-slate-200 p-4 sm:p-5 shadow-xs">
       <div className="flex items-center justify-between relative">
-        {STEPS.map((item, index) => {
+        {steps.map((item, index) => {
           const isCompleted = item.step < currentStep;
           const isActive = item.step === currentStep;
           const isClickable = item.step <= maxAccessibleStep && onStepClick;
@@ -65,7 +68,7 @@ export function WizardStepper({
                       isActive ? 'text-blue-600' : 'text-slate-400'
                     )}
                   >
-                    BƯỚC {item.step}
+                    {t('stepPrefix', { step: item.step })}
                   </span>
                   <span
                     className={cn(
@@ -79,7 +82,7 @@ export function WizardStepper({
               </div>
 
               {/* Connecting line */}
-              {index < STEPS.length - 1 && (
+              {index < steps.length - 1 && (
                 <div
                   className={cn(
                     'flex-1 h-0.5 mx-2 sm:mx-4 transition-colors',

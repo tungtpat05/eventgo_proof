@@ -3,6 +3,7 @@
 import React, { useState, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import { useTranslations, useLocale } from 'next-intl';
 import { createChecklistTemplateAction } from '@/features/admin/actions/admin-actions';
 import { ChecklistCategory } from '@/domain/enums';
 import { Button } from '@/components/ui/button';
@@ -18,33 +19,62 @@ interface FormItem {
 
 export default function NewTemplatePage() {
   const router = useRouter();
+  const t = useTranslations('admin.templates');
+  const locale = useLocale();
+
   const [name, setName] = useState('');
   const [code, setCode] = useState('');
   const [description, setDescription] = useState('');
   const [category, setCategory] = useState<ChecklistCategory>(ChecklistCategory.OTHER);
-  const [items, setItems] = useState<FormItem[]>([
-    {
-      id: '1',
-      title: 'Kiểm tra quầy kệ & kết cấu gian hàng',
-      description: 'Chụp toàn cảnh mặt trước và 2 bên hông gian hàng',
-      category: ChecklistCategory.STRUCTURE,
-      isRequired: true,
-    },
-    {
-      id: '2',
-      title: 'Kiểm tra Logo & Vật phẩm POSM',
-      description: 'Chụp cận cảnh logo nhãn hàng, standee và quà tặng',
-      category: ChecklistCategory.BRANDING,
-      isRequired: true,
-    },
-    {
-      id: '3',
-      title: 'Kiểm tra Nhân sự PG & Đồng phục',
-      description: 'Chụp nhân viên PG/PB có mặt tại quầy đúng đồng phục',
-      category: ChecklistCategory.STAFFING,
-      isRequired: true,
-    },
-  ]);
+  const [items, setItems] = useState<FormItem[]>(() =>
+    locale === 'en'
+      ? [
+          {
+            id: '1',
+            title: 'Booth structure & display check',
+            description: 'Take photos of front and both sides of the booth',
+            category: ChecklistCategory.STRUCTURE,
+            isRequired: true,
+          },
+          {
+            id: '2',
+            title: 'Logo & POSM items check',
+            description: 'Close-up of brand logo, standees and gifts',
+            category: ChecklistCategory.BRANDING,
+            isRequired: true,
+          },
+          {
+            id: '3',
+            title: 'Staffing & uniform check',
+            description: 'Photo of on-duty PG/PB in proper uniform',
+            category: ChecklistCategory.STAFFING,
+            isRequired: true,
+          },
+        ]
+      : [
+          {
+            id: '1',
+            title: 'Kiểm tra quầy kệ & kết cấu gian hàng',
+            description: 'Chụp toàn cảnh mặt trước và 2 bên hông gian hàng',
+            category: ChecklistCategory.STRUCTURE,
+            isRequired: true,
+          },
+          {
+            id: '2',
+            title: 'Kiểm tra Logo & Vật phẩm POSM',
+            description: 'Chụp cận cảnh logo nhãn hàng, standee và quà tặng',
+            category: ChecklistCategory.BRANDING,
+            isRequired: true,
+          },
+          {
+            id: '3',
+            title: 'Kiểm tra Nhân sự PG & Đồng phục',
+            description: 'Chụp nhân viên PG/PB có mặt tại quầy đúng đồng phục',
+            category: ChecklistCategory.STAFFING,
+            isRequired: true,
+          },
+        ]
+  );
   const [isPending, startTransition] = useTransition();
 
   const handleAddItem = () => {
@@ -73,13 +103,13 @@ export default function NewTemplatePage() {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!name.trim() || !code.trim()) {
-      alert('Vui lòng điền đầy đủ Tên và Mã mẫu');
+      alert(t('alertFillNameCode'));
       return;
     }
 
     const validItems = items.filter((i) => i.title.trim().length > 0);
     if (validItems.length === 0) {
-      alert('Vui lòng thêm ít nhất 1 tiêu chí hợp lệ');
+      alert(t('alertMinOneCriteria'));
       return;
     }
 
@@ -99,7 +129,7 @@ export default function NewTemplatePage() {
         });
         router.push('/admin/templates');
       } catch (err: any) {
-        alert(err.message || 'Lỗi tạo mẫu');
+        alert(err.message || (locale === 'en' ? 'Error creating template' : 'Lỗi tạo mẫu'));
       }
     });
   };
@@ -111,7 +141,7 @@ export default function NewTemplatePage() {
         <Link href="/admin/templates">
           <Button variant="ghost" size="sm" className="h-8 text-xs text-slate-600 hover:text-slate-900 gap-1.5 -ml-2">
             <ArrowLeft className="h-3.5 w-3.5" />
-            Quay lại Thư viện mẫu
+            {t('backToTemplates')}
           </Button>
         </Link>
       </div>
@@ -120,18 +150,18 @@ export default function NewTemplatePage() {
         {/* Basic Info Card */}
         <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm space-y-4">
           <h2 className="text-sm font-bold text-slate-900 uppercase tracking-wider text-purple-700">
-            1. Thông Tin Nhận Diện Mẫu
+            {t('step1Title')}
           </h2>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <label className="text-xs font-semibold text-slate-700 block mb-1">
-                Tên bộ mẫu <span className="text-rose-500">*</span>
+                {t('templateName')} <span className="text-rose-500">*</span>
               </label>
               <input
                 type="text"
                 required
-                placeholder="e.g. Kiểm tra Activation Siêu Thị"
+                placeholder={locale === 'en' ? 'e.g. Supermarket Activation Inspection' : 'e.g. Kiểm tra Activation Siêu Thị'}
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 className="w-full px-3 py-2 text-sm rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-purple-500/20"
@@ -140,7 +170,7 @@ export default function NewTemplatePage() {
 
             <div>
               <label className="text-xs font-semibold text-slate-700 block mb-1">
-                Mã mẫu (Code) <span className="text-rose-500">*</span>
+                {t('templateCode')} <span className="text-rose-500">*</span>
               </label>
               <input
                 type="text"
@@ -155,29 +185,29 @@ export default function NewTemplatePage() {
 
           <div>
             <label className="text-xs font-semibold text-slate-700 block mb-1">
-              Phân loại danh mục chính
+              {t('mainCategory')}
             </label>
             <select
               value={category}
               onChange={(e) => setCategory(e.target.value as ChecklistCategory)}
               className="w-full px-3 py-2 text-sm rounded-xl border border-slate-200 bg-white focus:outline-none focus:ring-2 focus:ring-purple-500/20"
             >
-              <option value={ChecklistCategory.STRUCTURE}>Kết cấu (STRUCTURE)</option>
-              <option value={ChecklistCategory.BRANDING}>Thương hiệu (BRANDING)</option>
-              <option value={ChecklistCategory.POSM}>Vật phẩm POSM</option>
-              <option value={ChecklistCategory.STAFFING}>Nhân sự (STAFFING)</option>
-              <option value={ChecklistCategory.CONDITION}>Hiện trạng (CONDITION)</option>
-              <option value={ChecklistCategory.OTHER}>Khác (OTHER)</option>
+              <option value={ChecklistCategory.STRUCTURE}>STRUCTURE</option>
+              <option value={ChecklistCategory.BRANDING}>BRANDING</option>
+              <option value={ChecklistCategory.POSM}>POSM</option>
+              <option value={ChecklistCategory.STAFFING}>STAFFING</option>
+              <option value={ChecklistCategory.CONDITION}>CONDITION</option>
+              <option value={ChecklistCategory.OTHER}>OTHER</option>
             </select>
           </div>
 
           <div>
             <label className="text-xs font-semibold text-slate-700 block mb-1">
-              Mô tả chi tiết mục đích áp dụng
+              {t('purposeDesc')}
             </label>
             <textarea
               rows={2}
-              placeholder="Bộ tiêu chí áp dụng cho các booth activation tại kênh MT (Siêu thị Big C, Co.opmart)..."
+              placeholder={locale === 'en' ? 'Standard criteria for MT activation booths (Supermarkets, Malls)...' : 'Bộ tiêu chí áp dụng cho các booth activation tại kênh MT (Siêu thị Big C, Co.opmart)...'}
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               className="w-full px-3 py-2 text-sm rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-purple-500/20"
@@ -189,7 +219,7 @@ export default function NewTemplatePage() {
         <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm space-y-4">
           <div className="flex items-center justify-between">
             <h2 className="text-sm font-bold text-slate-900 uppercase tracking-wider text-purple-700">
-              2. Danh Sách Tiêu Chí Con ({items.length})
+              {t('step2Title', { count: items.length })}
             </h2>
             <Button
               type="button"
@@ -198,7 +228,7 @@ export default function NewTemplatePage() {
               onClick={handleAddItem}
               className="text-xs gap-1 border-purple-300 text-purple-700 hover:bg-purple-50"
             >
-              <Plus className="h-3.5 w-3.5" /> Thêm tiêu chí
+              <Plus className="h-3.5 w-3.5" /> {t('addCriteria')}
             </Button>
           </div>
 
@@ -210,14 +240,14 @@ export default function NewTemplatePage() {
               >
                 <div className="flex items-center justify-between">
                   <span className="text-xs font-bold text-slate-700">
-                    Tiêu chí #{idx + 1}
+                    {t('criteriaNumber', { num: idx + 1 })}
                   </span>
                   {items.length > 1 && (
                     <button
                       type="button"
                       onClick={() => handleRemoveItem(item.id)}
-                      className="text-slate-400 hover:text-rose-600 transition-colors"
-                      title="Xóa tiêu chí"
+                      className="text-slate-400 hover:text-rose-600 transition-colors cursor-pointer"
+                      title={locale === 'en' ? 'Delete criteria' : 'Xóa tiêu chí'}
                     >
                       <Trash2 className="h-4 w-4" />
                     </button>
@@ -227,12 +257,12 @@ export default function NewTemplatePage() {
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                   <div className="sm:col-span-2">
                     <label className="text-[11px] font-semibold text-slate-600 block mb-1">
-                      Tiêu đề tiêu chí <span className="text-rose-500">*</span>
+                      {t('criteriaTitle')} <span className="text-rose-500">*</span>
                     </label>
                     <input
                       type="text"
                       required
-                      placeholder="e.g. Kiểm tra đồng phục nhân viên PG"
+                      placeholder={locale === 'en' ? 'e.g. Inspect PG staffing uniform' : 'e.g. Kiểm tra đồng phục nhân viên PG'}
                       value={item.title}
                       onChange={(e) => handleItemChange(item.id, 'title', e.target.value)}
                       className="w-full px-3 py-1.5 text-xs rounded-lg border border-slate-200 bg-white focus:outline-none focus:ring-1 focus:ring-purple-500"
@@ -241,7 +271,7 @@ export default function NewTemplatePage() {
 
                   <div>
                     <label className="text-[11px] font-semibold text-slate-600 block mb-1">
-                      Danh mục
+                      {t('category')}
                     </label>
                     <select
                       value={item.category}
@@ -260,11 +290,11 @@ export default function NewTemplatePage() {
 
                 <div>
                   <label className="text-[11px] font-semibold text-slate-600 block mb-1">
-                    Hướng dẫn chụp bằng chứng
+                    {t('evidenceGuide')}
                   </label>
                   <input
                     type="text"
-                    placeholder="e.g. Chụp rõ mặt và bảng tên của nhân sự..."
+                    placeholder={locale === 'en' ? 'e.g. Clear view of face and name badge...' : 'e.g. Chụp rõ mặt và bảng tên của nhân sự...'}
                     value={item.description}
                     onChange={(e) => handleItemChange(item.id, 'description', e.target.value)}
                     className="w-full px-3 py-1.5 text-xs rounded-lg border border-slate-200 bg-white focus:outline-none focus:ring-1 focus:ring-purple-500"
@@ -280,7 +310,7 @@ export default function NewTemplatePage() {
                     className="h-3.5 w-3.5 rounded border-slate-300 text-purple-600 focus:ring-purple-500"
                   />
                   <label htmlFor={`req_${item.id}`} className="text-xs text-slate-700 select-none">
-                    Bắt buộc phải nộp ảnh mới được duyệt
+                    {t('requiredAcceptance')}
                   </label>
                 </div>
               </div>
@@ -292,7 +322,7 @@ export default function NewTemplatePage() {
         <div className="flex items-center justify-end gap-3 pt-2">
           <Link href="/admin/templates">
             <Button type="button" variant="outline" className="text-xs">
-              Hủy
+              {t('cancel')}
             </Button>
           </Link>
           <Button
@@ -301,7 +331,7 @@ export default function NewTemplatePage() {
             className="bg-purple-600 hover:bg-purple-700 text-white text-xs gap-1.5"
           >
             {isPending ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <CheckCircle2 className="h-3.5 w-3.5" />}
-            Lưu Bộ Mẫu Vào Hệ Thống
+            {t('saveTemplate')}
           </Button>
         </div>
       </form>

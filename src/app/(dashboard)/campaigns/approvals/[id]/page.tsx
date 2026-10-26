@@ -12,16 +12,21 @@ import { StatusBadge } from '@/components/shared/status-badge';
 import { ArrowLeft, Tag, CheckCheck, Clock, CheckCircle2, AlertTriangle } from 'lucide-react';
 import { ReviewPanel } from '@/features/approvals/components/review-panel';
 import { Metadata } from 'next';
+import { getTranslations } from 'next-intl/server';
 
-export const metadata: Metadata = {
-  title: 'Phê Duyệt Chiến Dịch — EventGo Proof',
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getTranslations('operations.approvals');
+  return {
+    title: t('detailMetaTitle'),
+  };
+}
 
 interface ApprovalDetailPageProps {
   params: Promise<{ id: string }>;
 }
 
 export default async function ApprovalDetailPage({ params }: ApprovalDetailPageProps) {
+  const t = await getTranslations('operations.approvals');
   const { id } = await params;
   const session = await getCurrentUserSession();
   if (!session) redirect('/login');
@@ -90,7 +95,7 @@ export default async function ApprovalDetailPage({ params }: ApprovalDetailPageP
       return {
         submission: sub,
         booth,
-        boothName: booth?.name || 'Gian hàng',
+        boothName: booth?.name || t('defaultBoothName'),
         checklistItem,
         location,
       };
@@ -107,7 +112,7 @@ export default async function ApprovalDetailPage({ params }: ApprovalDetailPageP
         <Link href="/campaigns/approvals">
           <Button variant="ghost" size="sm" className="gap-1 text-slate-600">
             <ArrowLeft className="h-4 w-4" />
-            Quay lại danh sách phê duyệt
+            {t('btnBackToApprovals')}
           </Button>
         </Link>
       </div>
@@ -123,19 +128,19 @@ export default async function ApprovalDetailPage({ params }: ApprovalDetailPageP
               </span>
               <StatusBadge status={campaign.status} />
               <span className="inline-flex items-center gap-1 text-xs font-semibold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded">
-                <CheckCheck className="h-3 w-3" /> Quyền Approver
+                <CheckCheck className="h-3 w-3" /> {t('roleBadge')}
               </span>
             </div>
             <h1 className="text-2xl font-bold text-slate-900">{campaign.title}</h1>
             <p className="mt-1 text-xs text-slate-500">
-              Bạn đang phụ trách thẩm định và duyệt cho {assignedBooths.length} gian hàng kích hoạt.
+              {t('detailAssignedBooths', { count: assignedBooths.length })}
             </p>
           </div>
 
           <div className="flex items-center gap-3">
             <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-amber-50 border border-amber-200 text-amber-900 text-xs font-semibold">
               <Clock className="h-4 w-4 text-amber-600" />
-              <span>{pendingList.length} bài nộp chờ duyệt</span>
+              <span>{t('pendingSubmissionsBadge', { count: pendingList.length })}</span>
             </div>
           </div>
         </div>
@@ -148,7 +153,7 @@ export default async function ApprovalDetailPage({ params }: ApprovalDetailPageP
           <div className="flex items-center justify-between">
             <h2 className="text-base font-bold text-slate-900 flex items-center gap-2">
               <Clock className="h-4 w-4 text-amber-600" />
-              Hồ Sơ Đang Chờ Phê Duyệt ({pendingList.length})
+              {t('headingPending', { count: pendingList.length })}
             </h2>
           </div>
 
@@ -156,10 +161,10 @@ export default async function ApprovalDetailPage({ params }: ApprovalDetailPageP
             <div className="rounded-xl border border-dashed border-slate-200 p-8 text-center bg-white">
               <CheckCircle2 className="h-8 w-8 text-emerald-500 mx-auto mb-2" />
               <p className="text-xs font-semibold text-slate-800">
-                Không có hồ sơ nào đang chờ duyệt
+                {t('emptyPendingTitle')}
               </p>
               <p className="text-[11px] text-slate-400 mt-0.5">
-                Các giám sát viên chưa nộp thêm bằng chứng mới hoặc bạn đã duyệt hết các hồ sơ.
+                {t('emptyPendingDesc')}
               </p>
             </div>
           ) : (
@@ -183,7 +188,7 @@ export default async function ApprovalDetailPage({ params }: ApprovalDetailPageP
           <div className="space-y-4 pt-4 border-t border-slate-200">
             <h2 className="text-base font-bold text-slate-900 flex items-center gap-2">
               <AlertTriangle className="h-4 w-4 text-red-500" />
-              Đang Chờ Giám Sát Chụp Lại / Bổ Sung ({revisionList.length})
+              {t('headingNeedsRevision', { count: revisionList.length })}
             </h2>
 
             <div className="space-y-6">
@@ -206,7 +211,7 @@ export default async function ApprovalDetailPage({ params }: ApprovalDetailPageP
           <div className="space-y-4 pt-4 border-t border-slate-200">
             <h2 className="text-base font-bold text-slate-900 flex items-center gap-2">
               <CheckCircle2 className="h-4 w-4 text-emerald-600" />
-              Đã Phê Duyệt Đạt Chuẩn ({approvedList.length})
+              {t('headingApproved', { count: approvedList.length })}
             </h2>
 
             <div className="space-y-6">

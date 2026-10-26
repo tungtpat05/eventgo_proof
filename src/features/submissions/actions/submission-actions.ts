@@ -6,6 +6,15 @@ import { CloudinaryService } from '@/infrastructure/cloudinary/cloudinary-servic
 import { SupabaseSubmissionRepository } from '@/infrastructure/repositories/supabase-submission-repository';
 import { env } from '@/config/env';
 import { revalidatePath } from 'next/cache';
+import { formatActionError } from '@/lib/action-error';
+
+export type SubmissionActionResult = {
+  success: boolean;
+  error?: string;
+  errorCode?: string;
+  params?: Record<string, string | number>;
+  fieldErrors?: Record<string, string[]>;
+};
 
 export async function submitEvidenceAction(
   boothId: string,
@@ -13,15 +22,15 @@ export async function submitEvidenceAction(
   notes: string,
   photosJson: string,
   campaignId?: string
-): Promise<{ success?: boolean; error?: string }> {
+): Promise<SubmissionActionResult> {
   try {
     await requireAssignedSupervisor(boothId);
     const photos = JSON.parse(photosJson) as Array<{ dataUrl?: string }>;
     if (!Array.isArray(photos) || photos.length === 0 || photos.some((photo) => !photo.dataUrl)) {
-      return { error: 'Vui lòng đính kèm ít nhất một hình ảnh bằng chứng nghiệm thu.' };
+      return formatActionError('ERR_EVIDENCE_PHOTOS_REQUIRED', 'Vui lòng đính kèm ít nhất một hình ảnh bằng chứng nghiệm thu.');
     }
     if (!env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME || !env.CLOUDINARY_API_KEY || !env.CLOUDINARY_API_SECRET) {
-      return { error: 'Cloudinary chưa được cấu hình. Không thể lưu evidence an toàn.' };
+      return formatActionError('ERR_CLOUDINARY_NOT_CONFIGURED', 'Cloudinary chưa được cấu hình. Không thể lưu evidence an toàn.');
     }
 
     const uploadedPhotos = [];
@@ -46,7 +55,7 @@ export async function submitEvidenceAction(
     revalidatePath('/campaigns/approvals');
     return { success: true };
   } catch (error: unknown) {
-    return { error: error instanceof Error ? error.message : 'Lỗi khi nộp bằng chứng nghiệm thu.' };
+    return formatActionError(error, 'Lỗi khi nộp bằng chứng nghiệm thu.');
   }
 }
 
@@ -55,11 +64,11 @@ export async function reviewSubmissionAction(
   action: ApprovalAction,
   notes: string,
   campaignId?: string
-): Promise<{ success?: boolean; error?: string }> {
+): Promise<SubmissionActionResult> {
   try {
     await requireAssignedApprover(submissionId);
     if (action === ApprovalAction.REQUEST_REVISION && notes.trim().length === 0) {
-      return { error: 'Bắt buộc phải nhập lý do khi yêu cầu chỉnh sửa.' };
+      return formatActionError('ERR_REVISION_NOTES_REQUIRED', 'Bắt buộc phải nhập lý do khi yêu cầu chỉnh sửa.');
     }
 
     const repo = new SupabaseSubmissionRepository();
@@ -72,6 +81,6 @@ export async function reviewSubmissionAction(
     revalidatePath('/campaigns/approvals');
     return { success: true };
   } catch (error: unknown) {
-    return { error: error instanceof Error ? error.message : 'Lỗi khi ghi nhận kết quả duyệt.' };
+    return formatActionError(error, 'Lỗi khi ghi nhận kết quả duyệt.');
   }
 }

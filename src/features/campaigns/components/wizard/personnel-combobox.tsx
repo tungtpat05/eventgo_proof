@@ -5,11 +5,12 @@ import { createPortal } from 'react-dom';
 import { WizardPersonnelOption } from '@/application/use-cases/campaigns/get-campaign-wizard-data';
 import { ChevronDown, Search, Check, UserPlus, X, Clock, CheckCircle2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { useTranslations } from 'next-intl';
 
 export interface PersonnelComboboxProps {
   value: string | null | undefined;
   options: WizardPersonnelOption[];
-  placeholder: string;
+  placeholder?: string;
   isBatchMode?: boolean;
   onChange: (value: string | null | undefined) => void;
   onInviteNew?: () => void;
@@ -39,6 +40,13 @@ export function PersonnelCombobox({
   roleLabel,
   className,
 }: PersonnelComboboxProps) {
+  const tCombobox = useTranslations('campaigns.combobox');
+  const tRoles = useTranslations('roles');
+  const roleDisplayName =
+    roleLabel === 'Supervisor'
+      ? tRoles('roleShort.SUPERVISOR')
+      : tRoles('roleShort.APPROVER');
+
   const [isOpen, setIsOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [mounted, setMounted] = useState(false);
@@ -205,29 +213,31 @@ export function PersonnelCombobox({
       >
         <div className="flex items-center gap-1.5 truncate flex-1 min-w-0">
           {isBatchMode && value === undefined && (
-            <span className="text-slate-500 truncate font-medium">-- Giữ nguyên phân công hiện tại --</span>
+            <span className="text-slate-500 truncate font-medium">{tCombobox('keepCurrent')}</span>
           )}
 
           {!isBatchMode && !selectedOption && (
-            <span className="text-amber-800 font-medium truncate">-- Chưa gán {roleLabel} --</span>
+            <span className="text-amber-800 font-medium truncate">
+              {placeholder || tCombobox('unassignedRole', { role: roleDisplayName })}
+            </span>
           )}
 
           {isBatchMode && value === null && (
-            <span className="text-slate-700 font-medium truncate">-- Bỏ phân công (Xóa tất cả) --</span>
+            <span className="text-slate-700 font-medium truncate">{tCombobox('removeAll')}</span>
           )}
 
           {selectedOption && (
             <>
               {selectedOption.isPending ? (
-                <span className="flex h-2 w-2 rounded-full bg-blue-500 shrink-0" title="Chờ kích hoạt" />
+                <span className="flex h-2 w-2 rounded-full bg-blue-500 shrink-0" title={tCombobox('pendingGroup')} />
               ) : (
-                <span className="flex h-2 w-2 rounded-full bg-emerald-500 shrink-0" title="Đã kích hoạt" />
+                <span className="flex h-2 w-2 rounded-full bg-emerald-500 shrink-0" title={tCombobox('activeGroup')} />
               )}
               <span className="font-semibold text-slate-900 truncate">
                 {selectedOption.isPending ? selectedOption.email : selectedOption.fullName}
               </span>
               {selectedOption.isPending ? (
-                <span className="text-[10px] text-blue-600 shrink-0 font-medium">(Chờ login)</span>
+                <span className="text-[10px] text-blue-600 shrink-0 font-medium">{tCombobox('waitingLogin')}</span>
               ) : (
                 <span className="text-[10px] text-slate-400 truncate">({selectedOption.email})</span>
               )}
@@ -268,7 +278,7 @@ export function PersonnelCombobox({
                   type="text"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  placeholder={`Tìm ${roleLabel} theo tên hoặc email...`}
+                  placeholder={placeholder || tCombobox('searchPlaceholder', { role: roleDisplayName })}
                   className="w-full h-8 pl-8 pr-7 text-xs bg-white rounded-md border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-600 text-slate-800"
                 />
                 {searchQuery && (
@@ -297,7 +307,7 @@ export function PersonnelCombobox({
                         value === undefined && 'bg-blue-50 text-blue-700 font-semibold'
                       )}
                     >
-                      <span>-- Giữ nguyên phân công hiện tại --</span>
+                      <span>{tCombobox('keepCurrent')}</span>
                       {value === undefined && <Check className="h-3.5 w-3.5 text-blue-600 shrink-0" />}
                     </button>
                   )}
@@ -311,7 +321,7 @@ export function PersonnelCombobox({
                         value === null && 'bg-blue-50 text-blue-700 font-semibold'
                       )}
                     >
-                      <span>-- Chưa phân công (Bỏ gán) --</span>
+                      <span>{tCombobox('unassign')}</span>
                       {value === null && <Check className="h-3.5 w-3.5 text-blue-600 shrink-0" />}
                     </button>
                   )}
@@ -323,7 +333,7 @@ export function PersonnelCombobox({
                 <div className="py-1">
                   <div className="px-2.5 py-1 text-[10px] font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1">
                     <CheckCircle2 className="h-3 w-3 text-emerald-600" />
-                    Đã tham gia (Active)
+                    {tCombobox('activeGroup')}
                   </div>
                   {activeOptions.map((opt) => {
                     const isSelected = value === opt.id;
@@ -353,7 +363,7 @@ export function PersonnelCombobox({
                 <div className="py-1">
                   <div className="px-2.5 py-1 text-[10px] font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1">
                     <Clock className="h-3 w-3 text-blue-600" />
-                    Chờ xác nhận (Pending Invite)
+                    {tCombobox('pendingGroup')}
                   </div>
                   {pendingOptions.map((opt) => {
                     const isSelected = value === opt.id;
@@ -369,7 +379,7 @@ export function PersonnelCombobox({
                       >
                         <div className="truncate pr-2">
                           <div className="text-slate-900 font-medium truncate">{opt.email}</div>
-                          <div className="text-[10px] text-blue-600 font-medium">Chờ đăng nhập Google</div>
+                          <div className="text-[10px] text-blue-600 font-medium">{tCombobox('pendingGoogle')}</div>
                         </div>
                         {isSelected && <Check className="h-3.5 w-3.5 text-blue-600 shrink-0" />}
                       </button>
@@ -381,7 +391,7 @@ export function PersonnelCombobox({
               {/* Empty state when searching */}
               {filteredOptions.length === 0 && !showKeepOption && !showUnassignOption && (
                 <div className="py-5 text-center text-slate-400 text-xs">
-                  Không tìm thấy nhân sự nào khớp với &quot;{searchQuery}&quot;
+                  {tCombobox('emptySearch', { query: searchQuery })}
                 </div>
               )}
             </div>
@@ -398,7 +408,7 @@ export function PersonnelCombobox({
                   className="w-full px-2.5 py-1.5 rounded-md text-left text-xs font-semibold text-blue-600 hover:bg-blue-50 transition-colors flex items-center gap-1.5 cursor-pointer"
                 >
                   <UserPlus className="h-3.5 w-3.5" />
-                  <span>Mời nhân sự mới qua email...</span>
+                  <span>{tCombobox('inviteNew')}</span>
                 </button>
               </div>
             )}

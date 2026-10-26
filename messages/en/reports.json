@@ -1,0 +1,51 @@
+{
+  "page": {
+    "metaTitle": "Acceptance Report — EventGo Proof",
+    "empty": "No campaigns available to generate an acceptance report."
+  },
+  "view": {
+    "title": "Campaign Acceptance Report",
+    "subtitle": "Compliance audit documentation and payment reconciliation for partners & clients",
+    "btnExportExcel": "Export Excel (.xlsx)",
+    "btnPrint": "Print / Export PDF",
+    "systemSub": "Digital multi-location campaign acceptance platform",
+    "reportCode": "Report Code: PROOF-{code}",
+    "issueDate": "Issue Date: {date}",
+    "campaignName": "Campaign Name:",
+    "brand": "Brand:",
+    "period": "Campaign Period:",
+    "totalScale": "Total Scale:",
+    "scaleCount": "{count, plural, one{# activation point} other{# activation points}}",
+    "tableTitle": "Activation Points & Acceptance Results",
+    "thIndex": "No.",
+    "thLocation": "Location / Booth Name",
+    "thAddress": "Address & City",
+    "thCriteria": "Passed Criteria",
+    "thStatus": "Status",
+    "statusCompleted": "Accepted (100%)",
+    "statusInProgress": "In Progress ({percent}%)",
+    "statusNoCriteria": "No criteria (0/0)",
+    "statusNotAccepted": "Not Accepted (0%)",
+    "criteriaCount": "{approved} / {total} Criteria Passed",
+    "zeroCriteria": "0 / 0 Criteria",
+    "agencyRep": "REPRESENTATIVE OF AGENCY",
+    "clientRep": "REPRESENTATIVE OF BRAND / CLIENT",
+    "signNote": "(Sign and write full name)"
+  },
+  "excel": {
+    "sheetName": "Acceptance_Report",
+    "colSTT": "No.",
+    "colCampaign": "Campaign",
+    "colBrand": "Brand",
+    "colBoothName": "Booth Name",
+    "colAddress": "Address",
+    "colCity": "City",
+    "colDeadline": "Deadline",
+    "colPassed": "Passed Criteria",
+    "colStatus": "Acceptance Status",
+    "statusNotConfigured": "Not Configured",
+    "statusExcelCompleted": "Completed 100%",
+    "statusExcelInProgress": "In Progress ({percent}% - {approved}/{total} passed)",
+    "statusExcelNoCriteria": "No criteria (0/0)"
+  }
+}

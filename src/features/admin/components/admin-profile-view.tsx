@@ -5,18 +5,21 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { signOutAction } from '@/features/auth/actions/auth-actions';
 import { LogOut, ShieldCheck } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 
 interface AdminProfileViewProps {
   user: UserProfile;
 }
 
 export function AdminProfileView({ user }: AdminProfileViewProps) {
+  const t = useTranslations('admin.profile');
+
   return (
     <div className="mx-auto max-w-3xl space-y-6">
 
       <Card>
         <CardHeader>
-          <CardTitle className="text-base">Thông tin cá nhân</CardTitle>
+          <CardTitle className="text-base">{t('title')}</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4 text-sm">
           <div className="flex items-center gap-4 pb-2">
@@ -39,7 +42,7 @@ export function AdminProfileView({ user }: AdminProfileViewProps) {
                 <p className="font-semibold text-base text-slate-900">{user.fullName}</p>
                 <span className="inline-flex items-center gap-1 text-xs font-semibold px-2 py-0.5 rounded-full border bg-blue-50 text-blue-700 border-blue-200">
                   <ShieldCheck className="h-3 w-3" />
-                  Quản trị viên
+                  {t('roleBadge')}
                 </span>
               </div>
               <p className="text-sm text-slate-500">{user.email}</p>
@@ -47,11 +50,11 @@ export function AdminProfileView({ user }: AdminProfileViewProps) {
           </div>
 
           <div>
-            <span className="text-slate-500">Họ tên</span>
+            <span className="text-slate-500">{t('fullName')}</span>
             <p className="font-semibold text-slate-900">{user.fullName}</p>
           </div>
           <div>
-            <span className="text-slate-500">Email</span>
+            <span className="text-slate-500">{t('email')}</span>
             <p className="font-semibold text-slate-900">{user.email}</p>
           </div>
           <Badge variant="default">Google OAuth</Badge>
@@ -65,7 +68,7 @@ export function AdminProfileView({ user }: AdminProfileViewProps) {
               className="gap-2 text-rose-600 border-rose-200 hover:bg-rose-50 hover:text-rose-700"
             >
               <LogOut className="h-4 w-4" />
-              Đăng xuất
+              {t('signOut')}
             </Button>
           </form>
         </CardFooter>

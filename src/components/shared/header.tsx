@@ -3,6 +3,7 @@
 import { useState, useRef, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import { useTranslations } from 'next-intl';
 import { UserProfile } from '@/domain/entities';
 import { SubscriptionPlanTier } from '@/domain/enums';
 import { signOutAction, switchPersonaViewAction } from '@/features/auth/actions/auth-actions';
@@ -13,9 +14,7 @@ import {
   UserCircle,
   CreditCard,
   ChevronRight,
-  ShieldAlert,
   ShieldCheck,
-  ArrowRight,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { LanguageSwitcher } from '@/components/shared/language-switcher';
@@ -46,37 +45,38 @@ function getPlanBadgeInfo(plan?: string) {
   }
 }
 
-function getClientBreadcrumb(pathname: string): { group?: string; groupHref?: string; title: string } {
+function getClientBreadcrumb(pathname: string, t: (key: string) => string): { group?: string; groupHref?: string; title: string } {
   if (pathname === '/dashboard') {
-    return { title: 'Tổng quan' };
+    return { title: t('breadcrumbs.overview') };
   }
   if (pathname.startsWith('/campaigns/supervision')) {
-    return { group: 'Chiến dịch', groupHref: '/campaigns', title: 'Giám sát hiện trường' };
+    return { group: t('breadcrumbs.campaigns'), groupHref: '/campaigns', title: t('breadcrumbs.supervision') };
   }
   if (pathname.startsWith('/campaigns/approvals')) {
-    return { group: 'Chiến dịch', groupHref: '/campaigns', title: 'Phê duyệt bằng chứng' };
+    return { group: t('breadcrumbs.campaigns'), groupHref: '/campaigns', title: t('breadcrumbs.approvals') };
   }
   if (pathname.startsWith('/campaigns/new')) {
-    return { group: 'Chiến dịch', groupHref: '/campaigns', title: 'Tạo chiến dịch mới' };
+    return { group: t('breadcrumbs.campaigns'), groupHref: '/campaigns', title: t('breadcrumbs.newCampaign') };
   }
   if (pathname.startsWith('/campaigns/')) {
-    return { group: 'Chiến dịch', groupHref: '/campaigns', title: 'Chi tiết chiến dịch' };
+    return { group: t('breadcrumbs.campaigns'), groupHref: '/campaigns', title: t('breadcrumbs.campaignDetail') };
   }
   if (pathname === '/campaigns') {
-    return { title: 'Chiến dịch quản lý' };
+    return { title: t('breadcrumbs.managedCampaigns') };
   }
   if (pathname.startsWith('/settings/billing')) {
-    return { group: 'Cài đặt', title: 'Gói dịch vụ & Thanh toán' };
+    return { group: t('breadcrumbs.billing'), title: t('breadcrumbs.billing') };
   }
   if (pathname.startsWith('/account')) {
-    return { group: 'Cài đặt', title: 'Thông tin tài khoản' };
+    return { group: t('breadcrumbs.account'), title: t('breadcrumbs.account') };
   }
   return { title: 'EventGo Proof' };
 }
 
 export function Header({ user }: HeaderProps) {
   const pathname = usePathname();
-  const breadcrumb = getClientBreadcrumb(pathname);
+  const tHeader = useTranslations('common.header');
+  const breadcrumb = getClientBreadcrumb(pathname, tHeader);
   const [isOpen, setIsOpen] = useState(false);
   const [imgError, setImgError] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
@@ -133,11 +133,11 @@ export function Header({ user }: HeaderProps) {
             <button
               type="submit"
               className="flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-full text-xs font-semibold bg-amber-50 text-amber-900 border border-amber-300 hover:bg-amber-100 hover:text-amber-950 transition-colors shadow-xs cursor-pointer"
-              title="Quay lại giao diện Quản trị hệ thống"
+              title={tHeader('controls.toAdminWorkspace')}
             >
               <ShieldCheck className="h-3.5 w-3.5 text-amber-600 shrink-0" />
-              <span className="hidden md:inline text-amber-700">Chế độ Khách hàng —</span>
-              <span>Về Admin</span>
+              <span className="hidden md:inline text-amber-700">{tHeader('controls.clientModeLabel')}</span>
+              <span>{tHeader('controls.backToAdmin')}</span>
             </button>
           </form>
         )}
@@ -148,7 +148,7 @@ export function Header({ user }: HeaderProps) {
           className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold bg-blue-50 text-blue-700 border border-blue-200 hover:bg-blue-100 transition-colors cursor-pointer"
         >
           <CreditCard className="h-3.5 w-3.5" />
-          <span>Gói dịch vụ</span>
+          <span>{tHeader('controls.billingButton')}</span>
         </Link>
 
         {/* User Dropdown */}
@@ -197,7 +197,7 @@ export function Header({ user }: HeaderProps) {
               <div className="px-3 py-2.5">
                 <div className="flex items-center justify-between gap-2">
                   <p className="text-xs font-semibold text-slate-900 truncate">
-                    {user?.fullName || 'Người dùng'}
+                    {user?.fullName || tHeader('controls.defaultUser')}
                   </p>
                   <span
                     className={cn(
@@ -205,7 +205,7 @@ export function Header({ user }: HeaderProps) {
                       planInfo.className
                     )}
                   >
-                    Gói {planInfo.label}
+                    {tHeader('controls.planBadge', { plan: planInfo.label })}
                   </span>
                 </div>
                 {user?.email && (
@@ -214,7 +214,7 @@ export function Header({ user }: HeaderProps) {
                 {user?.isSystemAdmin && (
                   <div className="mt-1.5 inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold bg-amber-50 text-amber-800 border border-amber-200">
                     <ShieldCheck className="h-3 w-3 text-amber-600" />
-                    Quản trị viên Hệ thống
+                    {tHeader('controls.systemAdminBadge')}
                   </div>
                 )}
               </div>
@@ -228,7 +228,7 @@ export function Header({ user }: HeaderProps) {
                       className="flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-sm font-semibold text-amber-800 hover:bg-amber-50 transition-colors cursor-pointer"
                     >
                       <ShieldCheck className="h-4 w-4 text-amber-600" />
-                      Về Không gian Quản trị
+                      {tHeader('controls.toAdminWorkspace')}
                     </button>
                   </form>
                 )}
@@ -239,7 +239,7 @@ export function Header({ user }: HeaderProps) {
                   className="flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-100 hover:text-slate-900 transition-colors"
                 >
                   <UserCircle className="h-4 w-4 text-slate-500" />
-                  Thông tin tài khoản
+                  {tHeader('controls.accountInfo')}
                 </Link>
 
                 <Link
@@ -248,7 +248,7 @@ export function Header({ user }: HeaderProps) {
                   className="flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-100 hover:text-slate-900 transition-colors"
                 >
                   <CreditCard className="h-4 w-4 text-blue-600" />
-                  Gói dịch vụ & Thanh toán
+                  {tHeader('controls.billingSettings')}
                 </Link>
               </div>
 
@@ -260,7 +260,7 @@ export function Header({ user }: HeaderProps) {
                     className="flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-sm font-medium text-rose-600 hover:bg-rose-50 transition-colors cursor-pointer"
                   >
                     <LogOut className="h-4 w-4 text-rose-500" />
-                    Đăng xuất
+                    {tHeader('controls.signOut')}
                   </button>
                 </form>
               </div>

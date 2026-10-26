@@ -1,9 +1,10 @@
 'use client';
 
 import React from 'react';
-import { Search, X, RotateCcw, Filter, CheckSquare, Square } from 'lucide-react';
+import { Search, X, RotateCcw } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
+import { useTranslations } from 'next-intl';
 
 export interface FilterOption {
   value: string;
@@ -36,7 +37,7 @@ export interface DataTableToolbarProps {
 }
 
 export function DataTableToolbar({
-  searchPlaceholder = 'Tìm kiếm dữ liệu...',
+  searchPlaceholder,
   searchValue,
   onSearchChange,
   filters = [],
@@ -48,7 +49,9 @@ export function DataTableToolbar({
   actions,
   className,
 }: DataTableToolbarProps) {
+  const t = useTranslations('common.toolbar');
   const isSearchActive = searchValue.trim().length > 0;
+  const placeholderText = searchPlaceholder || t('searchPlaceholder');
 
   return (
     <div className={cn('space-y-3', className)}>
@@ -59,14 +62,14 @@ export function DataTableToolbar({
             <span className="flex h-5 w-5 items-center justify-center rounded-full bg-blue-600 text-white text-xs font-bold">
               {selectedCount}
             </span>
-            <span>Đang chọn {selectedCount} hàng dữ liệu</span>
+            <span>{t('selectedRows', { count: selectedCount })}</span>
             {onClearSelection && (
               <button
                 type="button"
                 onClick={onClearSelection}
                 className="text-xs text-blue-700 underline hover:text-blue-900 ml-1 cursor-pointer"
               >
-                Bỏ chọn tất cả
+                {t('clearSelection')}
               </button>
             )}
           </div>
@@ -92,7 +95,7 @@ export function DataTableToolbar({
               type="text"
               value={searchValue}
               onChange={(e) => onSearchChange(e.target.value)}
-              placeholder={searchPlaceholder}
+              placeholder={placeholderText}
               className={cn(
                 'w-full pl-9 pr-8 py-2 text-xs sm:text-sm rounded-xl border bg-white text-slate-900 placeholder:text-slate-400 font-normal transition-all focus:outline-none focus:ring-2 focus:ring-blue-500/20',
                 isSearchActive
@@ -105,8 +108,8 @@ export function DataTableToolbar({
                 type="button"
                 onClick={() => onSearchChange('')}
                 className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-700 p-1 rounded-md transition-colors cursor-pointer"
-                title="Xóa tìm kiếm"
-                aria-label="Xóa nội dung tìm kiếm"
+                title={t('clearSearch')}
+                aria-label={t('clearSearch')}
               >
                 <X className="h-3.5 w-3.5" />
               </button>
@@ -128,7 +131,7 @@ export function DataTableToolbar({
                       : 'border-slate-200 bg-white text-slate-700 hover:border-slate-300 focus:border-blue-500'
                   )}
                 >
-                  <option value="ALL">{f.allLabel || `Tất cả ${f.label.toLowerCase()}`}</option>
+                  <option value="ALL">{f.allLabel || t('allPrefix', { label: f.label.toLowerCase() })}</option>
                   {f.options.map((opt) => (
                     <option key={opt.value} value={opt.value}>
                       {opt.label}
@@ -152,10 +155,10 @@ export function DataTableToolbar({
               size="sm"
               onClick={onResetFilters}
               className="text-xs text-rose-600 hover:text-rose-700 hover:bg-rose-50 h-9 px-2.5 rounded-xl gap-1.5 font-medium cursor-pointer"
-              title="Đặt lại toàn bộ tiêu chí lọc"
+              title={t('resetFilters', { count: activeFiltersCount })}
             >
               <RotateCcw className="h-3.5 w-3.5" />
-              <span>Xóa lọc ({activeFiltersCount})</span>
+              <span>{t('resetFilters', { count: activeFiltersCount })}</span>
             </Button>
           )}
         </div>

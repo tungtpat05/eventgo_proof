@@ -5,19 +5,26 @@ import { UserSubscriptionSummary } from '../actions/subscription-actions';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { CheckCircle2, AlertTriangle, Clock, Layers } from 'lucide-react';
-import { cn } from '@/lib/utils';
+import { cn, formatDate } from '@/lib/utils';
+import { useTranslations, useLocale } from 'next-intl';
 
 interface BillingQuotaCardProps {
   summary: UserSubscriptionSummary;
 }
 
 export function BillingQuotaCard({ summary }: BillingQuotaCardProps) {
+  const t = useTranslations('billing.quota');
+  const tBilling = useTranslations('billing');
+  const locale = useLocale();
+
   const activeCount = summary.activeCampaignCount;
   const maxAllowed = summary.planConfig.maxActiveCampaigns;
   const percentUsed = Math.min(100, Math.round((activeCount / maxAllowed) * 100));
 
   const isExpiringSoon = summary.isExpiringSoon;
   const isExpired = summary.isExpired;
+  const planTier = summary.planConfig.tier;
+  const localizedPlanName = planTier ? tBilling(`tiers.${planTier}.name`) : summary.planConfig.name;
 
   return (
     <Card className="border-blue-200/80 bg-gradient-to-r from-blue-50/60 via-white to-white shadow-xs rounded-2xl overflow-hidden">
@@ -25,26 +32,26 @@ export function BillingQuotaCard({ summary }: BillingQuotaCardProps) {
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
           <div>
             <span className="text-[11px] font-bold uppercase tracking-wider text-blue-600">
-              Gói Thuê Bao Hiện Tại
+              {t('currentBadge')}
             </span>
             <div className="flex items-center gap-2.5 mt-1">
               <CardTitle className="text-xl sm:text-2xl font-bold text-slate-900">
-                {summary.planConfig.name}
+                {localizedPlanName}
               </CardTitle>
               {isExpired ? (
                 <Badge className="bg-rose-50 text-rose-700 border-rose-200 gap-1 text-xs font-semibold">
                   <AlertTriangle className="h-3 w-3 text-rose-600" />
-                  Đã hết hạn
+                  {t('statusExpired')}
                 </Badge>
               ) : isExpiringSoon ? (
                 <Badge className="bg-amber-50 text-amber-700 border-amber-200 gap-1 text-xs font-semibold">
                   <Clock className="h-3 w-3 text-amber-600" />
-                  Sắp hết hạn
+                  {t('statusExpiringSoon')}
                 </Badge>
               ) : (
                 <Badge className="bg-emerald-50 text-emerald-700 border-emerald-200 gap-1 text-xs font-semibold">
                   <CheckCircle2 className="h-3 w-3 text-emerald-600" />
-                  Đang hoạt động
+                  {t('statusActive')}
                 </Badge>
               )}
             </div>
@@ -54,9 +61,9 @@ export function BillingQuotaCard({ summary }: BillingQuotaCardProps) {
           <div className="text-left sm:text-right">
             {summary.subscription?.expiresAt ? (
               <div>
-                <p className="text-xs text-slate-500">Hết hạn vào</p>
+                <p className="text-xs text-slate-500">{t('expiresOn')}</p>
                 <p className="text-sm font-bold text-slate-800">
-                  {new Date(summary.subscription.expiresAt).toLocaleDateString('vi-VN')}
+                  {formatDate(summary.subscription.expiresAt, locale)}
                   {summary.daysRemaining !== null && (
                     <span
                       className={cn(
@@ -68,15 +75,15 @@ export function BillingQuotaCard({ summary }: BillingQuotaCardProps) {
                           : 'bg-blue-100 text-blue-700'
                       )}
                     >
-                      (Còn {summary.daysRemaining} ngày)
+                      {t('daysRemainingBadge', { days: summary.daysRemaining })}
                     </span>
                   )}
                 </p>
               </div>
             ) : (
               <div>
-                <p className="text-xs text-slate-500">Thời hạn sử dụng</p>
-                <p className="text-sm font-bold text-slate-800">Gói Miễn phí vĩnh viễn</p>
+                <p className="text-xs text-slate-500">{t('permanentDuration')}</p>
+                <p className="text-sm font-bold text-slate-800">{t('permanentFree')}</p>
               </div>
             )}
           </div>
@@ -90,7 +97,7 @@ export function BillingQuotaCard({ summary }: BillingQuotaCardProps) {
             <div className="flex items-center justify-between text-xs sm:text-sm font-semibold text-slate-700 mb-2">
               <span className="flex items-center gap-1.5">
                 <Layers className="h-4 w-4 text-blue-600" />
-                Chiến dịch đang kích hoạt
+                {t('activeCampaigns')}
               </span>
               <span>
                 <strong className="text-slate-900 text-base">{activeCount}</strong> / {maxAllowed} slots
@@ -114,21 +121,21 @@ export function BillingQuotaCard({ summary }: BillingQuotaCardProps) {
 
             <p className="text-xs text-slate-500 mt-2">
               {percentUsed >= 100
-                ? 'Bạn đã dùng hết hạn mức chiến dịch. Hãy nâng cấp gói để tạo thêm chiến dịch mới.'
-                : `Bạn còn ${maxAllowed - activeCount} vị trí chiến dịch có thể chạy đồng thời.`}
+                ? t('quotaExceeded')
+                : t('slotsRemaining', { count: maxAllowed - activeCount })}
             </p>
           </div>
 
           {/* Features in current plan */}
           <div className="bg-slate-50/80 rounded-xl p-3.5 border border-slate-200/70 text-xs space-y-1.5">
             <span className="font-bold text-slate-800 block text-xs mb-1">
-              Quyền lợi gói {summary.planConfig.name}:
+              {t('benefitsHeading', { name: localizedPlanName })}
             </span>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-1 text-slate-600">
-              <span>• Tối đa {maxAllowed} chiến dịch đồng thời</span>
-              <span>• Không giới hạn số booth</span>
-              <span>• Định vị GPS & Timestamp chuẩn</span>
-              <span>• Xuất báo cáo Excel / PDF</span>
+              <span>{t('benefitMaxCampaigns', { count: maxAllowed })}</span>
+              <span>{t('benefitUnlimitedBooths')}</span>
+              <span>{t('benefitGps')}</span>
+              <span>{t('benefitReport')}</span>
             </div>
           </div>
         </div>

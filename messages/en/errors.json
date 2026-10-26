@@ -1,0 +1,42 @@
+{
+  "ERR_UNKNOWN": "An unexpected error occurred. Please try again.",
+  "ERR_INVALID_INPUT": "Invalid input data. Please verify your fields.",
+  "ERR_UNAUTHORIZED": "Your session has expired or you are not signed in. Please sign in again.",
+  "ERR_FORBIDDEN": "You do not have permission to perform this action.",
+  "ERR_NOT_FOUND": "Requested resource was not found.",
+  "ERR_RLS_VIOLATION": "You do not have access to view or edit this resource under security policies.",
+  "ERR_CONFLICT": "Resource already exists or a conflict occurred.",
+  "ERR_NETWORK": "Network error. Please check your internet connection.",
+  "VAL_TOO_SMALL": "Input value is too short or below minimum requirement.",
+  "VAL_TOO_BIG": "Input value exceeds maximum allowed length.",
+  "VAL_INVALID_STRING": "Invalid string format.",
+  "VAL_INVALID_TYPE": "Invalid data type.",
+  "VAL_CUSTOM": "Data does not satisfy business rules.",
+  "ERR_QUOTA_EXCEEDED": "Action exceeds the current subscription plan quota.",
+  "ERR_INVITE_EXPIRED": "Invitation link is expired or invalid.",
+  "ERR_SUBMISSION_EMPTY": "Please attach at least one proof photo before submitting.",
+  "ERR_EVIDENCE_PHOTOS_REQUIRED": "Please attach at least one proof photo for acceptance evidence.",
+  "ERR_CLOUDINARY_NOT_CONFIGURED": "Cloudinary is not configured. Cannot securely store evidence.",
+  "ERR_CLOUDINARY_UPLOAD_FAILED": "Cloudinary upload did not return image data.",
+  "ERR_REVISION_NOTES_REQUIRED": "A reason is mandatory when requesting revisions.",
+  "ERR_FILE_TOO_LARGE": "File size exceeds maximum limit of 10MB.",
+  "ERR_INVALID_IMAGE_FORMAT": "Unsupported image format. Please select JPG, PNG, or WebP.",
+  "ERR_FILE_REQUIRED": "Please select a valid Excel (.xlsx) or CSV file.",
+  "ERR_FILE_PARSE_FAILED": "Could not read or parse the uploaded spreadsheet file.",
+  "notFound": {
+    "badge": "Error 404 • Not Found",
+    "title": "Page Not Found",
+    "description": "The page you are looking for does not exist on EventGo Proof or has been moved.",
+    "backHome": "Back to Home",
+    "backDashboard": "Back to Dashboard",
+    "viewCampaigns": "View Campaigns"
+  },
+  "serverError": {
+    "badge": "System Error",
+    "title": "Page Load Error",
+    "description": "The system encountered an error while processing your request. Please try again or return to dashboard.",
+    "tryAgain": "Reload Page",
+    "backDashboard": "Back to Dashboard",
+    "contactSupport": "Contact Support"
+  }
+}

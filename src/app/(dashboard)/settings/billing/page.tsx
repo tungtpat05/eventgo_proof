@@ -18,9 +18,13 @@ import { UpgradeConfirmDialog } from '@/features/subscriptions/components/upgrad
 import { SubscriptionPlanTier, Transaction, PLAN_CONFIGS, PlanConfig } from '@/domain/entities';
 import { Button } from '@/components/ui/button';
 import { CreditCard, RefreshCw, Loader2 } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 
 export default function BillingPage() {
   const router = useRouter();
+  const t = useTranslations('billing.page');
+  const tBilling = useTranslations('billing');
+
   const [summary, setSummary] = useState<UserSubscriptionSummary | null>(null);
   const [planConfigs, setPlanConfigs] = useState<PlanConfig[]>([]);
   const [transactions, setTransactions] = useState<Transaction[]>([]);
@@ -109,7 +113,7 @@ export default function BillingPage() {
         });
         setIsModalOpen(true);
       } catch (err: any) {
-        alert(err.message || 'Lỗi khởi tạo cổng thanh toán');
+        alert(err.message || t('errInitPayment'));
       }
     });
   };
@@ -155,10 +159,14 @@ export default function BillingPage() {
     return (
       <div className="flex flex-col items-center justify-center min-h-[50vh] space-y-3">
         <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
-        <p className="text-sm text-slate-500">Đang tải thông tin gói dịch vụ & thanh toán...</p>
+        <p className="text-sm text-slate-500">{t('loading')}</p>
       </div>
     );
   }
+
+  const localizedCurrentPlanName = summary.planConfig.tier
+    ? tBilling(`tiers.${summary.planConfig.tier}.name`)
+    : summary.planConfig.name;
 
   return (
     <div className="space-y-8 max-w-6xl mx-auto pb-12">
@@ -166,7 +174,7 @@ export default function BillingPage() {
       <ExpirationWarningBanner
         daysRemaining={summary.daysRemaining}
         isExpired={summary.isExpired}
-        planName={summary.planConfig.name}
+        planName={localizedCurrentPlanName}
       />
 
       {/* Page Header */}
@@ -174,10 +182,10 @@ export default function BillingPage() {
         <div>
           <h1 className="text-2xl font-bold text-slate-900 tracking-tight flex items-center gap-2.5">
             <CreditCard className="h-6 w-6 text-blue-600" />
-            Gói Dịch Vụ & Thanh Toán
+            {t('title')}
           </h1>
           <p className="text-xs sm:text-sm text-slate-500 mt-1">
-            Quản lý hạn mức chiến dịch, gia hạn thuê bao và đối soát lịch sử hóa đơn
+            {t('subtitle')}
           </p>
         </div>
 
@@ -191,7 +199,7 @@ export default function BillingPage() {
           className="gap-1.5 text-xs self-start sm:self-auto border-slate-300 cursor-pointer"
         >
           <RefreshCw className="h-3.5 w-3.5 text-slate-500" />
-          Làm mới
+          {t('btnRefresh')}
         </Button>
       </div>
 

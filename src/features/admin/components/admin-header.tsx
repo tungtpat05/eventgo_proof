@@ -8,6 +8,7 @@ import { signOutAction, switchPersonaViewAction } from '@/features/auth/actions/
 import { User, LogOut, ChevronDown, UserCircle, ShieldCheck, ChevronRight, Menu, ExternalLink } from 'lucide-react';
 import { useAdminLayout } from '../context/admin-layout-context';
 import { LanguageSwitcher } from '@/components/shared/language-switcher';
+import { useTranslations } from 'next-intl';
 
 interface AdminHeaderProps {
   user: UserProfile;
@@ -19,41 +20,49 @@ interface AdminBreadcrumb {
   title: string;
 }
 
-function getAdminBreadcrumb(pathname: string): AdminBreadcrumb {
+function getAdminBreadcrumb(
+  pathname: string,
+  t: (key: string) => string
+): AdminBreadcrumb {
   if (pathname === '/admin' || pathname === '/admin/dashboard') {
-    return { title: 'Tổng quan' };
+    return { title: t('breadcrumbs.dashboard') };
   }
   if (pathname.startsWith('/admin/transactions')) {
-    return { group: 'Thanh toán', title: 'Lịch sử giao dịch' };
+    return { group: t('breadcrumbs.groupBilling'), title: t('breadcrumbs.transactions') };
   }
   if (pathname.startsWith('/admin/subscriptions')) {
-    return { group: 'Thanh toán', title: 'Quản lý đăng ký' };
+    return { group: t('breadcrumbs.groupBilling'), title: t('breadcrumbs.subscriptions') };
   }
   if (pathname.startsWith('/admin/plans')) {
-    return { group: 'Thanh toán', title: 'Gói dịch vụ' };
+    return { group: t('breadcrumbs.groupBilling'), title: t('breadcrumbs.plans') };
   }
   if (pathname.startsWith('/admin/payment-settings')) {
-    return { group: 'Thanh toán', title: 'Cấu hình nhận tiền' };
+    return { group: t('breadcrumbs.groupBilling'), title: t('breadcrumbs.paymentSettings') };
   }
   if (pathname === '/admin/templates/new') {
-    return { group: 'Mẫu Checklist', groupHref: '/admin/templates', title: 'Tạo mẫu mới' };
+    return {
+      group: t('breadcrumbs.groupTemplates'),
+      groupHref: '/admin/templates',
+      title: t('breadcrumbs.templatesNew'),
+    };
   }
   if (pathname.startsWith('/admin/templates')) {
-    return { group: 'Mẫu Checklist', title: 'Thư viện mẫu' };
+    return { group: t('breadcrumbs.groupTemplates'), title: t('breadcrumbs.templates') };
   }
   if (pathname.startsWith('/admin/admins')) {
-    return { group: 'Quản trị viên', title: 'Danh sách quản trị' };
+    return { group: t('breadcrumbs.groupAdmins'), title: t('breadcrumbs.admins') };
   }
   if (pathname.startsWith('/admin/profile')) {
-    return { group: 'Tài khoản', title: 'Thông tin cá nhân' };
+    return { group: t('breadcrumbs.groupAccount'), title: t('breadcrumbs.profile') };
   }
-  return { title: 'Quản trị hệ thống' };
+  return { title: t('breadcrumbs.fallback') };
 }
 
 export function AdminHeader({ user }: AdminHeaderProps) {
   const pathname = usePathname();
+  const t = useTranslations('admin.header');
   const { toggleSidebar } = useAdminLayout();
-  const breadcrumb = getAdminBreadcrumb(pathname);
+  const breadcrumb = getAdminBreadcrumb(pathname, t);
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
@@ -76,7 +85,7 @@ export function AdminHeader({ user }: AdminHeaderProps) {
         <button
           type="button"
           onClick={toggleSidebar}
-          aria-label="Mở menu quản trị"
+          aria-label={t('openMenu')}
           className="md:hidden p-2 rounded-lg text-slate-600 hover:text-slate-900 hover:bg-slate-100 transition-colors cursor-pointer"
         >
           <Menu className="h-5 w-5" />
@@ -118,10 +127,10 @@ export function AdminHeader({ user }: AdminHeaderProps) {
           <button
             type="submit"
             className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold bg-blue-50 text-blue-700 border border-blue-200 hover:bg-blue-100 hover:text-blue-800 transition-colors cursor-pointer"
-            title="Xem giao diện người dùng / khách hàng"
+            title={t('viewClientTitle')}
           >
             <ExternalLink className="h-3.5 w-3.5" />
-            <span>Workspace Khách hàng</span>
+            <span>{t('clientWorkspace')}</span>
           </button>
         </form>
 
@@ -170,7 +179,7 @@ export function AdminHeader({ user }: AdminHeaderProps) {
                 </p>
                 <div className="mt-1.5 inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold bg-blue-50 text-blue-700 border border-blue-200">
                   <ShieldCheck className="h-3 w-3" />
-                  Quản trị viên Hệ thống
+                  {t('systemAdminBadge')}
                 </div>
               </div>
 
@@ -182,7 +191,7 @@ export function AdminHeader({ user }: AdminHeaderProps) {
                   className="flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-100 hover:text-slate-900 transition-colors"
                 >
                   <UserCircle className="h-4 w-4 text-slate-500" />
-                  Thông tin tài khoản
+                  {t('accountInfo')}
                 </Link>
 
                 <form action={() => switchPersonaViewAction('client')} className="w-full">
@@ -191,7 +200,7 @@ export function AdminHeader({ user }: AdminHeaderProps) {
                     className="flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-sm font-medium text-blue-700 hover:bg-blue-50 transition-colors cursor-pointer"
                   >
                     <ExternalLink className="h-4 w-4 text-blue-600" />
-                    Vào Workspace Khách hàng
+                    {t('enterClientWorkspace')}
                   </button>
                 </form>
               </div>
@@ -204,7 +213,7 @@ export function AdminHeader({ user }: AdminHeaderProps) {
                     className="flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-sm font-medium text-rose-600 hover:bg-rose-50 transition-colors"
                   >
                     <LogOut className="h-4 w-4 text-rose-500" />
-                    Đăng xuất
+                    {t('signOut')}
                   </button>
                 </form>
               </div>

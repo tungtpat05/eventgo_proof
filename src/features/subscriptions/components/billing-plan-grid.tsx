@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Check, Sparkles, ArrowRight } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { useTranslations, useLocale } from 'next-intl';
 
 interface BillingPlanGridProps {
   planConfigs: PlanConfig[];
@@ -27,6 +28,10 @@ export function BillingPlanGrid({
   isCurrentSubActive,
   onSelectPlan,
 }: BillingPlanGridProps) {
+  const t = useTranslations('billing.plans');
+  const tBilling = useTranslations('billing');
+  const locale = useLocale();
+
   const currentTierLevel = isCurrentSubActive ? PLAN_TIER_LEVEL[currentTier] : 0;
 
   const tiers = [
@@ -39,10 +44,10 @@ export function BillingPlanGrid({
     <div className="space-y-4">
       <div className="text-center max-w-xl mx-auto space-y-1.5">
         <h2 className="text-xl sm:text-2xl font-bold text-slate-900 tracking-tight">
-          Chọn Gói Cước Phù Hợp Cho Doanh Nghiệp
+          {t('title')}
         </h2>
         <p className="text-xs sm:text-sm text-slate-500">
-          Nâng cấp hoặc gia hạn linh hoạt theo tháng với cổng thanh toán PayOS VietQR tự động.
+          {t('subtitle')}
         </p>
       </div>
 
@@ -55,6 +60,8 @@ export function BillingPlanGrid({
           const isHigher = tierLevel > currentTierLevel;
           const isLower = isCurrentSubActive && tierLevel < currentTierLevel;
           const isPro = tier === SubscriptionPlanTier.PRO;
+          const localizedName = tBilling(`tiers.${tier}.name`);
+          const localizedDesc = tBilling(`tiers.${tier}.description`);
 
           return (
             <Card
@@ -71,7 +78,7 @@ export function BillingPlanGrid({
               {isPro && (
                 <div className="absolute -top-3.5 left-1/2 -translate-x-1/2">
                   <Badge className="bg-blue-600 hover:bg-blue-600 text-white font-bold text-[10px] tracking-wider uppercase px-3 py-1 shadow-sm">
-                    Phổ biến nhất
+                    {t('popularBadge')}
                   </Badge>
                 </div>
               )}
@@ -79,16 +86,16 @@ export function BillingPlanGrid({
               <CardHeader className="pb-4">
                 <div className="flex items-center justify-between">
                   <CardTitle className="text-lg font-bold text-slate-900">
-                    {config.name}
+                    {localizedName}
                   </CardTitle>
                   {isCurrent && (
                     <Badge variant="outline" className="text-xs border-blue-300 bg-blue-50 text-blue-700 font-semibold">
-                      Gói hiện tại
+                      {t('currentPlan')}
                     </Badge>
                   )}
                 </div>
                 <CardDescription className="text-xs text-slate-500 min-h-[32px] mt-1">
-                  {config.description}
+                  {localizedDesc}
                 </CardDescription>
 
                 {/* Price Display */}
@@ -96,16 +103,16 @@ export function BillingPlanGrid({
                   {config.priceMonthlyVnd > 0 ? (
                     <div className="flex items-baseline gap-1">
                       <span className="text-3xl font-extrabold text-slate-900 tracking-tight">
-                        {config.priceMonthlyVnd.toLocaleString('vi-VN')}
+                        {config.priceMonthlyVnd.toLocaleString(locale === 'en' ? 'en-US' : 'vi-VN')}
                       </span>
-                      <span className="text-xs font-semibold text-slate-500">đ / tháng</span>
+                      <span className="text-xs font-semibold text-slate-500">{t('perMonth')}</span>
                     </div>
                   ) : (
                     <div className="flex items-baseline gap-1">
                       <span className="text-3xl font-extrabold text-slate-900 tracking-tight">
-                        0 đ
+                        {t('freePrice')}
                       </span>
-                      <span className="text-xs font-semibold text-slate-500">Miễn phí</span>
+                      <span className="text-xs font-semibold text-slate-500">{t('freeLabel')}</span>
                     </div>
                   )}
                 </div>
@@ -114,31 +121,31 @@ export function BillingPlanGrid({
               {/* Features List */}
               <CardContent className="flex-1 pb-6 space-y-3">
                 <div className="pt-3 border-t border-slate-100 text-xs font-semibold text-slate-800">
-                  Hạn mức & Tính năng:
+                  {t('featuresHeading')}
                 </div>
                 <ul className="space-y-2.5 text-xs text-slate-600">
                   <li className="flex items-center gap-2">
                     <Check className="h-4 w-4 text-emerald-600 shrink-0" />
                     <span>
-                      Tối đa <strong>{config.maxActiveCampaigns} chiến dịch</strong> chạy đồng thời
+                      {t('featureCampaigns', { count: config.maxActiveCampaigns })}
                     </span>
                   </li>
                   <li className="flex items-center gap-2">
                     <Check className="h-4 w-4 text-emerald-600 shrink-0" />
-                    <span>Không giới hạn số gian hàng (booths)</span>
+                    <span>{t('featureBooths')}</span>
                   </li>
                   <li className="flex items-center gap-2">
                     <Check className="h-4 w-4 text-emerald-600 shrink-0" />
-                    <span>Nghiệm thu ảnh có tọa độ GPS & Timestamp</span>
+                    <span>{t('featureGps')}</span>
                   </li>
                   <li className="flex items-center gap-2">
                     <Check className="h-4 w-4 text-emerald-600 shrink-0" />
-                    <span>Phê duyệt bằng chứng hiện trường 2 bước</span>
+                    <span>{t('featureReview')}</span>
                   </li>
                   {isPro && (
                     <li className="flex items-center gap-2 text-blue-700 font-semibold">
                       <Sparkles className="h-4 w-4 text-blue-600 shrink-0" />
-                      <span>Hỗ trợ kỹ thuật ưu tiên 24/7 & SLA 99.9%</span>
+                      <span>{t('featureSupport')}</span>
                     </li>
                   )}
                 </ul>
@@ -152,27 +159,27 @@ export function BillingPlanGrid({
                     className="w-full text-xs font-semibold h-10 border-slate-200 text-slate-600"
                     disabled
                   >
-                    {isCurrent ? 'Đang sử dụng' : 'Gói mặc định'}
+                    {isCurrent ? t('btnCurrent') : t('btnDefault')}
                   </Button>
                 ) : isLower ? (
                   <Button
                     variant="outline"
                     className="w-full text-xs font-medium h-10 border-slate-200 text-slate-400 cursor-not-allowed"
                     disabled
-                    title="Bạn đang sử dụng gói cao hơn"
+                    title={t('btnLowerTooltip')}
                   >
-                    Gói thấp hơn
+                    {t('btnLower')}
                   </Button>
                 ) : isCurrent ? (
                   <Button
-                    onClick={() => onSelectPlan(tier, config.name, config.priceMonthlyVnd)}
+                    onClick={() => onSelectPlan(tier, localizedName, config.priceMonthlyVnd)}
                     className="w-full text-xs font-semibold h-10 bg-blue-600 hover:bg-blue-700 text-white shadow-xs cursor-pointer"
                   >
-                    Gia hạn thêm 30 ngày
+                    {t('btnRenew')}
                   </Button>
                 ) : (
                   <Button
-                    onClick={() => onSelectPlan(tier, config.name, config.priceMonthlyVnd)}
+                    onClick={() => onSelectPlan(tier, localizedName, config.priceMonthlyVnd)}
                     className={cn(
                       'w-full text-xs font-semibold h-10 transition-all cursor-pointer shadow-xs',
                       isPro
@@ -180,7 +187,7 @@ export function BillingPlanGrid({
                         : 'bg-slate-900 hover:bg-slate-800 text-white'
                     )}
                   >
-                    <span>{isHigher ? `Nâng cấp lên ${config.name}` : `Đăng ký ${config.name}`}</span>
+                    <span>{isHigher ? t('btnUpgrade', { name: localizedName }) : t('btnSubscribe', { name: localizedName })}</span>
                     <ArrowRight className="h-3.5 w-3.5 ml-1.5" />
                   </Button>
                 )}

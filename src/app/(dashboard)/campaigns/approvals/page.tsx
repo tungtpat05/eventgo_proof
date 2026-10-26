@@ -10,13 +10,19 @@ import { Badge } from '@/components/ui/badge';
 import { CheckCheck, Calendar, ArrowRight, Tag, Clock, LayoutDashboard, FolderKanban } from 'lucide-react';
 import { formatDate } from '@/lib/utils';
 import { Metadata } from 'next';
+import { getTranslations, getLocale } from 'next-intl/server';
 
-export const metadata: Metadata = {
-  title: 'Chiến Dịch Phê Duyệt Bằng Chứng',
-  description: 'Danh sách các chiến dịch bạn được phân công làm Người phê duyệt (Approver)',
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getTranslations('operations.approvals');
+  return {
+    title: t('metaTitle'),
+    description: t('metaDescription'),
+  };
+}
 
 export default async function ApprovalCampaignsPage() {
+  const t = await getTranslations('operations.approvals');
+  const locale = await getLocale();
   const session = await getCurrentUserSession();
   const campaigns = await getApprovalCampaignsUseCase();
 
@@ -29,21 +35,21 @@ export default async function ApprovalCampaignsPage() {
         <div>
           <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-slate-900 flex items-center gap-2.5">
             <CheckCheck className="h-6 w-6 text-emerald-600" />
-            Chiến Dịch Phê Duyệt Bằng Chứng
+            {t('pageTitle')}
           </h1>
           <p className="text-xs sm:text-sm text-slate-500 mt-0.5">
-            Thẩm định ảnh chụp hiện trường, đối chiếu tiêu chuẩn checklist và phê duyệt kết quả nghiệm thu.
+            {t('pageSubtitle')}
           </p>
         </div>
         <div className="flex items-center gap-2">
           {pendingSubmissions.length > 0 ? (
             <Badge className="bg-amber-100 text-amber-800 border-amber-300 gap-1.5 font-bold text-xs py-1">
               <Clock className="h-3.5 w-3.5 text-amber-600" />
-              {pendingSubmissions.length} ảnh đang chờ duyệt
+              {t('pendingBadge', { count: pendingSubmissions.length })}
             </Badge>
           ) : (
             <Badge variant="outline" className="text-xs border-slate-200 text-slate-600 font-medium">
-              {campaigns.length} chiến dịch được phân công
+              {t('assignedCountBadge', { count: campaigns.length })}
             </Badge>
           )}
         </div>
@@ -54,22 +60,22 @@ export default async function ApprovalCampaignsPage() {
           <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-emerald-50 text-emerald-600 mb-4 border border-emerald-100">
             <CheckCheck className="h-7 w-7" />
           </div>
-          <h3 className="text-base font-bold text-slate-900">Chưa có chiến dịch phê duyệt nào</h3>
+          <h3 className="text-base font-bold text-slate-900">{t('emptyTitle')}</h3>
           <p className="text-xs sm:text-sm text-slate-500 max-w-md mx-auto mt-1.5 leading-relaxed">
-            Khi Quản lý chiến dịch (Manager) phân công bạn làm Người phê duyệt (Approver) cho các booth, chiến dịch sẽ hiển thị tại đây kèm số lượng ảnh cần duyệt.
+            {t('emptyDesc')}
           </p>
 
           <div className="mt-6 flex flex-wrap items-center justify-center gap-3">
             <Link href="/dashboard">
               <Button size="sm" variant="outline" className="text-xs gap-1.5 cursor-pointer">
                 <LayoutDashboard className="h-3.5 w-3.5" />
-                Về Bảng điều khiển
+                {t('btnBackDashboard')}
               </Button>
             </Link>
             <Link href="/campaigns">
               <Button size="sm" className="text-xs bg-emerald-600 hover:bg-emerald-700 text-white gap-1.5 cursor-pointer font-semibold">
                 <FolderKanban className="h-3.5 w-3.5" />
-                Xem tất cả chiến dịch
+                {t('btnViewAllCampaigns')}
               </Button>
             </Link>
           </div>
@@ -105,17 +111,17 @@ export default async function ApprovalCampaignsPage() {
 
                     {/* Operational badge */}
                     <div className="flex items-center justify-between text-[11px] text-slate-600 bg-slate-50 p-2 rounded-xl border border-slate-100">
-                      <span className="font-semibold text-slate-700">Quyền phê duyệt</span>
-                      <span className="text-emerald-600 font-bold">Thẩm định viên</span>
+                      <span className="font-semibold text-slate-700">{t('roleCardBadge')}</span>
+                      <span className="text-emerald-600 font-bold">{t('roleCardTitle')}</span>
                     </div>
 
                     <div className="flex items-center justify-between text-xs text-slate-400 pt-3 border-t border-slate-100">
                       <div className="flex items-center gap-1.5">
                         <Calendar className="h-3.5 w-3.5" />
-                        <span>{formatDate(campaign.startDate)} – {formatDate(campaign.endDate)}</span>
+                        <span>{formatDate(campaign.startDate, locale)} – {formatDate(campaign.endDate, locale)}</span>
                       </div>
                       <span className="flex items-center gap-1 text-emerald-600 font-semibold group-hover:translate-x-0.5 transition-transform text-xs">
-                        Xem xét <ArrowRight className="h-3.5 w-3.5" />
+                        {t('btnReview')} <ArrowRight className="h-3.5 w-3.5" />
                       </span>
                     </div>
                   </CardContent>

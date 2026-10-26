@@ -29,8 +29,10 @@ import {
   AlertCircle,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { useTranslations } from 'next-intl';
 
 export default function AdminPlansPage() {
+  const t = useTranslations('admin.plans');
   const [planConfigs, setPlanConfigs] = useState<PlanConfig[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isPending, startTransition] = useTransition();
@@ -83,17 +85,17 @@ export default function AdminPlansPage() {
     if (!editingPlan) return;
 
     if (!formName.trim()) {
-      setFormError('Vui lòng nhập tên hiển thị của gói.');
+      setFormError(t('errNameRequired'));
       return;
     }
 
     if (formPrice === '' || formPrice < 0) {
-      setFormError('Giá niêm yết không hợp lệ (không được âm).');
+      setFormError(t('errPriceInvalid'));
       return;
     }
 
     if (formMaxCampaigns === '' || formMaxCampaigns < 1) {
-      setFormError('Hạn mức chiến dịch tối thiểu là 1.');
+      setFormError(t('errMaxCampaignsMin'));
       return;
     }
 
@@ -162,10 +164,10 @@ export default function AdminPlansPage() {
         <div>
           <h1 className="text-xl font-bold text-slate-900 tracking-tight flex items-center gap-2">
             <Package className="h-5 w-5 text-blue-600" />
-            Cấu hình Gói dịch vụ
+            {t('title')}
           </h1>
           <p className="text-xs text-slate-500 mt-1">
-            Bảng so sánh và quản trị cấu hình các gói dịch vụ SaaS trên hệ thống
+            {t('desc')}
           </p>
         </div>
 
@@ -180,14 +182,14 @@ export default function AdminPlansPage() {
           className="text-xs h-8 border-slate-300 gap-1.5 self-start sm:self-auto cursor-pointer hover:bg-slate-50"
         >
           <RefreshCw className={cn('h-3.5 w-3.5 text-slate-500', isLoading && 'animate-spin')} />
-          Làm mới
+          {t('refresh')}
         </Button>
       </div>
 
       {isLoading ? (
         <div className="py-24 flex flex-col items-center justify-center gap-3">
           <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
-          <p className="text-xs text-slate-500 font-medium">Đang tải cấu hình gói dịch vụ...</p>
+          <p className="text-xs text-slate-500 font-medium">{t('loading')}</p>
         </div>
       ) : (
         /* Subscription Plan Comparison Table */
@@ -199,7 +201,7 @@ export default function AdminPlansPage() {
                 <tr className="border-b border-slate-200 bg-slate-50/90 text-slate-700">
                   <th className="py-4 px-5 text-left font-semibold w-[34%] min-w-[260px] sticky left-0 bg-slate-50/95 z-20 backdrop-blur-xs shadow-[1px_0_0_0_#e2e8f0]">
                     <span className="text-xs uppercase tracking-wider text-slate-500 font-bold">
-                      Thông số / Tính năng
+                      {t('featuresHeader')}
                     </span>
                   </th>
                   {plans.map((plan) => {
@@ -236,7 +238,7 @@ export default function AdminPlansPage() {
                                   plan.isActive ? 'bg-emerald-500' : 'bg-slate-400'
                                 )}
                               />
-                              {plan.isActive ? 'Đang mở bán' : 'Ngừng mở bán'}
+                              {plan.isActive ? t('statusActive') : t('statusInactive')}
                             </Badge>
 
                             {plan.isPopular && (
@@ -245,7 +247,7 @@ export default function AdminPlansPage() {
                                 className="bg-blue-50 text-blue-700 border-blue-200 text-[10px] font-medium px-1.5 py-0.5 gap-1"
                               >
                                 <Sparkles className="h-2.5 w-2.5 text-blue-600" />
-                                Phổ biến
+                                {t('popular')}
                               </Badge>
                             )}
                           </div>
@@ -265,14 +267,14 @@ export default function AdminPlansPage() {
                     colSpan={4}
                     className="py-2.5 px-5 font-bold text-xs uppercase tracking-wider text-slate-700"
                   >
-                    Thông tin gói
+                    {t('groupPlanInfo')}
                   </td>
                 </tr>
 
                 {/* Hàng: Giá hàng tháng */}
                 <tr className="hover:bg-slate-50/50 transition-colors">
                   <td className="py-3.5 px-5 font-medium text-slate-700 sticky left-0 bg-white z-10 shadow-[1px_0_0_0_#f1f5f9]">
-                    Giá hàng tháng
+                    {t('monthlyPrice')}
                   </td>
                   {plans.map((plan) => (
                     <td
@@ -280,8 +282,8 @@ export default function AdminPlansPage() {
                       className="py-3.5 px-4 text-center border-l border-slate-100 font-bold text-slate-900"
                     >
                       {plan.priceMonthlyVnd === 0
-                        ? 'Miễn phí'
-                        : `${plan.priceMonthlyVnd.toLocaleString('vi-VN')} đ/tháng`}
+                        ? t('free')
+                        : t('pricePerMonth', { price: plan.priceMonthlyVnd.toLocaleString('vi-VN') })}
                     </td>
                   ))}
                 </tr>
@@ -294,21 +296,21 @@ export default function AdminPlansPage() {
                     colSpan={4}
                     className="py-2.5 px-5 font-bold text-xs uppercase tracking-wider text-slate-700"
                   >
-                    Giới hạn sử dụng
+                    {t('groupUsageLimits')}
                   </td>
                 </tr>
 
                 {/* Hàng: Chiến dịch đang hoạt động */}
                 <tr className="hover:bg-slate-50/50 transition-colors">
                   <td className="py-3.5 px-5 font-medium text-slate-700 sticky left-0 bg-white z-10 shadow-[1px_0_0_0_#f1f5f9]">
-                    Chiến dịch đang hoạt động
+                    {t('activeCampaigns')}
                   </td>
                   {plans.map((plan) => (
                     <td
                       key={plan.tier}
                       className="py-3.5 px-4 text-center border-l border-slate-100 font-semibold text-slate-800"
                     >
-                      {plan.maxActiveCampaigns} chiến dịch
+                      {t('campaignUnit', { count: plan.maxActiveCampaigns })}
                     </td>
                   ))}
                 </tr>
@@ -318,9 +320,9 @@ export default function AdminPlansPage() {
                 <tr className="hover:bg-slate-50/50 transition-colors">
                   <td className="py-3.5 px-5 font-medium text-slate-700 sticky left-0 bg-white z-10 shadow-[1px_0_0_0_#f1f5f9]">
                     <div className="flex items-center gap-2">
-                      <span>Dung lượng lưu trữ</span>
+                      <span>{t('storageQuota')}</span>
                       <span className="text-[10px] font-normal px-1.5 py-0.5 rounded bg-slate-100 text-slate-500 border border-slate-200 whitespace-nowrap">
-                        Chưa áp dụng
+                        {t('storageNotApplied')}
                       </span>
                     </div>
                   </td>
@@ -338,7 +340,7 @@ export default function AdminPlansPage() {
                 {/* Hàng: Thành viên tham gia */}
                 <tr className="hover:bg-slate-50/50 transition-colors">
                   <td className="py-3.5 px-5 font-medium text-slate-700 sticky left-0 bg-white z-10 shadow-[1px_0_0_0_#f1f5f9]">
-                    Thành viên tham gia
+                    {t('membersCount')}
                   </td>
                   {plans.map((plan) => (
                     <td
@@ -346,8 +348,8 @@ export default function AdminPlansPage() {
                       className="py-3.5 px-4 text-center border-l border-slate-100 text-slate-700"
                     >
                       {plan.maxParticipants === null
-                        ? 'Không giới hạn'
-                        : `${plan.maxParticipants} thành viên`}
+                        ? t('unlimited')
+                        : t('memberUnit', { count: plan.maxParticipants })}
                     </td>
                   ))}
                 </tr>
@@ -355,14 +357,14 @@ export default function AdminPlansPage() {
                 {/* Hàng: Địa điểm và gian hàng */}
                 <tr className="hover:bg-slate-50/50 transition-colors">
                   <td className="py-3.5 px-5 font-medium text-slate-700 sticky left-0 bg-white z-10 shadow-[1px_0_0_0_#f1f5f9]">
-                    Địa điểm và gian hàng
+                    {t('locationsAndBooths')}
                   </td>
                   {plans.map((plan) => (
                     <td
                       key={plan.tier}
                       className="py-3.5 px-4 text-center border-l border-slate-100 text-slate-700"
                     >
-                      {plan.maxBooths === null ? 'Không giới hạn' : `${plan.maxBooths} địa điểm`}
+                      {plan.maxBooths === null ? t('unlimited') : t('locationUnit', { count: plan.maxBooths })}
                     </td>
                   ))}
                 </tr>
@@ -375,7 +377,7 @@ export default function AdminPlansPage() {
                     colSpan={4}
                     className="py-2.5 px-5 font-bold text-xs uppercase tracking-wider text-slate-700"
                   >
-                    Tính năng nâng cao
+                    {t('groupAdvancedFeatures')}
                   </td>
                 </tr>
 
@@ -383,8 +385,8 @@ export default function AdminPlansPage() {
                 <tr className="hover:bg-slate-50/50 transition-colors">
                   <td className="py-3.5 px-5 font-medium text-slate-700 sticky left-0 bg-white z-10 shadow-[1px_0_0_0_#f1f5f9]">
                     <div className="flex items-center gap-1.5">
-                      <span>Nhân bản chiến dịch</span>
-                      <span className="text-[10px] text-slate-400 font-normal">(Dự kiến)</span>
+                      <span>{t('cloneCampaign')}</span>
+                      <span className="text-[10px] text-slate-400 font-normal">{t('planned')}</span>
                     </div>
                   </td>
                   <td className="py-3.5 px-4 text-center border-l border-slate-100">
@@ -402,8 +404,8 @@ export default function AdminPlansPage() {
                 <tr className="hover:bg-slate-50/50 transition-colors">
                   <td className="py-3.5 px-5 font-medium text-slate-700 sticky left-0 bg-white z-10 shadow-[1px_0_0_0_#f1f5f9]">
                     <div className="flex items-center gap-1.5">
-                      <span>Mẫu chiến dịch có sẵn</span>
-                      <span className="text-[10px] text-slate-400 font-normal">(Dự kiến)</span>
+                      <span>{t('presetTemplates')}</span>
+                      <span className="text-[10px] text-slate-400 font-normal">{t('planned')}</span>
                     </div>
                   </td>
                   <td className="py-3.5 px-4 text-center border-l border-slate-100">
@@ -421,9 +423,9 @@ export default function AdminPlansPage() {
                 <tr className="hover:bg-slate-50/50 transition-colors">
                   <td className="py-3.5 px-5 font-medium text-slate-700 sticky left-0 bg-white z-10 shadow-[1px_0_0_0_#f1f5f9]">
                     <div className="flex items-center gap-1.5">
-                      <span>Xuất báo cáo Excel/PDF</span>
+                      <span>{t('exportReports')}</span>
                       <span className="text-[10px] text-emerald-600 font-normal">
-                        (Excel hỗ trợ)
+                        {t('excelSupported')}
                       </span>
                     </div>
                   </td>
@@ -442,8 +444,8 @@ export default function AdminPlansPage() {
                 <tr className="hover:bg-slate-50/50 transition-colors">
                   <td className="py-3.5 px-5 font-medium text-slate-700 sticky left-0 bg-white z-10 shadow-[1px_0_0_0_#f1f5f9]">
                     <div className="flex items-center gap-1.5">
-                      <span>Báo cáo tổng hợp nhiều chiến dịch</span>
-                      <span className="text-[10px] text-slate-400 font-normal">(Dự kiến)</span>
+                      <span>{t('multiCampaignReport')}</span>
+                      <span className="text-[10px] text-slate-400 font-normal">{t('planned')}</span>
                     </div>
                   </td>
                   <td className="py-3.5 px-4 text-center border-l border-slate-100">
@@ -460,7 +462,7 @@ export default function AdminPlansPage() {
                 {/* Hàng: Hỗ trợ kỹ thuật 24/7 */}
                 <tr className="hover:bg-slate-50/50 transition-colors">
                   <td className="py-3.5 px-5 font-medium text-slate-700 sticky left-0 bg-white z-10 shadow-[1px_0_0_0_#f1f5f9]">
-                    Hỗ trợ kỹ thuật 24/7
+                    {t('support247')}
                   </td>
                   <td className="py-3.5 px-4 text-center border-l border-slate-100">
                     {renderCheckOrDash(false)}
@@ -478,7 +480,7 @@ export default function AdminPlansPage() {
                 {/* ========================================================= */}
                 <tr className="bg-slate-50/90 border-t-2 border-slate-200">
                   <td className="py-4 px-5 font-semibold text-slate-700 sticky left-0 bg-slate-50/95 z-10 shadow-[1px_0_0_0_#e2e8f0]">
-                    Thao tác quản trị
+                    {t('groupAdminActions')}
                   </td>
                   {plans.map((plan) => (
                     <td
@@ -492,7 +494,7 @@ export default function AdminPlansPage() {
                         className="text-xs h-8 px-3.5 border-slate-300 hover:border-blue-600 hover:text-blue-600 font-medium cursor-pointer gap-1.5 shadow-2xs hover:bg-blue-50/40"
                       >
                         <Edit3 className="h-3.5 w-3.5" />
-                        Chỉnh sửa
+                        {t('edit')}
                       </Button>
                     </td>
                   ))}
@@ -510,10 +512,10 @@ export default function AdminPlansPage() {
             <DialogHeader>
               <DialogTitle className="text-lg font-bold text-slate-900 flex items-center gap-2">
                 <Settings2 className="h-5 w-5 text-blue-600" />
-                Chỉnh Sửa Cấu Hình {editingPlan.name.toLowerCase().startsWith('gói') ? editingPlan.name : `Gói ${editingPlan.name}`}
+                {t('dialogEditTitle', { name: editingPlan.name })}
               </DialogTitle>
               <DialogDescription className="text-xs text-slate-500">
-                Mã hệ thống: <strong className="font-mono text-slate-800">{editingPlan.tier}</strong>
+                {t('systemCode', { tier: editingPlan.tier })}
               </DialogDescription>
             </DialogHeader>
 
@@ -528,7 +530,7 @@ export default function AdminPlansPage() {
               {/* Tên hiển thị */}
               <div>
                 <label className="font-semibold text-slate-700 block mb-1">
-                  Tên hiển thị của gói
+                  {t('fieldName')}
                 </label>
                 <input
                   type="text"
@@ -543,7 +545,7 @@ export default function AdminPlansPage() {
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className="font-semibold text-slate-700 block mb-1">
-                    Giá niêm yết (VND / tháng)
+                    {t('fieldPrice')}
                   </label>
                   <input
                     type="number"
@@ -558,14 +560,14 @@ export default function AdminPlansPage() {
                   />
                   <p className="text-[11px] text-slate-400 mt-0.5">
                     {formPrice === '' || formPrice === 0
-                      ? 'Miễn phí'
+                      ? t('free')
                       : `${Number(formPrice).toLocaleString('vi-VN')} đ`}
                   </p>
                 </div>
 
                 <div>
                   <label className="font-semibold text-slate-700 block mb-1">
-                    Hạn mức chiến dịch hoạt động
+                    {t('fieldMaxCampaigns')}
                   </label>
                   <input
                     type="number"
@@ -578,14 +580,14 @@ export default function AdminPlansPage() {
                     }}
                     className="w-full px-3 py-2 text-sm rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
                   />
-                  <p className="text-[11px] text-slate-400 mt-0.5">Số chiến dịch song song</p>
+                  <p className="text-[11px] text-slate-400 mt-0.5">{t('fieldMaxCampaignsHelp')}</p>
                 </div>
               </div>
 
               {/* Mô tả tóm tắt */}
               <div>
                 <label className="font-semibold text-slate-700 block mb-1">
-                  Mô tả tóm tắt
+                  {t('fieldDescription')}
                 </label>
                 <input
                   type="text"
@@ -599,14 +601,14 @@ export default function AdminPlansPage() {
               {/* Danh sách tính năng */}
               <div>
                 <label className="font-semibold text-slate-700 block mb-1">
-                  Danh sách tính năng đặc quyền (Mỗi dòng một tính năng)
+                  {t('fieldFeatures')}
                 </label>
                 <textarea
                   rows={4}
                   value={formFeatures}
                   onChange={(e) => setFormFeatures(e.target.value)}
                   className="w-full px-3 py-2 text-sm rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-blue-500/20 font-mono text-xs"
-                  placeholder="Ví dụ:&#10;5 Chiến dịch hoạt động cùng lúc&#10;Không giới hạn Booths & Người tham gia&#10;Thư viện mẫu Checklist chuẩn hóa"
+                  placeholder={t('fieldFeaturesPlaceholder')}
                 />
               </div>
 
@@ -620,7 +622,7 @@ export default function AdminPlansPage() {
                     className="h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500 cursor-pointer"
                   />
                   <span className="font-medium text-slate-700">
-                    Gắn nhãn &quot;Phổ biến nhất&quot; (Hiển thị nhãn trên bảng so sánh)
+                    {t('fieldIsPopular')}
                   </span>
                 </label>
 
@@ -632,7 +634,7 @@ export default function AdminPlansPage() {
                     className="h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500 cursor-pointer"
                   />
                   <span className="font-medium text-slate-700">
-                    Kích hoạt mở bán (Cho phép khách hàng lựa chọn và thanh toán)
+                    {t('fieldIsActive')}
                   </span>
                 </label>
               </div>
@@ -645,7 +647,7 @@ export default function AdminPlansPage() {
                 onClick={() => setEditingPlan(null)}
                 className="text-xs cursor-pointer"
               >
-                Hủy
+                {t('cancel')}
               </Button>
               <Button
                 size="sm"
@@ -658,7 +660,7 @@ export default function AdminPlansPage() {
                 ) : (
                   <CheckCircle2 className="h-3.5 w-3.5 mr-1" />
                 )}
-                Lưu Cấu Hình
+                {t('save')}
               </Button>
             </DialogFooter>
           </DialogContent>

@@ -29,6 +29,7 @@ import {
   PhoneCall,
   Info,
 } from 'lucide-react';
+import { useTranslations, useLocale } from 'next-intl';
 
 interface PayOSCheckoutModalProps {
   isOpen: boolean;
@@ -64,13 +65,17 @@ export function PayOSCheckoutModal({
   description,
   onSuccess,
 }: PayOSCheckoutModalProps) {
+  const t = useTranslations('billing.payosModal');
+  const tBilling = useTranslations('billing');
+  const locale = useLocale();
+
   const [copiedKey, setCopiedKey] = useState<string | null>(null);
   const [isSuccess, setIsSuccess] = useState(false);
   const [timeLeft, setTimeLeft] = useState(900); // 15 minutes
   const [isCheckingManual, setIsCheckingManual] = useState(false);
   const [manualCheckMsg, setManualCheckMsg] = useState<string | null>(null);
 
-  const displayName = planName || PLAN_CONFIGS[targetPlan]?.name || 'Gói Dịch Vụ';
+  const displayName = planName || (targetPlan ? tBilling(`tiers.${targetPlan}.name`) : 'Gói Dịch Vụ');
   const transferContent = description || `EVENTGO ${orderCode}`;
 
   // Countdown timer
@@ -126,9 +131,7 @@ export function PayOSCheckoutModal({
           onClose();
         }, 2000);
       } else {
-        setManualCheckMsg(
-          'Chưa ghi nhận biến động số dư. Cổng VietQR đang đối soát tự động (1–3 phút). Vui lòng đợi trong giây lát.'
-        );
+        setManualCheckMsg(t('manualCheckMsg'));
       }
     } catch (err: any) {
       setManualCheckMsg(err.message || 'Lỗi kiểm tra trạng thái thanh toán.');
@@ -152,10 +155,10 @@ export function PayOSCheckoutModal({
         <DialogHeader className="text-center sm:text-center pb-1">
           <DialogTitle className="text-xl font-bold text-slate-900 flex items-center justify-center gap-2">
             <QrCode className="h-5 w-5 text-blue-600" />
-            Thanh toán {displayName}
+            {t('title', { plan: displayName })}
           </DialogTitle>
           <DialogDescription className="text-xs sm:text-sm text-slate-500">
-            Quét mã VietQR bằng app bất kỳ ngân hàng nào hoặc MB Bank
+            {t('subtitle')}
           </DialogDescription>
         </DialogHeader>
 
@@ -164,13 +167,12 @@ export function PayOSCheckoutModal({
             <div className="h-16 w-16 bg-emerald-50 text-emerald-600 rounded-full flex items-center justify-center border border-emerald-200 animate-bounce">
               <CheckCircle2 className="h-10 w-10" />
             </div>
-            <h3 className="text-xl font-bold text-slate-900">Thanh toán thành công!</h3>
+            <h3 className="text-xl font-bold text-slate-900">{t('successTitle')}</h3>
             <p className="text-sm text-slate-600 max-w-sm">
-              Hệ thống đã xác nhận thanh toán thành công. Gói{' '}
-              <span className="font-semibold text-blue-600">{displayName}</span> của bạn đã được kích hoạt trong 30 ngày.
+              {t('successDesc', { plan: displayName })}
             </p>
             <Badge className="bg-emerald-50 text-emerald-700 border-emerald-200 font-semibold">
-              Đang tải lại giao diện...
+              {t('reloading')}
             </Badge>
           </div>
         ) : (
@@ -179,17 +181,17 @@ export function PayOSCheckoutModal({
             <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-xl p-3.5 flex items-center justify-between">
               <div>
                 <p className="text-xs text-blue-600 font-semibold uppercase tracking-wider">
-                  Số tiền thanh toán
+                  {t('amountLabel')}
                 </p>
                 <div className="flex items-center gap-2 mt-0.5">
                   <p className="text-2xl font-bold text-blue-700">
-                    {amount.toLocaleString('vi-VN')} đ
+                    {amount.toLocaleString(locale === 'en' ? 'en-US' : 'vi-VN')} đ
                   </p>
                   <button
                     type="button"
                     onClick={() => handleCopy('amount', amount.toString())}
                     className="text-blue-500 hover:text-blue-700 p-1 cursor-pointer"
-                    title="Sao chép số tiền"
+                    title={t('copyAmountTitle')}
                   >
                     {copiedKey === 'amount' ? (
                       <Check className="h-4 w-4 text-emerald-600" />
@@ -204,7 +206,7 @@ export function PayOSCheckoutModal({
                   <Clock className="h-3.5 w-3.5 text-amber-500" />
                   {minutes}:{seconds < 10 ? `0${seconds}` : seconds}
                 </Badge>
-                <p className="text-[11px] text-slate-500 mt-1">Hết hạn mã QR</p>
+                <p className="text-[11px] text-slate-500 mt-1">{t('qrExpiresLabel')}</p>
               </div>
             </div>
 
@@ -221,7 +223,7 @@ export function PayOSCheckoutModal({
 
               <div className="flex items-center gap-1.5 text-xs text-slate-600 mt-3 font-medium">
                 <ShieldCheck className="h-4 w-4 text-emerald-600" />
-                <span>VietQR Napas247 • Tự động kích hoạt sau khi quét</span>
+                <span>{t('qrSecurity')}</span>
               </div>
             </div>
 
@@ -230,20 +232,20 @@ export function PayOSCheckoutModal({
               <div className="flex items-center justify-between pb-2 border-b border-slate-200/60 font-semibold text-slate-700">
                 <span className="flex items-center gap-1.5">
                   <Building2 className="h-4 w-4 text-blue-600" />
-                  Thông tin chuyển khoản thủ công
+                  {t('manualCardTitle')}
                 </span>
-                <span className="text-[11px] font-normal text-slate-500">24/7 Napas</span>
+                <span className="text-[11px] font-normal text-slate-500">{t('napasBadge')}</span>
               </div>
 
               <div className="flex items-center justify-between">
-                <span className="text-slate-500">Ngân hàng:</span>
+                <span className="text-slate-500">{t('bankLabel')}</span>
                 <span className="font-semibold text-slate-800">{bankName}</span>
               </div>
 
               <div className="flex items-center justify-between">
                 <span className="text-slate-500 flex items-center gap-1">
                   <User className="h-3.5 w-3.5 text-slate-400" />
-                  Chủ tài khoản:
+                  {t('accountNameLabel')}
                 </span>
                 <span className="font-semibold text-slate-900">{accountName}</span>
               </div>
@@ -251,7 +253,7 @@ export function PayOSCheckoutModal({
               <div className="flex items-center justify-between">
                 <span className="text-slate-500 flex items-center gap-1">
                   <Hash className="h-3.5 w-3.5 text-slate-400" />
-                  Số tài khoản:
+                  {t('accountNoLabel')}
                 </span>
                 <div className="flex items-center gap-1.5">
                   <span className="font-mono font-bold text-slate-900 text-sm">
@@ -261,20 +263,20 @@ export function PayOSCheckoutModal({
                     type="button"
                     onClick={() => handleCopy('stk', accountNumber)}
                     className="text-blue-600 hover:text-blue-700 flex items-center gap-0.5 font-medium cursor-pointer"
-                    title="Sao chép số tài khoản"
+                    title={t('copyAccTitle')}
                   >
                     {copiedKey === 'stk' ? (
                       <Check className="h-3.5 w-3.5 text-emerald-600" />
                     ) : (
                       <Copy className="h-3.5 w-3.5" />
                     )}
-                    <span>{copiedKey === 'stk' ? 'Đã chép' : 'Chép'}</span>
+                    <span>{copiedKey === 'stk' ? t('copied') : t('copy')}</span>
                   </button>
                 </div>
               </div>
 
               <div className="flex items-center justify-between bg-blue-50/70 p-2.5 rounded-lg border border-blue-200/60">
-                <span className="text-blue-900 font-semibold">Nội dung chuyển:</span>
+                <span className="text-blue-900 font-semibold">{t('transferContentLabel')}</span>
                 <div className="flex items-center gap-1.5">
                   <span className="font-mono font-bold text-blue-700">
                     {transferContent}
@@ -283,14 +285,14 @@ export function PayOSCheckoutModal({
                     type="button"
                     onClick={() => handleCopy('content', transferContent)}
                     className="text-blue-600 hover:text-blue-800 flex items-center gap-0.5 font-semibold cursor-pointer"
-                    title="Sao chép nội dung chuyển khoản"
+                    title={t('copyContentTitle')}
                   >
                     {copiedKey === 'content' ? (
                       <Check className="h-3.5 w-3.5 text-emerald-600" />
                     ) : (
                       <Copy className="h-3.5 w-3.5" />
                     )}
-                    <span>{copiedKey === 'content' ? 'Đã chép' : 'Chép'}</span>
+                    <span>{copiedKey === 'content' ? t('copied') : t('copy')}</span>
                   </button>
                 </div>
               </div>
@@ -301,7 +303,7 @@ export function PayOSCheckoutModal({
               <div className="flex items-start gap-2 text-xs text-blue-900 leading-relaxed">
                 <Info className="h-4 w-4 text-blue-600 shrink-0 mt-0.5" />
                 <span>
-                  <strong>Cam kết SLA:</strong> Hệ thống tự động ghi nhận thanh toán trong <strong>1–3 phút</strong> kể từ khi tài khoản ngân hàng của bạn trừ tiền.
+                  <strong>{t('slaTitle')}</strong> {t('slaDesc')}
                 </span>
               </div>
 
@@ -322,14 +324,14 @@ export function PayOSCheckoutModal({
                 ) : (
                   <RefreshCw className="h-3.5 w-3.5" />
                 )}
-                Tôi đã chuyển khoản — Kiểm tra lại ngay
+                {t('btnManualCheck')}
               </Button>
             </div>
 
             {/* Realtime listener status indicator */}
             <div className="flex items-center justify-center gap-2 py-1 text-xs text-slate-500">
               <Loader2 className="h-3.5 w-3.5 animate-spin text-blue-600" />
-              <span>Đang kết nối cổng PayOS và chờ nhận tiền...</span>
+              <span>{t('listening')}</span>
             </div>
 
             {/* Action buttons & Hotline */}
@@ -342,12 +344,12 @@ export function PayOSCheckoutModal({
                   className="inline-flex items-center gap-1 text-blue-600 hover:text-blue-800 font-medium"
                 >
                   <ExternalLink className="h-3.5 w-3.5" />
-                  Mở cổng thanh toán PayOS
+                  {t('openPortal')}
                 </a>
               ) : (
                 <span className="text-[11px] text-slate-500 flex items-center gap-1">
                   <PhoneCall className="h-3 w-3 text-emerald-600" />
-                  Hỗ trợ khẩn cấp: 0988.xxx.xxx
+                  {t('hotline')}
                 </span>
               )}
 
@@ -358,7 +360,7 @@ export function PayOSCheckoutModal({
                 onClick={onClose}
                 className="text-xs text-slate-500 hover:text-slate-700 cursor-pointer"
               >
-                Đóng / Thanh toán sau
+                {t('btnClose')}
               </Button>
             </div>
           </div>

@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { Copy, Check, Loader2 } from 'lucide-react';
 import { getPaymentGatewayConfigAction } from '@/features/admin/actions/admin-actions';
+import { useTranslations } from 'next-intl';
 
 interface PaymentConfigData {
   beneficiaryBank: {
@@ -20,6 +21,7 @@ interface PaymentConfigData {
 }
 
 export default function AdminPaymentSettingsPage() {
+  const t = useTranslations('admin.paymentSettings');
   const [data, setData] = useState<PaymentConfigData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [copiedKey, setCopiedKey] = useState<string | null>(null);
@@ -72,21 +74,21 @@ export default function AdminPaymentSettingsPage() {
       <div className="bg-white rounded-2xl border border-slate-200 shadow-xs p-6 space-y-6">
         {/* Phần 1: Tài khoản ngân hàng thụ hưởng */}
         <div>
-          <h2 className="text-sm font-semibold text-slate-900 mb-3">Tài khoản ngân hàng thụ hưởng</h2>
+          <h2 className="text-sm font-semibold text-slate-900 mb-3">{t('bankAccount')}</h2>
           <div className="space-y-2.5 text-xs text-slate-600">
             <div className="flex items-center justify-between py-1.5 border-b border-slate-100">
-              <span className="text-slate-500">Ngân hàng</span>
+              <span className="text-slate-500">{t('bankName')}</span>
               <span className="font-medium text-slate-900">{bank.bankName}</span>
             </div>
             <div className="flex items-center justify-between py-1.5 border-b border-slate-100">
-              <span className="text-slate-500">Số tài khoản</span>
+              <span className="text-slate-500">{t('accountNumber')}</span>
               <div className="flex items-center gap-2">
                 <span className="font-mono font-bold text-slate-900">{bank.accountNumber}</span>
                 <button
                   type="button"
                   onClick={() => handleCopy(bank.accountNumber, 'acc')}
-                  className="p-1 text-slate-400 hover:text-blue-600"
-                  title="Sao chép"
+                  className="p-1 text-slate-400 hover:text-blue-600 cursor-pointer"
+                  title={copiedKey === 'acc' ? t('copied') : t('copy')}
                 >
                   {copiedKey === 'acc' ? (
                     <Check className="h-3.5 w-3.5 text-emerald-600" />
@@ -97,11 +99,11 @@ export default function AdminPaymentSettingsPage() {
               </div>
             </div>
             <div className="flex items-center justify-between py-1.5 border-b border-slate-100">
-              <span className="text-slate-500">Chủ tài khoản</span>
+              <span className="text-slate-500">{t('accountName')}</span>
               <span className="font-mono font-medium text-slate-900 uppercase">{bank.accountName}</span>
             </div>
             <div className="flex items-center justify-between py-1.5">
-              <span className="text-slate-500">Cú pháp chuyển khoản</span>
+              <span className="text-slate-500">{t('transferSyntax')}</span>
               <span className="font-mono font-medium text-blue-600">{bank.transferSyntaxPrefix} [PLAN]</span>
             </div>
           </div>
@@ -109,20 +111,20 @@ export default function AdminPaymentSettingsPage() {
 
         {/* Phần 2: Cổng thanh toán */}
         <div className="pt-4 border-t border-slate-100">
-          <h2 className="text-sm font-semibold text-slate-900 mb-3">Cổng thanh toán tự động</h2>
+          <h2 className="text-sm font-semibold text-slate-900 mb-3">{t('payosWebhook')}</h2>
           <div className="space-y-2.5 text-xs text-slate-600">
             <div className="flex items-center justify-between py-1.5 border-b border-slate-100">
-              <span className="text-slate-500">Cổng thanh toán</span>
+              <span className="text-slate-500">{t('payosStatus')}</span>
               <span className="font-medium text-slate-900">{payos.gatewayName}</span>
             </div>
             <div className="flex items-center justify-between py-1.5 border-b border-slate-100">
-              <span className="text-slate-500">Trạng thái kết nối</span>
-              <span className="font-medium text-emerald-600">
-                {payos.isConfigured ? '● Đang hoạt động' : '○ Chưa kết nối'}
+              <span className="text-slate-500">{t('payosStatus')}</span>
+              <span className={payos.isConfigured ? 'font-medium text-emerald-600' : 'font-medium text-slate-400'}>
+                {payos.isConfigured ? `● ${t('configured')}` : `○ ${t('notConfigured')}`}
               </span>
             </div>
             <div className="flex items-center justify-between py-1.5">
-              <span className="text-slate-500">Webhook đối soát</span>
+              <span className="text-slate-500">{t('webhookUrl')}</span>
               <span className="font-mono text-slate-700">{payos.webhookUrl}</span>
             </div>
           </div>
