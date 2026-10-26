@@ -627,6 +627,11 @@ export interface Database {
         Args: { p_member_id: string; p_role: CampaignRole; p_revoke?: boolean };
         Returns: undefined;
       };
+      cancel_campaign_invite: {
+        Args: { p_invite_id: string };
+        Returns: undefined;
+      };
+
       assign_booth_personnel: {
         Args: {
           p_booth_id: string;

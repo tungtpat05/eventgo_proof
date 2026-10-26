@@ -465,11 +465,12 @@ export async function getCampaignWizardDataUseCase(campaignId: string): Promise<
       status: p.isPending ? 'PENDING' : 'ACTIVE',
       email: p.email,
       fullName: p.fullName,
-      avatarUrl: p.avatarUrl,
+      avatarUrl: p.avatarUrl || null,
       createdAt: p.createdAt,
       assignedBooths,
     };
   });
+
 
   let fullyStaffedActiveCount = 0;
   let pendingStaffedCount = 0;
