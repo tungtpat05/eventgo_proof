@@ -11,8 +11,14 @@ import { Metadata } from 'next';
 
 export const metadata: Metadata = { title: 'Bảng điều khiển — EventGo Proof' };
 
+import { redirect } from 'next/navigation';
+
 export default async function DashboardPage() {
-  const { user } = await getCurrentUserSession();
+  const session = await getCurrentUserSession();
+  if (!session?.user) {
+    redirect('/login');
+  }
+  const user = session.user;
 
   const campaigns = await getCampaignsUseCase();
   const pendingReviews = await new SupabaseSubmissionRepository().findPendingReviews(user.id);

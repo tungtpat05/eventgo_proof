@@ -80,10 +80,15 @@ async function executeInviteMember(input: {
   await requireCampaignManager(input.campaignId);
 
   // 1. Lấy thông tin người mời & chiến dịch
-  const [{ user: currentUser }, campaign] = await Promise.all([
+  const [session, campaign] = await Promise.all([
     getCurrentUserSession(),
     getCampaignDetailsUseCase(input.campaignId),
   ]);
+
+  if (!session?.user) {
+    return { error: 'Yêu cầu đăng nhập.' };
+  }
+  const currentUser = session.user;
 
   if (!campaign) {
     return { error: 'Chiến dịch không tồn tại.' };
@@ -153,10 +158,15 @@ export async function resendCampaignInviteEmailAction(
   try {
     await requireCampaignManager(campaignId);
 
-    const [{ user: currentUser }, campaign] = await Promise.all([
+    const [session, campaign] = await Promise.all([
       getCurrentUserSession(),
       getCampaignDetailsUseCase(campaignId),
     ]);
+
+    if (!session?.user) {
+      return { success: false, error: 'Yêu cầu đăng nhập.' };
+    }
+    const currentUser = session.user;
 
     if (!campaign) {
       return { success: false, error: 'Chiến dịch không tồn tại.' };

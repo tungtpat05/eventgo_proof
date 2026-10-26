@@ -64,7 +64,10 @@ export async function parseExcelFileAction(
   }
 
   try {
-    await getCurrentUserSession();
+    const session = await getCurrentUserSession();
+    if (!session?.user) {
+      return { error: 'Yêu cầu đăng nhập trước khi import file.' };
+    }
     const buffer = await file.arrayBuffer();
     const result = ExcelImportService.parseLocations(buffer);
 

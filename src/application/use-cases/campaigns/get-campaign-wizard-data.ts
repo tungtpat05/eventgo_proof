@@ -122,7 +122,7 @@ export async function getCampaignWizardDataUseCase(campaignId: string): Promise<
   const [{ data: membersData }, { data: invitesData }] = await Promise.all([
     supabase
       .from('campaign_members')
-      .select('*, profiles:user_id(id, full_name, email, avatar_url, phone)')
+      .select('*')
       .eq('campaign_id', campaignId)
       .eq('status', 'ACTIVE' as any),
     supabase
@@ -132,19 +132,34 @@ export async function getCampaignWizardDataUseCase(campaignId: string): Promise<
       .eq('status', 'PENDING' as any),
   ]);
 
-  const activeMembers: WizardPersonnelOption[] = (membersData || []).map((m: any) => ({
-    id: m.id,
-    campaignId: m.campaign_id,
-    userId: m.user_id,
-    role: m.role as CampaignRole,
-    status: m.status as any,
-    isPending: false,
-    fullName: m.profiles?.full_name || 'Thành viên',
-    email: m.profiles?.email || '',
-    avatarUrl: m.profiles?.avatar_url || null,
-    createdAt: new Date(m.created_at),
-    updatedAt: new Date(m.updated_at),
-  }));
+  const rawMembers = membersData || [];
+  const userIds = Array.from(new Set(rawMembers.map((m: any) => m.user_id).filter(Boolean)));
+  const profileMap = new Map<string, any>();
+
+  if (userIds.length > 0) {
+    const { data: profilesData } = await supabase
+      .from('profiles')
+      .select('id, full_name, email, avatar_url, phone')
+      .in('id', userIds);
+    (profilesData || []).forEach((p: any) => profileMap.set(p.id, p));
+  }
+
+  const activeMembers: WizardPersonnelOption[] = rawMembers.map((m: any) => {
+    const profile = profileMap.get(m.user_id);
+    return {
+      id: m.id,
+      campaignId: m.campaign_id,
+      userId: m.user_id,
+      role: m.role as CampaignRole,
+      status: m.status as any,
+      isPending: false,
+      fullName: profile?.full_name || 'Thành viên',
+      email: profile?.email || '',
+      avatarUrl: profile?.avatar_url || null,
+      createdAt: new Date(m.created_at),
+      updatedAt: new Date(m.updated_at),
+    };
+  });
 
   const pendingMembers: WizardPersonnelOption[] = (invitesData || []).map((inv: any) => ({
     id: `invite_${inv.id}`,

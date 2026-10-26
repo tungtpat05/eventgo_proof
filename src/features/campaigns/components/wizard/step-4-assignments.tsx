@@ -143,8 +143,8 @@ export function Step4Assignments({
     const res = await batchAssignLocationPersonnelInWizardAction(
       campaign.id,
       activeLocation.id,
-      batchSupervisorId || null,
-      batchApproverId || null
+      batchSupervisorId ? batchSupervisorId : undefined,
+      batchApproverId ? batchApproverId : undefined
     );
     setIsBatchApplying(false);
 

@@ -35,6 +35,10 @@ export async function createDraftCampaignAction(formData: FormData): Promise<Wiz
     return { success: false, error: 'Tên chiến dịch không được để trống.' };
   }
 
+  if (startDate && endDate && new Date(endDate) < new Date(startDate)) {
+    return { success: false, error: 'Ngày kết thúc phải lớn hơn hoặc bằng ngày bắt đầu.' };
+  }
+
   try {
     const supabase = await createServerSupabaseClient();
     const { data: userData } = await supabase.auth.getUser();
@@ -102,6 +106,10 @@ export async function saveCampaignStep1Action(
 
     if (!title) {
       return { success: false, error: 'Tên chiến dịch không được để trống.' };
+    }
+
+    if (startDate && endDate && new Date(endDate) < new Date(startDate)) {
+      return { success: false, error: 'Ngày kết thúc phải lớn hơn hoặc bằng ngày bắt đầu.' };
     }
 
     const updatePayload: any = {
@@ -499,8 +507,8 @@ export async function cascadeLocationSupervisorInWizardAction(
 export async function batchAssignLocationPersonnelInWizardAction(
   campaignId: string,
   locationId: string,
-  supervisorId: string | null,
-  approverId: string | null
+  supervisorId?: string | null,
+  approverId?: string | null
 ): Promise<WizardActionResult> {
   try {
     await requireCampaignManager(campaignId);
@@ -511,11 +519,54 @@ export async function batchAssignLocationPersonnelInWizardAction(
       .eq('location_id', locationId);
 
     const boothIds = (booths || []).map((b) => b.id);
+    if (boothIds.length === 0) {
+      return { success: true };
+    }
+
+    // Đọc phân công hiện tại để tránh xóa mất vai trò kia nếu người dùng chỉ chọn 1 vai trò
+    const [{ data: existingSups }, { data: existingApps }] = await Promise.all([
+      (supabase.from('booth_supervisor_assignments') as any)
+        .select('booth_id, supervisor_member_id, supervisor_invite_id')
+        .in('booth_id', boothIds),
+      (supabase.from('booth_approver_assignments') as any)
+        .select('booth_id, approver_member_id, approver_invite_id')
+        .in('booth_id', boothIds),
+    ]);
+
+    const supMap = new Map<string, any>();
+    (existingSups || []).forEach((s: any) => supMap.set(s.booth_id, s));
+
+    const appMap = new Map<string, any>();
+    (existingApps || []).forEach((a: any) => appMap.set(a.booth_id, a));
+
     for (const boothId of boothIds) {
+      const currentSup = supMap.get(boothId);
+      const currentApp = appMap.get(boothId);
+
+      // Nếu supervisorId là undefined hoặc rỗng (chỉ đổi approver), giữ nguyên supervisor cũ
+      const finalSupervisor =
+        supervisorId !== undefined && supervisorId !== ''
+          ? supervisorId
+          : currentSup
+          ? currentSup.supervisor_invite_id
+            ? `invite_${currentSup.supervisor_invite_id}`
+            : currentSup.supervisor_member_id
+          : null;
+
+      // Nếu approverId là undefined hoặc rỗng (chỉ đổi supervisor), giữ nguyên approver cũ
+      const finalApprover =
+        approverId !== undefined && approverId !== ''
+          ? approverId
+          : currentApp
+          ? currentApp.approver_invite_id
+            ? `invite_${currentApp.approver_invite_id}`
+            : currentApp.approver_member_id
+          : null;
+
       await assignBoothPersonnelUseCase({
         boothId,
-        supervisorMemberId: supervisorId,
-        approverMemberId: approverId,
+        supervisorMemberId: finalSupervisor,
+        approverMemberId: finalApprover,
       });
     }
 
@@ -556,7 +607,8 @@ export async function activateCampaignInWizardAction(campaignId: string): Promis
         const planTier = sub?.plan || SubscriptionPlanTier.FREE;
         const planConfig = await subRepo.getPlanConfigByTier(planTier);
 
-        const { count: activeCount } = await supabase
+        const adminClient = createAdminSupabaseClient();
+        const { count: activeCount } = await adminClient
           .from('campaigns')
           .select('*', { count: 'exact', head: true })
           .eq('created_by', ownerId)

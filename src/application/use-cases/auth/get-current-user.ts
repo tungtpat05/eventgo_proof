@@ -13,7 +13,7 @@ export interface CurrentUserSession {
  * Retrieves the current authenticated user profile and organization.
  * Falls back to demo session if Supabase environment variables are pending.
  */
-export async function getCurrentUserSession(): Promise<CurrentUserSession> {
+export async function getCurrentUserSession(): Promise<CurrentUserSession | null> {
   if (env.NEXT_PUBLIC_SUPABASE_URL && env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
     try {
       const supabase = await createServerSupabaseClient();
@@ -91,11 +91,11 @@ export async function getCurrentUserSession(): Promise<CurrentUserSession> {
         }
       }
     } catch {
-      // Fall through to demo profile
+      // Ignore and continue to dev check
     }
   }
 
-  // Check for local development test session via cookie
+  // Check for local development test session via cookie if in development mode
   if (process.env.NODE_ENV === 'development') {
     try {
       const { cookies } = await import('next/headers');
@@ -129,23 +129,10 @@ export async function getCurrentUserSession(): Promise<CurrentUserSession> {
         }
       }
     } catch {
-      // Fall through
+      // Ignore
     }
   }
 
-  // Default demo Project Manager session for local prototyping
-  return {
-    user: {
-      id: 'e31ecfe6-6008-4ae5-aa9c-2cc65d2c191a',
-      email: 'pm1@eventgo.vn',
-      fullName: 'Nguyễn Văn Quản Lý (Demo PM)',
-      avatarUrl: null,
-      phone: null,
-      isSystemAdmin: true,
-      plan: SubscriptionPlanTier.PRO,
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    },
-    organizationName: 'EventGo Demo Agency (Hà Nội)',
-  };
+  // No authenticated session
+  return null;
 }

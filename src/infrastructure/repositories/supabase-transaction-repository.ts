@@ -82,6 +82,18 @@ export class SupabaseTransactionRepository implements TransactionRepository {
     return data ? mapTransaction(data) : null;
   }
 
+  async getByGatewayTransactionId(gatewayId: string): Promise<Transaction | null> {
+    const supabase = await this.getClient();
+    const { data, error } = await supabase
+      .from('transactions')
+      .select('*')
+      .eq('gateway_transaction_id', gatewayId)
+      .maybeSingle();
+
+    if (error) throw new Error(error.message);
+    return data ? mapTransaction(data) : null;
+  }
+
   async getByUserId(userId: string): Promise<Transaction[]> {
     const supabase = await this.getClient();
     const { data, error } = await supabase

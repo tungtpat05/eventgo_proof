@@ -4,6 +4,7 @@ import { getCurrentUserSession } from '../auth/get-current-user';
 
 export async function getCampaignsUseCase(): Promise<Campaign[]> {
   const session = await getCurrentUserSession();
+  if (!session?.user) return [];
   const repo = new SupabaseCampaignRepository();
   return await repo.findAccessibleByUser(session.user.id);
 }

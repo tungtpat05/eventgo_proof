@@ -125,27 +125,63 @@ export class SupabaseBoothRepository implements BoothRepository {
   ): Promise<void> {
     const supabase = await createServerSupabaseClient();
 
-    let finalSupMemberId = supervisorMemberId || null;
-    let finalSupInviteId = supervisorInviteId || null;
-    if (finalSupMemberId && finalSupMemberId.startsWith('invite_')) {
-      finalSupInviteId = finalSupMemberId.replace('invite_', '');
-      finalSupMemberId = null;
+    let finalSupMemberId = supervisorMemberId;
+    let finalSupInviteId = supervisorInviteId;
+
+    // Nếu supervisorMemberId là undefined (không truyền), giữ nguyên phân công Supervisor hiện tại
+    if (finalSupMemberId === undefined && finalSupInviteId === undefined) {
+      const { data: curSup } = await (supabase.from('booth_supervisor_assignments') as any)
+        .select('supervisor_member_id, supervisor_invite_id')
+        .eq('booth_id', boothId)
+        .maybeSingle();
+      if (curSup) {
+        finalSupMemberId = curSup.supervisor_member_id;
+        finalSupInviteId = curSup.supervisor_invite_id;
+      } else {
+        finalSupMemberId = null;
+        finalSupInviteId = null;
+      }
+    } else {
+      finalSupMemberId = finalSupMemberId || null;
+      finalSupInviteId = finalSupInviteId || null;
+      if (finalSupMemberId && finalSupMemberId.startsWith('invite_')) {
+        finalSupInviteId = finalSupMemberId.replace('invite_', '');
+        finalSupMemberId = null;
+      }
     }
 
-    let finalAppMemberId = approverMemberId || null;
-    let finalAppInviteId = approverInviteId || null;
-    if (finalAppMemberId && finalAppMemberId.startsWith('invite_')) {
-      finalAppInviteId = finalAppMemberId.replace('invite_', '');
-      finalAppMemberId = null;
+    let finalAppMemberId = approverMemberId;
+    let finalAppInviteId = approverInviteId;
+
+    // Nếu approverMemberId là undefined (không truyền), giữ nguyên phân công Approver hiện tại
+    if (finalAppMemberId === undefined && finalAppInviteId === undefined) {
+      const { data: curApp } = await (supabase.from('booth_approver_assignments') as any)
+        .select('approver_member_id, approver_invite_id')
+        .eq('booth_id', boothId)
+        .maybeSingle();
+      if (curApp) {
+        finalAppMemberId = curApp.approver_member_id;
+        finalAppInviteId = curApp.approver_invite_id;
+      } else {
+        finalAppMemberId = null;
+        finalAppInviteId = null;
+      }
+    } else {
+      finalAppMemberId = finalAppMemberId || null;
+      finalAppInviteId = finalAppInviteId || null;
+      if (finalAppMemberId && finalAppMemberId.startsWith('invite_')) {
+        finalAppInviteId = finalAppMemberId.replace('invite_', '');
+        finalAppMemberId = null;
+      }
     }
 
     const { error } = await supabase.rpc('assign_booth_personnel', {
       p_booth_id: boothId,
-      p_supervisor_member_id: finalSupMemberId,
-      p_approver_member_id: finalAppMemberId,
+      p_supervisor_member_id: finalSupMemberId || null,
+      p_approver_member_id: finalAppMemberId || null,
       p_deadline: deadline ? deadline.toISOString() : null,
-      p_supervisor_invite_id: finalSupInviteId,
-      p_approver_invite_id: finalAppInviteId,
+      p_supervisor_invite_id: finalSupInviteId || null,
+      p_approver_invite_id: finalAppInviteId || null,
     } as any);
 
     if (error) {
@@ -157,8 +193,8 @@ export class SupabaseBoothRepository implements BoothRepository {
       ) {
         const { error: fallbackErr } = await supabase.rpc('assign_booth_personnel', {
           p_booth_id: boothId,
-          p_supervisor_member_id: finalSupMemberId,
-          p_approver_member_id: finalAppMemberId,
+          p_supervisor_member_id: finalSupMemberId || null,
+          p_approver_member_id: finalAppMemberId || null,
           p_deadline: deadline ? deadline.toISOString() : null,
         });
         if (fallbackErr) throw new Error(fallbackErr.message);

@@ -35,6 +35,9 @@ export async function getSubscriptionPlanConfigsAction(): Promise<PlanConfig[]> 
 
 export async function getUserSubscriptionSummaryAction(): Promise<UserSubscriptionSummary> {
   const session = await getCurrentUserSession();
+  if (!session?.user) {
+    throw new Error('Yêu cầu đăng nhập để xem thông tin gói cước.');
+  }
   const userId = session.user.id;
 
   const [sub, supabase] = await Promise.all([
@@ -86,6 +89,9 @@ export async function createSubscriptionPaymentAction(targetPlan: SubscriptionPl
   }
 
   const session = await getCurrentUserSession();
+  if (!session?.user) {
+    throw new Error('Yêu cầu đăng nhập trước khi tạo giao dịch thanh toán.');
+  }
   const user = session.user;
 
   // Active downgrade guard: prevent accidental loss of a higher tier plan
@@ -196,16 +202,24 @@ export async function checkSubscriptionPaymentStatusAction(
   transactionCode: string
 ) {
   const session = await getCurrentUserSession();
+  if (!session?.user) {
+    throw new Error('Yêu cầu đăng nhập.');
+  }
   const currentUserId = session.user.id;
 
   // 1. Check in Database first (may have been updated by Webhook)
   const txn = await txnRepo.getByCode(transactionCode).catch(() => null);
-  if (txn && txn.status === TransactionStatus.SUCCESS) {
-    return {
-      isPaid: true,
-      status: 'PAID',
-      message: 'Giao dịch đã hoàn tất và kích hoạt thành công!',
-    };
+  if (txn) {
+    if (txn.userId !== currentUserId) {
+      throw new Error('Bạn không có quyền kiểm tra trạng thái giao dịch này.');
+    }
+    if (txn.status === TransactionStatus.SUCCESS) {
+      return {
+        isPaid: true,
+        status: 'PAID',
+        message: 'Giao dịch đã hoàn tất và kích hoạt thành công!',
+      };
+    }
   }
 
   // 2. Query PayOS directly
@@ -293,5 +307,6 @@ export async function checkSubscriptionPaymentStatusAction(
 
 export async function getUserTransactionsAction() {
   const session = await getCurrentUserSession();
+  if (!session?.user) return [];
   return txnRepo.getByUserId(session.user.id);
 }

@@ -6,7 +6,12 @@ export const metadata: Metadata = {
   title: 'Thông tin tài khoản — EventGo Admin',
 };
 
+import { redirect } from 'next/navigation';
+
 export default async function AdminProfilePage() {
-  const { user } = await getCurrentUserSession();
-  return <AdminProfileView user={user} />;
+  const session = await getCurrentUserSession();
+  if (!session?.user) {
+    redirect('/login');
+  }
+  return <AdminProfileView user={session.user} />;
 }

@@ -8,6 +8,11 @@ import { AdminLayoutProvider } from '@/features/admin/context/admin-layout-conte
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
   const session = await getCurrentUserSession();
 
+  // Guard: Must be authenticated
+  if (!session?.user) {
+    redirect('/login');
+  }
+
   // Guard: Must be system admin
   if (!session.user.isSystemAdmin) {
     redirect('/dashboard');

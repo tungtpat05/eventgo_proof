@@ -73,6 +73,10 @@ export function NewCampaignStep1() {
       setErrorMessage('Vui lòng nhập thương hiệu / nhãn hàng.');
       return;
     }
+    if (formData.startDate && formData.endDate && new Date(formData.endDate) < new Date(formData.startDate)) {
+      setErrorMessage('Ngày kết thúc phải lớn hơn hoặc bằng ngày bắt đầu.');
+      return;
+    }
 
     setIsSaving(true);
     setErrorMessage(null);

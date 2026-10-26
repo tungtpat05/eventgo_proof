@@ -17,6 +17,7 @@ export interface TransactionRepository {
   create(params: CreateTransactionParams): Promise<Transaction>;
   getById(id: string): Promise<Transaction | null>;
   getByCode(code: string): Promise<Transaction | null>;
+  getByGatewayTransactionId(gatewayId: string): Promise<Transaction | null>;
   getByUserId(userId: string): Promise<Transaction[]>;
   getAll(params?: {
     status?: TransactionStatus;

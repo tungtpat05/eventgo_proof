@@ -3,7 +3,10 @@ import { getCurrentUserSession } from '@/application/use-cases/auth/get-current-
 
 export default async function HomePage() {
   const session = await getCurrentUserSession();
-  if (session?.user?.isSystemAdmin) {
+  if (!session?.user) {
+    redirect('/login');
+  }
+  if (session.user.isSystemAdmin) {
     redirect('/admin/dashboard');
   }
   redirect('/dashboard');

@@ -31,8 +31,11 @@ async function getAdminClient() {
 
 async function assertSystemAdmin() {
   const session = await getCurrentUserSession();
+  if (!session?.user) {
+    throw new Error('Yêu cầu đăng nhập trước khi thực hiện thao tác quản trị.');
+  }
   const isAdmin = await adminRepo.isSystemAdmin(session.user.id);
-  if (!isAdmin && !session.user.isSystemAdmin) {
+  if (!isAdmin) {
     throw new Error('Yêu cầu quyền Quản trị viên hệ thống (403 Forbidden).');
   }
   return session.user;

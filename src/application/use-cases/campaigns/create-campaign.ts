@@ -5,6 +5,9 @@ import { campaignSchema, CampaignInput } from '@/application/validation/campaign
 
 export async function createCampaignUseCase(input: CampaignInput): Promise<Campaign> {
   const session = await getCurrentUserSession();
+  if (!session?.user) {
+    throw new Error('Yêu cầu đăng nhập trước khi tạo chiến dịch');
+  }
 
   const validated = campaignSchema.parse(input);
 

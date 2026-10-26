@@ -7,6 +7,10 @@ import { cookies } from 'next/headers';
 
 export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
   const session = await getCurrentUserSession();
+  if (!session?.user) {
+    redirect('/login');
+  }
+
   const cookieStore = await cookies();
   const viewMode = cookieStore.get('eventgo_view_mode')?.value;
 

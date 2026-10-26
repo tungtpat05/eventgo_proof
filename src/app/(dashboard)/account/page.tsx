@@ -8,10 +8,16 @@ import { Metadata } from 'next';
 
 import { cn } from '@/lib/utils';
 
+import { redirect } from 'next/navigation';
+
 export const metadata: Metadata = { title: 'Tài khoản — EventGo Proof' };
 
 export default async function AccountPage() {
-  const { user } = await getCurrentUserSession();
+  const session = await getCurrentUserSession();
+  if (!session?.user) {
+    redirect('/login');
+  }
+  const user = session.user;
 
   const planLabel = user.plan === 'PRO' ? 'Pro' : user.plan === 'STARTER' ? 'Starter' : 'Free';
   const planClass =

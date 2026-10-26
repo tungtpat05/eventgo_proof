@@ -173,13 +173,23 @@ export async function cascadeLocationSupervisorUseCase(input: CascadeLocationSup
   await requireCampaignManager(input.campaignId);
   const supabase = await createServerSupabaseClient();
 
-  // Try updating default_supervisor_member_id on location if column exists
-  try {
-    await (supabase.from('locations').update as any)({
-      default_supervisor_member_id: input.supervisorMemberId,
-    }).eq('id', input.locationId);
-  } catch (err) {
-    // If column doesn't exist, ignore
+  // Try updating default_supervisor_member_id on location if column exists and is a valid UUID (not an invite)
+  if (input.supervisorMemberId && !input.supervisorMemberId.startsWith('invite_')) {
+    try {
+      await (supabase.from('locations').update as any)({
+        default_supervisor_member_id: input.supervisorMemberId,
+      }).eq('id', input.locationId);
+    } catch (err) {
+      // If column doesn't exist, ignore
+    }
+  } else if (input.supervisorMemberId === null) {
+    try {
+      await (supabase.from('locations').update as any)({
+        default_supervisor_member_id: null,
+      }).eq('id', input.locationId);
+    } catch (err) {
+      // If column doesn't exist, ignore
+    }
   }
 
   if (input.applyToAllBooths && input.supervisorMemberId) {

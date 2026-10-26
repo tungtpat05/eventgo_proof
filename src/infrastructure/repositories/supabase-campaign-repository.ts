@@ -23,6 +23,7 @@ function mapCampaign(row: CampaignRow, role: CampaignRole): Campaign {
     startDate: new Date(row.start_date),
     endDate: new Date(row.end_date),
     status: row.status,
+    wizardStep: (row as any).wizard_step || 1,
     createdBy: row.created_by,
     currentUserRole: role,
     createdAt: new Date(row.created_at),

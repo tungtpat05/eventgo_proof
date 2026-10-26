@@ -68,6 +68,10 @@ export function Step1Info({ campaign, onNext, onAutoSaveNotify }: Step1InfoProps
       setErrorMsg('Vui lòng nhập thương hiệu / nhãn hàng.');
       return;
     }
+    if (formData.startDate && formData.endDate && new Date(formData.endDate) < new Date(formData.startDate)) {
+      setErrorMsg('Ngày kết thúc phải lớn hơn hoặc bằng ngày bắt đầu.');
+      return;
+    }
 
     setIsSaving(true);
     setErrorMsg(null);

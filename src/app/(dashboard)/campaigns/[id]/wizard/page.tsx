@@ -35,8 +35,13 @@ export default async function CampaignWizardPage({
       />
     );
   } catch (err: any) {
+    // Không nuốt lỗi điều hướng nội bộ của Next.js (notFound hoặc redirect)
+    if (err && typeof err === 'object' && 'digest' in err) {
+      throw err;
+    }
+
     console.error('Wizard error for campaign', id, ':', err);
-    // If not manager or forbidden
-    redirect('/campaigns');
+    const isAuthError = err?.name === 'AuthorizationError' || err?.message?.toLowerCase().includes('quyền') || err?.message?.toLowerCase().includes('forbidden');
+    redirect(`/campaigns?error=${encodeURIComponent(isAuthError ? 'Bạn không có quyền quản lý chiến dịch này.' : 'Không thể tải dữ liệu thiết lập chiến dịch.')}`);
   }
 }
