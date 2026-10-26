@@ -63,7 +63,7 @@ export function CampaignHierarchyView({
           </p>
         </div>
 
-        {isManager && (
+        {isManager && locations.length > 0 && (
           <div className="flex items-center gap-2">
             <Link href={`/locations/new?campaignId=${campaignId}`}>
               <Button size="sm" className="flex items-center gap-1.5 text-xs">
@@ -89,11 +89,20 @@ export function CampaignHierarchyView({
             Hãy thêm địa điểm tổ chức (TTTM, siêu thị, đại lý) để bắt đầu thiết lập gian hàng.
           </p>
           {isManager && (
-            <Link href={`/locations/new?campaignId=${campaignId}`}>
-              <Button size="sm" className="text-xs">
-                Thêm địa điểm đầu tiên
-              </Button>
-            </Link>
+            <div className="flex flex-wrap items-center justify-center gap-3">
+              <Link href={`/locations/new?campaignId=${campaignId}`}>
+                <Button size="sm" className="flex items-center gap-1.5 text-xs">
+                  <PlusCircle className="h-3.5 w-3.5" />
+                  Thêm địa điểm đầu tiên
+                </Button>
+              </Link>
+              <Link href={`/locations/import?campaignId=${campaignId}`}>
+                <Button size="sm" variant="outline" className="flex items-center gap-1.5 text-xs">
+                  <FileSpreadsheet className="h-3.5 w-3.5 text-emerald-600" />
+                  Import Excel
+                </Button>
+              </Link>
+            </div>
           )}
         </div>
       ) : (
@@ -123,7 +132,7 @@ export function CampaignHierarchyView({
                     </div>
                   </div>
 
-                  {isManager && (
+                  {isManager && booths.length > 0 && (
                     <div className="flex items-center gap-2">
                       <BoothDialog
                         locationId={loc.id}

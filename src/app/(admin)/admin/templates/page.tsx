@@ -57,14 +57,16 @@ export default function AdminTemplatesPage() {
   return (
     <div className="space-y-6">
       {/* Action bar */}
-      <div className="flex items-center justify-end">
-        <Link href="/admin/templates/new">
-          <Button size="sm" className="bg-purple-600 hover:bg-purple-700 text-white text-xs gap-1.5 shadow-xs h-8 px-3">
-            <Plus className="h-3.5 w-3.5" />
-            {t('createNew')}
-          </Button>
-        </Link>
-      </div>
+      {templates.length > 0 && (
+        <div className="flex items-center justify-end">
+          <Link href="/admin/templates/new">
+            <Button size="sm" className="bg-purple-600 hover:bg-purple-700 text-white text-xs gap-1.5 shadow-xs h-8 px-3">
+              <Plus className="h-3.5 w-3.5" />
+              {t('createNew')}
+            </Button>
+          </Link>
+        </div>
+      )}
 
       {/* Templates List */}
       {isLoading ? (
