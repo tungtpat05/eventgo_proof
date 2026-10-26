@@ -95,6 +95,7 @@ export function CampaignWizard({ initialData, initialStep = 1 }: CampaignWizardP
           locations={initialData.locations}
           supervisors={initialData.supervisors}
           approvers={initialData.approvers}
+          personnelList={initialData.personnelList}
           onBack={() => setStep(3)}
           onNext={() => setStep(5)}
           onAutoSaveNotify={handleAutoSaveNotify}

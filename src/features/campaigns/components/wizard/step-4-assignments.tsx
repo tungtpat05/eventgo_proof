@@ -18,7 +18,7 @@ import {
   Layers,
   Sparkles,
 } from 'lucide-react';
-import { Campaign, Location, Booth, CampaignMember } from '@/domain/entities';
+import { Campaign, Location, Booth } from '@/domain/entities';
 import { WizardFooter } from './wizard-footer';
 import {
   assignBoothPersonnelInWizardAction,
@@ -28,7 +28,12 @@ import { QuickInviteModal } from './quick-invite-modal';
 import { cn } from '@/lib/utils';
 import { useRouter } from 'next/navigation';
 import { CampaignRole } from '@/domain/enums';
-import { WizardPersonnelOption } from '@/application/use-cases/campaigns/get-campaign-wizard-data';
+import {
+  WizardPersonnelOption,
+  CampaignPersonnelItem,
+} from '@/application/use-cases/campaigns/get-campaign-wizard-data';
+import { PersonnelCombobox } from './personnel-combobox';
+import { CampaignPersonnelSection } from './campaign-personnel-section';
 
 interface Step4AssignmentsProps {
   campaign: Campaign;
@@ -37,6 +42,7 @@ interface Step4AssignmentsProps {
   })[];
   supervisors: WizardPersonnelOption[];
   approvers: WizardPersonnelOption[];
+  personnelList?: CampaignPersonnelItem[];
   onBack: () => void;
   onNext: () => void;
   onAutoSaveNotify?: () => void;
@@ -47,6 +53,7 @@ export function Step4Assignments({
   locations,
   supervisors,
   approvers,
+  personnelList = [],
   onBack,
   onNext,
   onAutoSaveNotify,
@@ -60,16 +67,16 @@ export function Step4Assignments({
   const [isInviteModalOpen, setIsInviteModalOpen] = useState(false);
   const [defaultInviteRole, setDefaultInviteRole] = useState<CampaignRole>(CampaignRole.SUPERVISOR);
 
-  // Batch assign local state for the active location
-  const [batchSupervisorId, setBatchSupervisorId] = useState<string>('');
-  const [batchApproverId, setBatchApproverId] = useState<string>('');
+  // Batch assign local state for the active location (undefined = Giữ nguyên)
+  const [batchSupervisorId, setBatchSupervisorId] = useState<string | null | undefined>(undefined);
+  const [batchApproverId, setBatchApproverId] = useState<string | null | undefined>(undefined);
   const [isBatchApplying, setIsBatchApplying] = useState(false);
 
-  // 1. Overall stats calculation
+  // 1. Truthful Overall Staffing KPIs
   let totalBoothsCount = 0;
-  let fullyStaffedCount = 0;
+  let fullyStaffedActiveCount = 0;
+  let pendingStaffedCount = 0;
   let missingStaffCount = 0;
-  let pendingStaffCount = 0;
 
   locations.forEach((loc) => {
     loc.booths.forEach((b) => {
@@ -79,14 +86,21 @@ export function Step4Assignments({
       const isPending = b.isSupervisorPending || b.isApproverPending;
 
       if (hasSup && hasApp) {
-        fullyStaffedCount++;
-        if (isPending) pendingStaffCount++;
+        if (isPending) {
+          pendingStaffedCount++;
+        } else {
+          fullyStaffedActiveCount++;
+        }
       } else {
         missingStaffCount++;
-        if (isPending) pendingStaffCount++;
       }
     });
   });
+
+  const pendingInvitesCount = useMemo(
+    () => personnelList.filter((p) => p.isPending).length,
+    [personnelList]
+  );
 
   // Filtered locations on left sidebar
   const filteredLocations = useMemo(() => {
@@ -108,18 +122,6 @@ export function Step4Assignments({
     supId: string | null,
     appId: string | null
   ) => {
-    // If user clicked "+ Mời nhân sự..."
-    if (supId === '__INVITE_NEW__') {
-      setDefaultInviteRole(CampaignRole.SUPERVISOR);
-      setIsInviteModalOpen(true);
-      return;
-    }
-    if (appId === '__INVITE_NEW__') {
-      setDefaultInviteRole(CampaignRole.APPROVER);
-      setIsInviteModalOpen(true);
-      return;
-    }
-
     setLoadingBoothId(boothId);
     const res = await assignBoothPersonnelInWizardAction(campaign.id, boothId, supId, appId);
     setLoadingBoothId(null);
@@ -134,7 +136,7 @@ export function Step4Assignments({
 
   const handleApplyBatchLocation = async () => {
     if (!activeLocation) return;
-    if (!batchSupervisorId && !batchApproverId) {
+    if (batchSupervisorId === undefined && batchApproverId === undefined) {
       alert('Vui lòng chọn ít nhất một Supervisor hoặc Approver để áp dụng hàng loạt.');
       return;
     }
@@ -143,8 +145,8 @@ export function Step4Assignments({
     const res = await batchAssignLocationPersonnelInWizardAction(
       campaign.id,
       activeLocation.id,
-      batchSupervisorId ? batchSupervisorId : undefined,
-      batchApproverId ? batchApproverId : undefined
+      batchSupervisorId,
+      batchApproverId
     );
     setIsBatchApplying(false);
 
@@ -168,7 +170,7 @@ export function Step4Assignments({
 
   return (
     <div className="space-y-6">
-      {/* 1. Header Toolbar & Overall KPI Bar */}
+      {/* 1. Header Toolbar & Overall Truthful KPI Bar */}
       <Card className="border border-slate-200 shadow-xs bg-white overflow-hidden">
         <CardHeader className="p-4 sm:p-5 border-b border-slate-100 bg-slate-50/50">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
@@ -186,7 +188,7 @@ export function Step4Assignments({
               </div>
             </div>
 
-            {/* Quick Action & Modal Trigger */}
+            {/* Quick Action Trigger */}
             <div className="flex items-center gap-2">
               <Button
                 type="button"
@@ -203,21 +205,31 @@ export function Step4Assignments({
           </div>
         </CardHeader>
 
-        {/* Staffing KPI Highlights */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 divide-x divide-y sm:divide-y-0 divide-slate-100 border-b border-slate-100 text-xs bg-white">
+        {/* Staffing KPI Highlights - Tách bạch trung thực */}
+        <div className="grid grid-cols-2 sm:grid-cols-5 divide-x divide-y sm:divide-y-0 divide-slate-100 border-b border-slate-100 text-xs bg-white">
           <div className="p-3.5 flex flex-col justify-center">
             <span className="text-slate-400 font-medium text-[11px]">Tổng số gian hàng</span>
             <span className="text-base font-bold text-slate-900 mt-0.5">{totalBoothsCount} booth</span>
           </div>
 
           <div className="p-3.5 flex flex-col justify-center">
-            <span className="text-slate-400 font-medium text-[11px]">Đã đủ nhân sự</span>
+            <span className="text-slate-400 font-medium text-[11px]">Sẵn sàng hoạt động</span>
             <div className="flex items-center gap-1.5 mt-0.5">
-              <span className="text-base font-bold text-emerald-600">{fullyStaffedCount}</span>
+              <span className="text-base font-bold text-emerald-600">{fullyStaffedActiveCount}</span>
               <span className="text-slate-400">/{totalBoothsCount}</span>
-              {fullyStaffedCount === totalBoothsCount && totalBoothsCount > 0 && (
+              {fullyStaffedActiveCount === totalBoothsCount && totalBoothsCount > 0 && (
                 <CheckCircle2 className="h-3.5 w-3.5 text-emerald-600" />
               )}
+            </div>
+          </div>
+
+          <div className="p-3.5 flex flex-col justify-center">
+            <span className="text-slate-400 font-medium text-[11px]">Chờ kích hoạt</span>
+            <div className="flex items-center gap-1 mt-0.5">
+              <span className={`text-base font-bold ${pendingStaffedCount > 0 ? 'text-blue-600' : 'text-slate-600'}`}>
+                {pendingStaffedCount}
+              </span>
+              <span className="text-slate-400">booth (⏳)</span>
             </div>
           </div>
 
@@ -228,17 +240,31 @@ export function Step4Assignments({
             </span>
           </div>
 
-          <div className="p-3.5 flex flex-col justify-center">
+          <div className="p-3.5 flex flex-col justify-center col-span-2 sm:col-span-1">
             <span className="text-slate-400 font-medium text-[11px]">Nhân sự chờ xác nhận</span>
             <div className="flex items-center gap-1 mt-0.5">
-              <span className="text-base font-bold text-blue-600">{pendingStaffCount}</span>
-              <span className="text-slate-400">lời mời (⏳)</span>
+              <span className="text-base font-bold text-blue-600">{pendingInvitesCount}</span>
+              <span className="text-slate-400">lời mời</span>
             </div>
           </div>
         </div>
       </Card>
 
-      {/* 2. Master–Detail Layout Container */}
+      {/* 2. KHU VỰC NHÂN SỰ CHIẾN DỊCH (Campaign Personnel Section) */}
+      <CampaignPersonnelSection
+        campaignId={campaign.id}
+        personnelList={personnelList}
+        onInviteNew={() => {
+          setDefaultInviteRole(CampaignRole.SUPERVISOR);
+          setIsInviteModalOpen(true);
+        }}
+        onRefresh={() => {
+          router.refresh();
+          if (onAutoSaveNotify) onAutoSaveNotify();
+        }}
+      />
+
+      {/* 3. Master–Detail Layout Container (Phân công theo địa điểm) */}
       {locations.length === 0 ? (
         <Card className="p-12 text-center text-slate-500 border border-dashed border-slate-200">
           Chưa có địa điểm nào được tạo. Vui lòng quay lại Bước 2 để thêm địa điểm và gian hàng.
@@ -261,7 +287,7 @@ export function Step4Assignments({
                   placeholder="Tìm địa điểm..."
                   value={searchLocationQuery}
                   onChange={(e) => setSearchLocationQuery(e.target.value)}
-                  className="pl-8 h-8 text-xs border-slate-200 focus-visible:ring-blue-600"
+                  className="pl-8 h-8 text-xs border-slate-200 focus-visible:ring-blue-600 bg-white"
                 />
               </div>
             )}
@@ -358,7 +384,7 @@ export function Step4Assignments({
                     </div>
                   </div>
 
-                  {/* BATCH ASSIGN TOOLBAR (Gán hàng loạt cho toàn bộ booth tại đây) */}
+                  {/* BATCH ASSIGN TOOLBAR (Gán hàng loạt có tìm kiếm) */}
                   <div className="mt-4 pt-3.5 border-t border-slate-200/80 rounded-xl bg-white p-3 border border-slate-200 shadow-2xs">
                     <div className="flex items-center gap-2 mb-2 text-xs font-bold text-slate-700">
                       <Layers className="h-3.5 w-3.5 text-blue-600" />
@@ -368,64 +394,40 @@ export function Step4Assignments({
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
                       {/* Chọn Supervisor hàng loạt */}
                       <div>
-                        <select
+                        <label className="block text-[10px] font-bold text-slate-400 uppercase mb-1">
+                          Supervisor hàng loạt:
+                        </label>
+                        <PersonnelCombobox
                           value={batchSupervisorId}
-                          onChange={(e) => setBatchSupervisorId(e.target.value)}
-                          className="w-full h-8 rounded-md border border-slate-200 bg-white px-2.5 text-xs text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-600"
-                        >
-                          <option value="">-- Chọn Supervisor hàng loạt --</option>
-                          <optgroup label="🟢 Đã tham gia (Active)">
-                            {supervisors
-                              .filter((s) => !s.isPending)
-                              .map((s) => (
-                                <option key={s.id} value={s.id}>
-                                  {s.fullName} ({s.email})
-                                </option>
-                              ))}
-                          </optgroup>
-                          {supervisors.some((s) => s.isPending) && (
-                            <optgroup label="🟡 Chờ xác nhận (Pending Invite)">
-                              {supervisors
-                                .filter((s) => s.isPending)
-                                .map((s) => (
-                                  <option key={s.id} value={s.id}>
-                                    {s.email} (Chờ login)
-                                  </option>
-                                ))}
-                            </optgroup>
-                          )}
-                        </select>
+                          options={supervisors}
+                          placeholder="-- Giữ nguyên Supervisor --"
+                          isBatchMode
+                          roleLabel="Supervisor"
+                          onChange={(val) => setBatchSupervisorId(val)}
+                          onInviteNew={() => {
+                            setDefaultInviteRole(CampaignRole.SUPERVISOR);
+                            setIsInviteModalOpen(true);
+                          }}
+                        />
                       </div>
 
                       {/* Chọn Approver hàng loạt */}
                       <div>
-                        <select
+                        <label className="block text-[10px] font-bold text-slate-400 uppercase mb-1">
+                          Approver hàng loạt:
+                        </label>
+                        <PersonnelCombobox
                           value={batchApproverId}
-                          onChange={(e) => setBatchApproverId(e.target.value)}
-                          className="w-full h-8 rounded-md border border-slate-200 bg-white px-2.5 text-xs text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-600"
-                        >
-                          <option value="">-- Chọn Approver hàng loạt --</option>
-                          <optgroup label="🟢 Đã tham gia (Active)">
-                            {approvers
-                              .filter((a) => !a.isPending)
-                              .map((a) => (
-                                <option key={a.id} value={a.id}>
-                                  {a.fullName} ({a.email})
-                                </option>
-                              ))}
-                          </optgroup>
-                          {approvers.some((a) => a.isPending) && (
-                            <optgroup label="🟡 Chờ xác nhận (Pending Invite)">
-                              {approvers
-                                .filter((a) => a.isPending)
-                                .map((a) => (
-                                  <option key={a.id} value={a.id}>
-                                    {a.email} (Chờ login)
-                                  </option>
-                                ))}
-                            </optgroup>
-                          )}
-                        </select>
+                          options={approvers}
+                          placeholder="-- Giữ nguyên Approver --"
+                          isBatchMode
+                          roleLabel="Approver"
+                          onChange={(val) => setBatchApproverId(val)}
+                          onInviteNew={() => {
+                            setDefaultInviteRole(CampaignRole.APPROVER);
+                            setIsInviteModalOpen(true);
+                          }}
+                        />
                       </div>
                     </div>
 
@@ -433,7 +435,10 @@ export function Step4Assignments({
                       <Button
                         type="button"
                         size="sm"
-                        disabled={isBatchApplying || (!batchSupervisorId && !batchApproverId)}
+                        disabled={
+                          isBatchApplying ||
+                          (batchSupervisorId === undefined && batchApproverId === undefined)
+                        }
                         onClick={handleApplyBatchLocation}
                         className="text-xs h-7 px-3 bg-slate-800 hover:bg-slate-900 text-white font-medium"
                       >
@@ -475,102 +480,46 @@ export function Step4Assignments({
                               )}
                             </div>
 
-                            {/* Cột 2: Supervisor Select */}
+                            {/* Cột 2: Supervisor Select với Combobox */}
                             <div className="md:w-1/3">
                               <label className="block text-[10px] font-bold text-slate-400 uppercase mb-1">
                                 Supervisor:
                               </label>
-                              <select
-                                value={b.supervisorMemberId || ''}
+                              <PersonnelCombobox
+                                value={b.supervisorMemberId || null}
                                 disabled={loadingBoothId === b.id}
-                                onChange={(e) =>
-                                  handleAssignBooth(
-                                    b.id,
-                                    e.target.value || null,
-                                    b.approverMemberId || null
-                                  )
+                                options={supervisors}
+                                placeholder="-- Chưa gán Supervisor --"
+                                roleLabel="Supervisor"
+                                onChange={(val) =>
+                                  handleAssignBooth(b.id, val || null, b.approverMemberId || null)
                                 }
-                                className={cn(
-                                  'w-full h-8 rounded-md px-2.5 text-xs focus:outline-none focus:ring-2 focus:ring-blue-600 transition-colors',
-                                  !hasSupervisor
-                                    ? 'border-amber-400 bg-amber-50/40 text-amber-900 font-medium'
-                                    : b.isSupervisorPending
-                                    ? 'border-blue-300 bg-blue-50/30 text-blue-900'
-                                    : 'border-slate-200 bg-white text-slate-800'
-                                )}
-                              >
-                                <option value="">-- Chưa gán Supervisor --</option>
-                                <optgroup label="🟢 Đã tham gia (Active)">
-                                  {supervisors
-                                    .filter((s) => !s.isPending)
-                                    .map((s) => (
-                                      <option key={s.id} value={s.id}>
-                                        {s.fullName} ({s.email})
-                                      </option>
-                                    ))}
-                                </optgroup>
-                                {supervisors.some((s) => s.isPending) && (
-                                  <optgroup label="🟡 Chờ xác nhận (Pending Invite)">
-                                    {supervisors
-                                      .filter((s) => s.isPending)
-                                      .map((s) => (
-                                        <option key={s.id} value={s.id}>
-                                          {s.email} (Chờ login)
-                                        </option>
-                                      ))}
-                                  </optgroup>
-                                )}
-                                <option value="__INVITE_NEW__">➕ Mời nhân sự mới qua email...</option>
-                              </select>
+                                onInviteNew={() => {
+                                  setDefaultInviteRole(CampaignRole.SUPERVISOR);
+                                  setIsInviteModalOpen(true);
+                                }}
+                              />
                             </div>
 
-                            {/* Cột 3: Approver Select */}
+                            {/* Cột 3: Approver Select với Combobox */}
                             <div className="md:w-1/3">
                               <label className="block text-[10px] font-bold text-slate-400 uppercase mb-1">
                                 Approver:
                               </label>
-                              <select
-                                value={b.approverMemberId || ''}
+                              <PersonnelCombobox
+                                value={b.approverMemberId || null}
                                 disabled={loadingBoothId === b.id}
-                                onChange={(e) =>
-                                  handleAssignBooth(
-                                    b.id,
-                                    b.supervisorMemberId || null,
-                                    e.target.value || null
-                                  )
+                                options={approvers}
+                                placeholder="-- Chưa gán Approver --"
+                                roleLabel="Approver"
+                                onChange={(val) =>
+                                  handleAssignBooth(b.id, b.supervisorMemberId || null, val || null)
                                 }
-                                className={cn(
-                                  'w-full h-8 rounded-md px-2.5 text-xs focus:outline-none focus:ring-2 focus:ring-blue-600 transition-colors',
-                                  !hasApprover
-                                    ? 'border-amber-400 bg-amber-50/40 text-amber-900 font-medium'
-                                    : b.isApproverPending
-                                    ? 'border-blue-300 bg-blue-50/30 text-blue-900'
-                                    : 'border-slate-200 bg-white text-slate-800'
-                                )}
-                              >
-                                <option value="">-- Chưa gán Approver --</option>
-                                <optgroup label="🟢 Đã tham gia (Active)">
-                                  {approvers
-                                    .filter((a) => !a.isPending)
-                                    .map((a) => (
-                                      <option key={a.id} value={a.id}>
-                                        {a.fullName} ({a.email})
-                                      </option>
-                                    ))}
-                                </optgroup>
-                                {approvers.some((a) => a.isPending) && (
-                                  <optgroup label="🟡 Chờ xác nhận (Pending Invite)">
-                                    {approvers
-                                      .filter((a) => a.isPending)
-                                      .map((a) => (
-                                        <option key={a.id} value={a.id}>
-                                          {a.email} (Chờ login)
-                                        </option>
-                                      ))}
-                                  </optgroup>
-                                )}
-                                <option value="__INVITE_NEW__">➕ Mời nhân sự mới qua email...</option>
-                              </select>
+                                onInviteNew={() => {
+                                  setDefaultInviteRole(CampaignRole.APPROVER);
+                                  setIsInviteModalOpen(true);
+                                }}
+                              />
                             </div>
 
                             {/* Cột 4: Trạng thái Booth */}
@@ -584,7 +533,7 @@ export function Step4Assignments({
                                 ) : (
                                   <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">
                                     <CheckCircle2 className="h-3 w-3" />
-                                    Đủ nhân sự
+                                    Sẵn sàng
                                   </span>
                                 )
                               ) : (

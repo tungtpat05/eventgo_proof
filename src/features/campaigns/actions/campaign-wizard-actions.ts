@@ -543,31 +543,40 @@ export async function batchAssignLocationPersonnelInWizardAction(
       const currentSup = supMap.get(boothId);
       const currentApp = appMap.get(boothId);
 
-      // Nếu supervisorId là undefined hoặc rỗng (chỉ đổi approver), giữ nguyên supervisor cũ
-      const finalSupervisor =
-        supervisorId !== undefined && supervisorId !== ''
-          ? supervisorId
-          : currentSup
+      // Xử lý 3 trạng thái cho Supervisor: Unassign, Gán mới, hoặc Giữ nguyên
+      let finalSupervisor: string | null;
+      if (supervisorId === '__UNASSIGN__' || supervisorId === null) {
+        finalSupervisor = null;
+      } else if (supervisorId !== undefined && supervisorId !== '' && supervisorId !== '__KEEP__') {
+        finalSupervisor = supervisorId;
+      } else {
+        finalSupervisor = currentSup
           ? currentSup.supervisor_invite_id
             ? `invite_${currentSup.supervisor_invite_id}`
             : currentSup.supervisor_member_id
           : null;
+      }
 
-      // Nếu approverId là undefined hoặc rỗng (chỉ đổi supervisor), giữ nguyên approver cũ
-      const finalApprover =
-        approverId !== undefined && approverId !== ''
-          ? approverId
-          : currentApp
+      // Xử lý 3 trạng thái cho Approver: Unassign, Gán mới, hoặc Giữ nguyên
+      let finalApprover: string | null;
+      if (approverId === '__UNASSIGN__' || approverId === null) {
+        finalApprover = null;
+      } else if (approverId !== undefined && approverId !== '' && approverId !== '__KEEP__') {
+        finalApprover = approverId;
+      } else {
+        finalApprover = currentApp
           ? currentApp.approver_invite_id
             ? `invite_${currentApp.approver_invite_id}`
             : currentApp.approver_member_id
           : null;
+      }
 
       await assignBoothPersonnelUseCase({
         boothId,
         supervisorMemberId: finalSupervisor,
         approverMemberId: finalApprover,
       });
+
     }
 
     revalidatePath(`/campaigns/${campaignId}/wizard`);
