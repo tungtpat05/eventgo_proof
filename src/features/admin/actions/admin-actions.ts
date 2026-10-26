@@ -49,14 +49,12 @@ export async function getAdminOverviewAction() {
   const [
     { count: totalUsers },
     { count: activeCampaigns },
-    { count: totalBooths },
     { transactions },
     { subscriptions },
     { data: profiles },
   ] = await Promise.all([
     supabase.from('profiles').select('*', { count: 'exact', head: true }),
     supabase.from('campaigns').select('*', { count: 'exact', head: true }).eq('status', CampaignStatus.ACTIVE),
-    supabase.from('booths').select('*', { count: 'exact', head: true }),
     txnRepo.getAll(),
     subRepo.getAll(),
     supabase.from('profiles').select('id, full_name, email'),
@@ -143,10 +141,18 @@ export async function getAdminOverviewAction() {
     pro: proCount,
   };
 
+  const activeSubscriptions = subscriptions.filter(
+    (s) => s.status === SubscriptionStatus.ACTIVE
+  ).length;
+  const paidSubscriptions = subscriptions.filter(
+    (s) => s.status === SubscriptionStatus.ACTIVE && s.plan !== SubscriptionPlanTier.FREE
+  ).length;
+
   return {
     totalUsers: totalUsers || 0,
     activeCampaigns: activeCampaigns || 0,
-    totalBooths: totalBooths || 0,
+    activeSubscriptions,
+    paidSubscriptions,
     totalRevenue,
     recentTransactions,
     planDistribution,

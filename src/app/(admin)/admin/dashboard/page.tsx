@@ -9,7 +9,6 @@ import { Button } from '@/components/ui/button';
 import {
   Users,
   Flag,
-  Store,
   DollarSign,
   ArrowRight,
   Loader2,
@@ -54,7 +53,8 @@ interface MonthlyRevenueItem {
 interface OverviewData {
   totalUsers: number;
   activeCampaigns: number;
-  totalBooths: number;
+  activeSubscriptions: number;
+  paidSubscriptions: number;
   totalRevenue: number;
   recentTransactions?: RecentTransaction[];
   planDistribution?: {
@@ -88,6 +88,10 @@ export default function AdminDashboardPage() {
     );
   }
 
+  const conversionRate = data.totalUsers > 0
+    ? Math.round((data.paidSubscriptions / data.totalUsers) * 100)
+    : 0;
+
   const kpis = [
     {
       label: t('kpiTotalRevenue'),
@@ -119,12 +123,12 @@ export default function AdminDashboardPage() {
       badgeColor: 'bg-indigo-50 text-indigo-700 border-indigo-200',
     },
     {
-      label: t('kpiTotalBooths'),
-      value: data.totalBooths.toString(),
-      desc: t('kpiBoothsDesc'),
-      icon: Store,
+      label: t('kpiPaidSubscribers'),
+      value: data.paidSubscriptions.toString(),
+      desc: t('kpiPaidSubscriptionsDesc'),
+      icon: CreditCard,
       color: 'text-purple-600 bg-purple-50 border-purple-200',
-      badge: t('kpiBoothsUnit', { count: data.totalBooths }),
+      badge: t('kpiConversionRateBadge', { rate: conversionRate }),
       badgeColor: 'bg-purple-50 text-purple-700 border-purple-200',
     },
   ];
