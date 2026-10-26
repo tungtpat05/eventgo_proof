@@ -171,7 +171,7 @@ export function Step4Assignments({
   return (
     <div className="space-y-6">
       {/* 1. Header Toolbar & Overall Truthful KPI Bar */}
-      <Card className="border border-slate-200 shadow-xs bg-white overflow-hidden">
+      <Card className="border border-slate-200 shadow-xs bg-white">
         <CardHeader className="p-4 sm:p-5 border-b border-slate-100 bg-slate-50/50">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div className="flex items-center gap-3">
@@ -186,21 +186,6 @@ export function Step4Assignments({
                   Gán Giám sát viên (Supervisor) và Người duyệt (Approver) phụ trách từng gian hàng.
                 </CardDescription>
               </div>
-            </div>
-
-            {/* Quick Action Trigger */}
-            <div className="flex items-center gap-2">
-              <Button
-                type="button"
-                onClick={() => {
-                  setDefaultInviteRole(CampaignRole.SUPERVISOR);
-                  setIsInviteModalOpen(true);
-                }}
-                className="gap-1.5 text-xs bg-blue-600 hover:bg-blue-700 text-white font-medium shadow-xs h-9 px-3.5"
-              >
-                <UserPlus className="h-3.5 w-3.5" />
-                Mời nhân sự mới
-              </Button>
             </div>
           </div>
         </CardHeader>
@@ -367,7 +352,7 @@ export function Step4Assignments({
           {/* CỘT PHẢI (DETAIL - 8/12 columns): Chi tiết Booths & Gán hàng loạt */}
           <div className="lg:col-span-8 space-y-4">
             {activeLocation && (
-              <Card className="border border-slate-200 bg-white shadow-xs overflow-hidden">
+              <Card className="border border-slate-200 bg-white shadow-xs">
                 {/* Header Địa điểm đang chọn */}
                 <CardHeader className="p-4 sm:p-5 border-b border-slate-100 bg-slate-50/50">
                   <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
@@ -465,7 +450,7 @@ export function Step4Assignments({
                         return (
                           <div
                             key={b.id}
-                            className="p-4 hover:bg-slate-50/50 transition-colors flex flex-col md:flex-row md:items-center justify-between gap-3 text-xs"
+                            className="p-4 hover:bg-slate-50/50 transition-colors flex flex-col md:flex-row md:items-center justify-between gap-3 text-xs relative"
                           >
                             {/* Cột 1: Tên Booth */}
                             <div className="min-w-0 md:w-1/4">
