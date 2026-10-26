@@ -1,0 +1,47 @@
+{
+  "roles": {
+    "MANAGER": "Campaign Manager",
+    "SUPERVISOR": "Site Supervisor",
+    "APPROVER": "Evidence Approver"
+  },
+  "roleShort": {
+    "MANAGER": "Manager",
+    "SUPERVISOR": "Supervisor",
+    "APPROVER": "Approver"
+  },
+  "roleDescriptions": {
+    "MANAGER": "Full access to manage the campaign, configure hierarchy, assign team members, and oversee reviews.",
+    "SUPERVISOR": "Responsible for assigned booths, capturing photos and submitting on-site proof.",
+    "APPROVER": "Inspects on-site proof submissions and approves or requests revisions against checklists."
+  },
+  "memberStatus": {
+    "ACTIVE": "Active",
+    "REVOKED": "Revoked"
+  },
+  "inviteStatus": {
+    "PENDING": "Pending Activation",
+    "ACCEPTED": "Joined",
+    "REVOKED": "Revoked",
+    "EXPIRED": "Expired"
+  },
+  "campaignStatus": {
+    "DRAFT": "Draft",
+    "ACTIVE": "Active",
+    "COMPLETED": "Completed",
+    "ARCHIVED": "Archived"
+  },
+  "submissionStatus": {
+    "DRAFT": "Draft",
+    "SUBMITTED": "Pending Review",
+    "NEEDS_REVISION": "Needs Revision",
+    "APPROVED": "Approved"
+  },
+  "checklistCategory": {
+    "STRUCTURE": "Booth Structure",
+    "BRANDING": "Brand Elements",
+    "POSM": "POSM Materials",
+    "STAFFING": "Staff & Uniforms",
+    "CONDITION": "Cleanliness & Condition",
+    "OTHER": "Other Criteria"
+  }
+}

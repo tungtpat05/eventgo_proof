@@ -1,0 +1,47 @@
+{
+  "roles": {
+    "MANAGER": "Quản lý chiến dịch",
+    "SUPERVISOR": "Giám sát hiện trường",
+    "APPROVER": "Người kiểm duyệt"
+  },
+  "roleShort": {
+    "MANAGER": "Quản lý",
+    "SUPERVISOR": "Giám sát",
+    "APPROVER": "Kiểm duyệt"
+  },
+  "roleDescriptions": {
+    "MANAGER": "Toàn quyền quản lý chiến dịch, thiết lập địa điểm, phân công nhân sự và cấu hình nghiệm thu.",
+    "SUPERVISOR": "Phụ trách các gian hàng được phân công, trực tiếp chụp và gửi bằng chứng nghiệm thu.",
+    "APPROVER": "Kiểm tra bằng chứng nghiệm thu thực tế và đưa ra quyết định duyệt hoặc yêu cầu bổ sung."
+  },
+  "memberStatus": {
+    "ACTIVE": "Đang hoạt động",
+    "REVOKED": "Đã thu hồi"
+  },
+  "inviteStatus": {
+    "PENDING": "Chờ kích hoạt",
+    "ACCEPTED": "Đã tham gia",
+    "REVOKED": "Đã thu hồi",
+    "EXPIRED": "Đã hết hạn"
+  },
+  "campaignStatus": {
+    "DRAFT": "Bản nháp",
+    "ACTIVE": "Đang diễn ra",
+    "COMPLETED": "Đã hoàn thành",
+    "ARCHIVED": "Đã lưu trữ"
+  },
+  "submissionStatus": {
+    "DRAFT": "Chưa nộp",
+    "SUBMITTED": "Chờ phê duyệt",
+    "NEEDS_REVISION": "Cần bổ sung",
+    "APPROVED": "Đã nghiệm thu"
+  },
+  "checklistCategory": {
+    "STRUCTURE": "Kết cấu gian hàng",
+    "BRANDING": "Hình ảnh thương hiệu",
+    "POSM": "Vật phẩm POSM",
+    "STAFFING": "Nhân sự & Đồng phục",
+    "CONDITION": "Vệ sinh & Tình trạng",
+    "OTHER": "Tiêu chí khác"
+  }
+}

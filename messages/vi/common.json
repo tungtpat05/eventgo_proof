@@ -1,0 +1,49 @@
+{
+  "nav": {
+    "dashboard": "Tổng quan",
+    "managedCampaigns": "Chiến dịch quản lý",
+    "supervisionCampaigns": "Chiến dịch giám sát",
+    "approvalCampaigns": "Chiến dịch phê duyệt",
+    "systemAdmin": "Quản trị hệ thống",
+    "pricingPlans": "Gói cước & Đăng ký",
+    "settings": "Cài đặt"
+  },
+  "brand": {
+    "title": "EventGo Proof",
+    "subtitle": "Nghiệm Thu Trưng Bày Gian Hàng"
+  },
+  "actions": {
+    "save": "Lưu thay đổi",
+    "cancel": "Hủy bỏ",
+    "confirm": "Xác nhận",
+    "delete": "Xóa",
+    "edit": "Chỉnh sửa",
+    "create": "Tạo mới",
+    "back": "Quay lại",
+    "continue": "Tiếp tục",
+    "loading": "Đang xử lý...",
+    "copyLink": "Sao chép liên kết",
+    "copied": "Đã sao chép",
+    "resend": "Gửi lại",
+    "refresh": "Làm mới",
+    "search": "Tìm kiếm...",
+    "filter": "Bộ lọc",
+    "close": "Đóng"
+  },
+  "status": {
+    "all": "Tất cả",
+    "active": "Hoạt động",
+    "success": "Thành công",
+    "error": "Lỗi",
+    "warning": "Cảnh báo",
+    "info": "Thông tin"
+  },
+  "user": {
+    "profile": "Hồ sơ cá nhân",
+    "logout": "Đăng xuất",
+    "viewMode": "Chế độ xem",
+    "adminView": "Chế độ Quản trị",
+    "clientView": "Chế độ Khách hàng",
+    "language": "Ngôn ngữ"
+  }
+}

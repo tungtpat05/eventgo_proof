@@ -1,0 +1,72 @@
+{
+  "tabs": {
+    "overview": "Campaign Overview",
+    "locations": "Locations & Booths",
+    "team": "Campaign Team",
+    "approvals": "Approval Queue"
+  },
+  "workspace": {
+    "completionRate": "Compliance Rate",
+    "approvedCount": "{count} approved",
+    "totalLocations": "Locations",
+    "totalBooths": "Booths",
+    "totalStaff": "Personnel",
+    "urgentAttention": "Urgent Actions & Attention",
+    "realtimeUpdate": "Real-time updates",
+    "pendingReviewsPrompt": "There are {count} submissions waiting for review.",
+    "openApprovalQueue": "Open Approval Queue →",
+    "pendingInvitesPrompt": "There are {count} members who have not activated their Google accounts.",
+    "viewAndResend": "View & Resend Email →",
+    "missingStaffPrompt": "There are {count} booths without assigned personnel.",
+    "assignNow": "Assign Now →",
+    "allOnTrack": "All campaign activities are proceeding on schedule with no bottlenecks!",
+    "quickHierarchy": "Manage Locations & Booths",
+    "quickHierarchyDesc": "Explore tree hierarchy, add ad-hoc booths, or edit checklists.",
+    "quickTeam": "Team & Access Control",
+    "quickTeamDesc": "Invite personnel, assign supervisors, and inspect audit logs.",
+    "quickApprovals": "Acceptance Queue",
+    "quickApprovalsDesc": "Inspect on-site photos captured at booths and approve compliance."
+  },
+  "team": {
+    "title": "Campaign Members & Permissions",
+    "description": "Managers can assign roles, invite personnel, or revoke access permissions.",
+    "inviteButton": "Invite Member",
+    "tableMember": "Member",
+    "tableRole": "Role",
+    "tableStatus": "Status",
+    "tableActions": "Actions",
+    "revokeAccess": "Revoke",
+    "restoreAccess": "Restore",
+    "pendingInvitesTitle": "Pending Google Login Invitations ({count})",
+    "copyLink": "Copy link",
+    "copied": "Copied",
+    "resendEmail": "Resend email",
+    "resending": "Sending...",
+    "auditTrailTitle": "Personnel & Role Changes (Audit Trail)",
+    "auditEmpty": "No role changes recorded yet.",
+    "auditEntry": "Role transition: {oldRole} ({oldStatus}) ➔ {newRole} ({newStatus})"
+  },
+  "assignment": {
+    "title": "Assign Responsible Personnel",
+    "supervisorField": "Site Supervisor",
+    "approverField": "Evidence Approver",
+    "unassigned": "-- Unassigned --",
+    "deadlineField": "Acceptance Deadline",
+    "save": "Save Assignment",
+    "saving": "Saving...",
+    "success": "Personnel assignment updated successfully!",
+    "error": "Failed to update assignment"
+  },
+  "wizard": {
+    "title": "Create New Campaign",
+    "stepBasic": "General Information",
+    "stepLocations": "Locations & Booths",
+    "stepPersonnel": "Campaign Team",
+    "stepChecklist": "Acceptance Checklists",
+    "allRoles": "All Roles",
+    "addPersonnel": "Add Member",
+    "personnelEmail": "Google Account Email",
+    "selectRole": "Select Role",
+    "noPersonnel": "No team members added yet."
+  }
+}

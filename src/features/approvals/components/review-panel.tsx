@@ -10,6 +10,7 @@ import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { formatDateTime } from '@/lib/utils';
 import { CheckCircle2, AlertTriangle, History, MessageSquare, ZoomIn, Store } from 'lucide-react';
 import { useRouter } from 'next/navigation';
+import { useTranslations } from 'next-intl';
 
 interface ReviewPanelProps {
   submission: Submission;
@@ -21,6 +22,7 @@ interface ReviewPanelProps {
 
 export function ReviewPanel({ submission, location, checklistItem, boothName, campaignId }: ReviewPanelProps) {
   const router = useRouter();
+  const tOps = useTranslations('operations');
   const [activePhoto, setActivePhoto] = useState<string | null>(null);
   const [revisionNotes, setRevisionNotes] = useState('');
   const [isProcessing, setIsProcessing] = useState(false);
@@ -186,7 +188,7 @@ export function ReviewPanel({ submission, location, checklistItem, boothName, ca
                   className="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white flex items-center justify-center gap-2 text-xs h-9"
                 >
                   <CheckCircle2 className="h-4 w-4" />
-                  Duyệt Đạt (Approve)
+                  {tOps('approvals.approveAction')}
                 </Button>
 
                 <Button
@@ -197,7 +199,7 @@ export function ReviewPanel({ submission, location, checklistItem, boothName, ca
                   className="flex-1 flex items-center justify-center gap-2 text-xs h-9"
                 >
                   <AlertTriangle className="h-4 w-4" />
-                  Yêu Cầu Chụp Lại (Revision)
+                  {tOps('approvals.rejectAction')}
                 </Button>
               </div>
             </div>

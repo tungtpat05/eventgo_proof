@@ -1,0 +1,24 @@
+{
+  "dashboard": {
+    "title": "System Administration",
+    "systemUsers": "System Users",
+    "activeCampaigns": "Active Campaigns",
+    "activeSubscriptions": "Active Subscriptions",
+    "totalRevenue": "PayOS Gateway Revenue",
+    "auditLogs": "System Audit Logs",
+    "switchClient": "Switch to Client Workspace"
+  },
+  "subscriptions": {
+    "title": "Subscription Plans & Billing",
+    "currentPlan": "Current Plan",
+    "upgrade": "Upgrade Plan",
+    "tierFree": "Free Tier",
+    "tierStarter": "Starter Tier",
+    "tierPro": "Professional (Pro)",
+    "boothLimit": "Booth Quota",
+    "campaignLimit": "Active Campaign Quota",
+    "memberLimit": "Member Quota",
+    "billingHistory": "Billing History",
+    "qrPrompt": "Scan VietQR to activate instantly"
+  }
+}

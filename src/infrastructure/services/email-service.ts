@@ -15,6 +15,7 @@ interface SendCampaignInviteParams {
   brandName?: string | null;
   role: CampaignRole;
   inviteLink: string;
+  locale?: 'vi' | 'en';
 }
 
 export function isMailConfigured(): boolean {
@@ -127,30 +128,50 @@ export async function sendCampaignInviteEmail({
   brandName,
   role,
   inviteLink,
+  locale = 'vi',
 }: SendCampaignInviteParams) {
   const transporter = getMailTransporter();
 
-  const roleLabels: Record<CampaignRole, { title: string; desc: string }> = {
+  const roleLabelsVi: Record<CampaignRole, { title: string; desc: string }> = {
     [CampaignRole.SUPERVISOR]: {
-      title: 'Giám Sát Viên Hiện Trường (Supervisor)',
+      title: 'Giám Sát Hiện Trường',
       desc: 'Chịu trách nhiệm chụp ảnh check-in, kiểm tra tiêu chí gian hàng và nộp bằng chứng nghiệm thu tại các Booth được phân công.',
     },
     [CampaignRole.APPROVER]: {
-      title: 'Người Phê Duyệt Nghiệm Thu (Approver)',
+      title: 'Người Kiểm Duyệt Nghiệm Thu',
       desc: 'Chịu trách nhiệm kiểm tra, đối soát chất lượng hình ảnh và phê duyệt đạt chuẩn hoặc yêu cầu chỉnh sửa cho các gian hàng.',
     },
     [CampaignRole.MANAGER]: {
-      title: 'Quản Lý Chiến Dịch (Campaign Manager)',
+      title: 'Quản Lý Chiến Dịch',
       desc: 'Toàn quyền cấu hình địa điểm, phân công nhân sự và quản lý vòng đời chiến dịch.',
     },
   };
 
-  const currentRoleInfo = roleLabels[role] || {
-    title: role,
-    desc: 'Thành viên tham gia phối hợp vận hành chiến dịch.',
+  const roleLabelsEn: Record<CampaignRole, { title: string; desc: string }> = {
+    [CampaignRole.SUPERVISOR]: {
+      title: 'Site Supervisor',
+      desc: 'Responsible for check-in photos, verifying booth criteria, and submitting acceptance proof for assigned booths.',
+    },
+    [CampaignRole.APPROVER]: {
+      title: 'Evidence Approver',
+      desc: 'Responsible for inspecting on-site proof photos and approving compliance or requesting revisions.',
+    },
+    [CampaignRole.MANAGER]: {
+      title: 'Campaign Manager',
+      desc: 'Full authority to configure campaign hierarchy, team assignments, and manage lifecycle.',
+    },
   };
 
-  const subject = `[EventGo Proof] Lời mời tham gia chiến dịch "${campaignTitle}" (${currentRoleInfo.title})`;
+  const roleLabels = locale === 'en' ? roleLabelsEn : roleLabelsVi;
+  const currentRoleInfo = roleLabels[role] || {
+    title: role,
+    desc: locale === 'en' ? 'Campaign Team Member' : 'Thành viên tham gia phối hợp vận hành chiến dịch.',
+  };
+
+  const subject =
+    locale === 'en'
+      ? `[EventGo Proof] Invitation to join campaign "${campaignTitle}" (${currentRoleInfo.title})`
+      : `[EventGo Proof] Lời mời tham gia chiến dịch "${campaignTitle}" (${currentRoleInfo.title})`;
 
   const html = `
     <!DOCTYPE html>

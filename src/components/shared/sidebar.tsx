@@ -3,6 +3,7 @@
 import React from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import { useTranslations } from 'next-intl';
 import { cn } from '@/lib/utils';
 import {
   FolderKanban,
@@ -13,28 +14,34 @@ import {
 
 export function Sidebar() {
   const pathname = usePathname();
+  const t = useTranslations('common');
 
   const navigation = [
     {
-      name: 'Tổng quan',
+      name: t('nav.dashboard'),
       href: '/dashboard',
       icon: CheckCircle,
       active: pathname === '/dashboard',
     },
     {
-      name: 'Chiến dịch quản lý',
+      name: t('nav.managedCampaigns'),
       href: '/campaigns',
       icon: FolderKanban,
-      active: pathname === '/campaigns' || pathname.startsWith('/campaigns/managed') || (pathname.startsWith('/campaigns/') && !pathname.startsWith('/campaigns/supervision') && !pathname.startsWith('/campaigns/approvals')),
+      active:
+        pathname === '/campaigns' ||
+        pathname.startsWith('/campaigns/managed') ||
+        (pathname.startsWith('/campaigns/') &&
+          !pathname.startsWith('/campaigns/supervision') &&
+          !pathname.startsWith('/campaigns/approvals')),
     },
     {
-      name: 'Chiến dịch giám sát',
+      name: t('nav.supervisionCampaigns'),
       href: '/campaigns/supervision',
       icon: ScanEye,
       active: pathname.startsWith('/campaigns/supervision'),
     },
     {
-      name: 'Chiến dịch phê duyệt',
+      name: t('nav.approvalCampaigns'),
       href: '/campaigns/approvals',
       icon: CheckCheck,
       active: pathname.startsWith('/campaigns/approvals'),
@@ -50,16 +57,18 @@ export function Sidebar() {
             <CheckCircle className="h-5 w-5" />
           </div>
           <div>
-            <span className="text-base font-bold text-slate-900 leading-none">EventGo Proof</span>
+            <span className="text-base font-bold text-slate-900 leading-none">
+              {t('brand.title')}
+            </span>
             <span className="block text-[10px] font-medium text-slate-400 uppercase tracking-wider mt-0.5">
-              Booth Compliance
+              {t('brand.subtitle')}
             </span>
           </div>
         </div>
 
         <div className="px-4 pt-4 pb-1">
           <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-400">
-            Không gian làm việc
+            {t('nav.managedCampaigns')}
           </p>
         </div>
 
@@ -91,7 +100,7 @@ export function Sidebar() {
 
         <div className="p-4 border-t border-slate-100">
           <div className="rounded-lg bg-slate-50 p-3 text-xs text-slate-500 text-center">
-            Phiên bản <span className="font-semibold text-slate-700">v1.0</span>
+            EventGo Proof <span className="font-semibold text-slate-700">v1.0</span>
           </div>
         </div>
       </aside>

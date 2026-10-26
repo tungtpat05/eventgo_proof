@@ -9,6 +9,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
 import { ArrowLeft, CheckCircle2, AlertCircle, Send, Loader2 } from 'lucide-react';
 import { ChecklistItem, Location } from '@/domain/entities';
+import { useTranslations } from 'next-intl';
 
 interface SupervisorSubmitFormProps {
   location: Location;
@@ -17,6 +18,8 @@ interface SupervisorSubmitFormProps {
 
 export function SupervisorSubmitForm({ location, checklistItems }: SupervisorSubmitFormProps) {
   const router = useRouter();
+  const tOps = useTranslations('operations');
+  const tCommon = useTranslations('common');
   const [selectedItemId, setSelectedItemId] = useState(checklistItems[0]?.id || '');
   const [photos, setPhotos] = useState<CapturedPhoto[]>([]);
   const [notes, setNotes] = useState('');
@@ -140,7 +143,7 @@ export function SupervisorSubmitForm({ location, checklistItems }: SupervisorSub
                 value={notes}
                 onChange={(e) => setNotes(e.target.value)}
                 rows={3}
-                placeholder="Nhập tình hình thực tế, thời điểm chụp hoặc ghi chú cho người duyệt..."
+                placeholder={tOps('submissions.notesPlaceholder')}
                 className="flex w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm placeholder:text-slate-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600"
               />
             </div>
@@ -153,12 +156,12 @@ export function SupervisorSubmitForm({ location, checklistItems }: SupervisorSub
               {isSubmitting ? (
                 <>
                   <Loader2 className="h-4 w-4 animate-spin" />
-                  Đang nộp hồ sơ nghiệm thu...
+                  {tOps('submissions.submitting')}
                 </>
               ) : (
                 <>
                   <Send className="h-4 w-4" />
-                  Nộp Bằng Chứng Nghiệm Thu ({photos.length} ảnh)
+                  {tOps('submissions.submitButton')} ({photos.length})
                 </>
               )}
             </Button>

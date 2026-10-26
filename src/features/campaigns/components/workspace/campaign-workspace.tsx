@@ -40,6 +40,8 @@ import {
   resendCampaignInviteEmailAction,
 } from '../../actions/member-actions';
 import { cn } from '@/lib/utils';
+import { useTranslations } from 'next-intl';
+import { getRoleLabel, getMemberStatusLabel } from '@/lib/i18n/enum-presenters';
 
 interface CampaignWorkspaceProps {
   campaign: Campaign;
@@ -69,6 +71,9 @@ export function CampaignWorkspace({
   isManager,
 }: CampaignWorkspaceProps) {
   const router = useRouter();
+  const tCamp = useTranslations('campaigns');
+  const tRoles = useTranslations('roles');
+
   const [activeTab, setActiveTab] = useState<WorkspaceTab>('OVERVIEW');
   const [isInviteModalOpen, setIsInviteModalOpen] = useState(false);
   const [copiedLink, setCopiedLink] = useState<string | null>(null);
@@ -343,9 +348,9 @@ export function CampaignWorkspace({
             >
               <div className="flex items-center gap-2 text-slate-900 font-bold text-xs mb-1">
                 <Building2 className="h-4 w-4 text-blue-600" />
-                <span>Quản lý Địa điểm & Gian hàng</span>
+                <span>{tCamp('workspace.quickHierarchy')}</span>
               </div>
-              <p className="text-[11px] text-slate-500">Xem cấu trúc cây, thêm booth phát sinh hoặc sửa checklist.</p>
+              <p className="text-[11px] text-slate-500">{tCamp('workspace.quickHierarchyDesc')}</p>
             </button>
 
             <button
@@ -355,9 +360,9 @@ export function CampaignWorkspace({
             >
               <div className="flex items-center gap-2 text-slate-900 font-bold text-xs mb-1">
                 <Users className="h-4 w-4 text-blue-600" />
-                <span>Đội ngũ & Phân quyền</span>
+                <span>{tCamp('workspace.quickTeam')}</span>
               </div>
-              <p className="text-[11px] text-slate-500">Mời thêm nhân sự, đổi người giám sát, xem nhật ký phân quyền.</p>
+              <p className="text-[11px] text-slate-500">{tCamp('workspace.quickTeamDesc')}</p>
             </button>
 
             <Link
@@ -366,9 +371,9 @@ export function CampaignWorkspace({
             >
               <div className="flex items-center gap-2 text-slate-900 font-bold text-xs mb-1">
                 <CheckCheck className="h-4 w-4 text-emerald-600" />
-                <span>Hàng đợi Nghiệm thu</span>
+                <span>{tCamp('workspace.quickApprovals')}</span>
               </div>
-              <p className="text-[11px] text-slate-500">Xem ảnh thực tế chụp tại booth và phê duyệt kết quả trưng bày.</p>
+              <p className="text-[11px] text-slate-500">{tCamp('workspace.quickApprovalsDesc')}</p>
             </Link>
           </div>
         </div>
@@ -392,10 +397,10 @@ export function CampaignWorkspace({
             <CardHeader className="p-4 sm:p-5 border-b border-slate-100 bg-slate-50/50 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
               <div>
                 <CardTitle className="text-sm sm:text-base font-bold text-slate-900">
-                  Thành viên & Quyền hạn chiến dịch
+                  {tCamp('team.title')}
                 </CardTitle>
                 <CardDescription className="text-xs text-slate-500">
-                  Manager có quyền phân công, mời thêm hoặc thu hồi quyền truy cập của nhân sự.
+                  {tCamp('team.description')}
                 </CardDescription>
               </div>
 
@@ -406,7 +411,7 @@ export function CampaignWorkspace({
                   className="gap-1.5 text-xs bg-blue-600 hover:bg-blue-700 text-white font-medium shadow-xs"
                 >
                   <UserPlus className="h-3.5 w-3.5" />
-                  Mời nhân sự mới
+                  {tCamp('team.inviteButton')}
                 </Button>
               )}
             </CardHeader>
@@ -417,10 +422,10 @@ export function CampaignWorkspace({
                 <table className="w-full text-left text-xs border-collapse">
                   <thead>
                     <tr className="border-b border-slate-100 bg-slate-50/60 text-[10px] font-bold uppercase tracking-wider text-slate-400">
-                      <th className="py-3 px-4">Nhân sự</th>
-                      <th className="py-3 px-4">Vai trò</th>
-                      <th className="py-3 px-4">Trạng thái</th>
-                      <th className="py-3 px-4 text-right">Thao tác</th>
+                      <th className="py-3 px-4">{tCamp('team.tableMember')}</th>
+                      <th className="py-3 px-4">{tCamp('team.tableRole')}</th>
+                      <th className="py-3 px-4">{tCamp('team.tableStatus')}</th>
+                      <th className="py-3 px-4 text-right">{tCamp('team.tableActions')}</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-100">
@@ -445,12 +450,12 @@ export function CampaignWorkspace({
                               }
                               className="h-8 rounded-md border border-slate-200 bg-white px-2 text-xs focus:ring-2 focus:ring-blue-600"
                             >
-                              <option value={CampaignRole.SUPERVISOR}>Supervisor</option>
-                              <option value={CampaignRole.APPROVER}>Approver</option>
-                              <option value={CampaignRole.MANAGER}>Manager</option>
+                              <option value={CampaignRole.SUPERVISOR}>{tRoles('roles.SUPERVISOR')}</option>
+                              <option value={CampaignRole.APPROVER}>{tRoles('roles.APPROVER')}</option>
+                              <option value={CampaignRole.MANAGER}>{tRoles('roles.MANAGER')}</option>
                             </select>
                           ) : (
-                            <span className="font-semibold text-slate-700">{member.role}</span>
+                            <span className="font-semibold text-slate-700">{getRoleLabel(member.role, tRoles)}</span>
                           )}
                         </td>
 
@@ -458,11 +463,11 @@ export function CampaignWorkspace({
                           {member.status === CampaignMemberStatus.ACTIVE ? (
                             <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">
                               <CheckCircle2 className="h-3 w-3" />
-                              Hoạt động
+                              {getMemberStatusLabel(member.status, tRoles)}
                             </span>
                           ) : (
                             <span className="inline-flex items-center gap-1 text-[11px] font-medium text-slate-500 bg-slate-100 px-2 py-0.5 rounded-full">
-                              Đã thu hồi
+                              {getMemberStatusLabel(member.status, tRoles)}
                             </span>
                           )}
                         </td>
@@ -508,9 +513,9 @@ export function CampaignWorkspace({
                       >
                         <div>
                           <span className="font-semibold text-slate-900">{inv.email}</span>
-                          <span className="ml-2 text-slate-400">({inv.role})</span>
+                          <span className="ml-2 text-slate-500 font-medium">({getRoleLabel(inv.role, tRoles)})</span>
                           <span className="ml-2 rounded-full bg-blue-50 text-blue-700 border border-blue-200 px-2 py-0.2 text-[10px] font-medium">
-                            Chờ kích hoạt
+                            {tRoles('inviteStatus.PENDING')}
                           </span>
                         </div>
 
@@ -522,7 +527,7 @@ export function CampaignWorkspace({
                             className="h-7 text-xs gap-1 border-slate-200"
                           >
                             <Copy className="h-3 w-3" />
-                            {copiedLink === inv.id ? 'Đã sao chép' : 'Sao chép link'}
+                            {copiedLink === inv.id ? tCamp('team.copied') : tCamp('team.copyLink')}
                           </Button>
 
                           <Button
@@ -533,7 +538,7 @@ export function CampaignWorkspace({
                             className="h-7 text-xs gap-1 border-slate-200 text-blue-600 hover:bg-blue-50"
                           >
                             <RefreshCw className={cn('h-3 w-3', resendingInviteId === inv.id && 'animate-spin')} />
-                            {resendingInviteId === inv.id ? 'Đang gửi...' : 'Gửi lại email'}
+                            {resendingInviteId === inv.id ? tCamp('team.resending') : tCamp('team.resendEmail')}
                           </Button>
                         </div>
                       </div>

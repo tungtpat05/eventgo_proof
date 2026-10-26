@@ -28,6 +28,8 @@ import { cn } from '@/lib/utils';
 import { resendCampaignInviteEmailAction } from '@/features/campaigns/actions/member-actions';
 import { PersonnelConfirmRevokeModal } from './personnel-confirm-revoke-modal';
 import { CampaignRole } from '@/domain/enums';
+import { useTranslations } from 'next-intl';
+import { getRoleLabel } from '@/lib/i18n/enum-presenters';
 
 function normalizeVietnamese(str: string): string {
   return str
@@ -54,6 +56,9 @@ export function CampaignPersonnelSection({
   onRefresh,
   className,
 }: CampaignPersonnelSectionProps) {
+  const tRoles = useTranslations('roles');
+  const tCamp = useTranslations('campaigns');
+
   const [isExpanded, setIsExpanded] = useState(true);
   const [viewMode, setViewMode] = useState<'table' | 'grid'>('table');
   const [searchQuery, setSearchQuery] = useState('');
@@ -174,19 +179,19 @@ export function CampaignPersonnelSection({
       case CampaignRole.MANAGER:
         return (
           <span className="inline-flex items-center rounded-md bg-purple-50 text-purple-700 border border-purple-200/80 px-2 py-0.5 text-[10px] font-bold">
-            MANAGER
+            {getRoleLabel(role, tRoles)}
           </span>
         );
       case CampaignRole.SUPERVISOR:
         return (
           <span className="inline-flex items-center rounded-md bg-blue-50 text-blue-700 border border-blue-200/80 px-2 py-0.5 text-[10px] font-bold">
-            SUPERVISOR
+            {getRoleLabel(role, tRoles)}
           </span>
         );
       case CampaignRole.APPROVER:
         return (
           <span className="inline-flex items-center rounded-md bg-amber-50 text-amber-700 border border-amber-200/80 px-2 py-0.5 text-[10px] font-bold">
-            APPROVER
+            {getRoleLabel(role, tRoles)}
           </span>
         );
       default:
@@ -323,7 +328,7 @@ export function CampaignPersonnelSection({
                       : 'text-slate-500 hover:text-slate-800'
                   )}
                 >
-                  Tất cả vai trò
+                  {tCamp('wizard.allRoles')}
                 </button>
 
                 <button
@@ -336,7 +341,7 @@ export function CampaignPersonnelSection({
                       : 'text-slate-500 hover:text-slate-800'
                   )}
                 >
-                  Supervisor ({supervisorCount})
+                  {tRoles('roleShort.SUPERVISOR')} ({supervisorCount})
                 </button>
 
                 <button
@@ -349,7 +354,7 @@ export function CampaignPersonnelSection({
                       : 'text-slate-500 hover:text-slate-800'
                   )}
                 >
-                  Approver ({approverCount})
+                  {tRoles('roleShort.APPROVER')} ({approverCount})
                 </button>
 
                 <button
@@ -362,7 +367,7 @@ export function CampaignPersonnelSection({
                       : 'text-slate-500 hover:text-slate-800'
                   )}
                 >
-                  Manager ({managerCount})
+                  {tRoles('roleShort.MANAGER')} ({managerCount})
                 </button>
               </div>
             </div>

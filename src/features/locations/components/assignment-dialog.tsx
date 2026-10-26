@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
+import { useTranslations } from 'next-intl';
 import { assignPersonnelAction } from '../actions/location-actions';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -24,6 +25,9 @@ export function AssignmentPanel({
   currentApproverMemberId,
   currentDeadline,
 }: AssignmentPanelProps) {
+  const tCamp = useTranslations('campaigns');
+  const tRoles = useTranslations('roles');
+
   const [supervisorMemberId, setSupervisorMemberId] = useState(currentSupervisorMemberId || '');
   const [approverMemberId, setApproverMemberId] = useState(currentApproverMemberId || '');
   const [deadline, setDeadline] = useState(currentDeadline || '');
@@ -44,9 +48,9 @@ export function AssignmentPanel({
     setIsLoading(false);
 
     if (res.success) {
-      setMessage({ text: 'Đã cập nhật phân công nhân sự thành công!' });
+      setMessage({ text: tCamp('assignment.success') });
     } else {
-      setMessage({ text: res.error || 'Lỗi cập nhật', isError: true });
+      setMessage({ text: res.error || tCamp('assignment.error'), isError: true });
     }
   };
 
@@ -54,7 +58,7 @@ export function AssignmentPanel({
     <form onSubmit={handleSave} className="rounded-xl border border-slate-200 bg-white p-5 space-y-4">
       <div className="flex items-center gap-2 pb-2 border-b border-slate-100">
         <UserCheck className="h-5 w-5 text-blue-600" />
-        <h3 className="font-bold text-slate-900 text-sm">Phân Công Nhân Sự Phụ Trách</h3>
+        <h3 className="font-bold text-slate-900 text-sm">{tCamp('assignment.title')}</h3>
       </div>
 
       {message && (
@@ -72,14 +76,14 @@ export function AssignmentPanel({
 
       <div className="space-y-1.5">
         <label className="text-xs font-semibold uppercase text-slate-700">
-          Giám sát hiện trường (Site Supervisor)
+          {tRoles('roles.SUPERVISOR')}
         </label>
         <select
           value={supervisorMemberId}
           onChange={(e) => setSupervisorMemberId(e.target.value)}
           className="flex h-10 w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm ring-offset-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600 focus-visible:ring-offset-2"
         >
-          <option value="">-- Chưa phân công --</option>
+          <option value="">{tCamp('assignment.unassigned')}</option>
           {supervisors.map((member) => (
             <option key={member.id} value={member.id}>
               {member.fullName} ({member.email})
@@ -90,14 +94,14 @@ export function AssignmentPanel({
 
       <div className="space-y-1.5">
         <label className="text-xs font-semibold uppercase text-slate-700">
-          Người kiểm duyệt (Approver)
+          {tRoles('roles.APPROVER')}
         </label>
         <select
           value={approverMemberId}
           onChange={(e) => setApproverMemberId(e.target.value)}
           className="flex h-10 w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm ring-offset-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600 focus-visible:ring-offset-2"
         >
-          <option value="">-- Chưa phân công --</option>
+          <option value="">{tCamp('assignment.unassigned')}</option>
           {approvers.map((member) => (
             <option key={member.id} value={member.id}>
               {member.fullName} ({member.email})
@@ -108,7 +112,7 @@ export function AssignmentPanel({
 
       <div className="space-y-1.5">
         <label className="text-xs font-semibold uppercase text-slate-700">
-          Hạn chót nghiệm thu (Deadline)
+          {tCamp('assignment.deadlineField')}
         </label>
         <Input
           type="datetime-local"
@@ -121,10 +125,10 @@ export function AssignmentPanel({
         {isLoading ? (
           <>
             <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-            Đang cập nhật...
+            {tCamp('assignment.saving')}
           </>
         ) : (
-          'Lưu phân công nhân sự'
+          tCamp('assignment.save')
         )}
       </Button>
     </form>

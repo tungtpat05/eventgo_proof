@@ -1,0 +1,37 @@
+{
+  "submissions": {
+    "title": "Nghiệm Thu Gian Hàng",
+    "submitProof": "Nộp bằng chứng nghiệm thu",
+    "capturePhoto": "Chụp hoặc tải ảnh hiện trường",
+    "uploading": "Đang tải ảnh lên...",
+    "notesPlaceholder": "Ghi chú thêm về điều kiện thực tế tại gian hàng...",
+    "submitButton": "Gửi bằng chứng",
+    "submitting": "Đang gửi...",
+    "success": "Đã nộp bằng chứng nghiệm thu thành công!",
+    "checklistTitle": "Danh mục kiểm tra nghiệm thu",
+    "passCriteria": "Đạt yêu cầu",
+    "failCriteria": "Chưa đạt",
+    "emptyEvidence": "Chưa có hình ảnh nào được tải lên."
+  },
+  "approvals": {
+    "title": "Hàng Đợi Nghiệm Thu Chiến Dịch",
+    "description": "Xem toàn bộ hình ảnh thực tế được nộp từ các gian hàng tại các địa điểm, đối soát tiêu chí checklist và tiến hành phê duyệt.",
+    "openQueue": "Mở màn hình duyệt tập trung",
+    "approveAction": "Phê duyệt đạt",
+    "rejectAction": "Yêu cầu bổ sung",
+    "revisionNote": "Lý do yêu cầu chụp lại / chỉnh sửa",
+    "approving": "Đang phê duyệt...",
+    "rejecting": "Đang gửi yêu cầu...",
+    "approvedSuccess": "Đã duyệt bằng chứng nghiệm thu thành công!",
+    "revisionSuccess": "Đã gửi yêu cầu bổ sung bằng chứng thành công!"
+  },
+  "hierarchy": {
+    "locationsTitle": "Danh sách Địa điểm & Gian hàng",
+    "addLocation": "Thêm địa điểm",
+    "addBooth": "Thêm gian hàng",
+    "boothCount": "{count} gian hàng",
+    "assignedTo": "Phụ trách: {name}",
+    "noAssignments": "Chưa phân công nhân sự",
+    "emptyTree": "Chiến dịch chưa có địa điểm nào được cấu hình."
+  }
+}

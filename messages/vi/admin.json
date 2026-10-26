@@ -1,0 +1,24 @@
+{
+  "dashboard": {
+    "title": "Quản Trị Hệ Thống",
+    "systemUsers": "Người dùng hệ thống",
+    "activeCampaigns": "Chiến dịch đang chạy",
+    "activeSubscriptions": "Thuê bao hoạt động",
+    "totalRevenue": "Doanh thu cổng PayOS",
+    "auditLogs": "Nhật ký hệ thống",
+    "switchClient": "Chuyển sang Giao diện Khách hàng"
+  },
+  "subscriptions": {
+    "title": "Gói Cước & Đăng Ký Dịch Vụ",
+    "currentPlan": "Gói cước hiện tại",
+    "upgrade": "Nâng cấp gói",
+    "tierFree": "Miễn phí",
+    "tierStarter": "Khởi đầu (Starter)",
+    "tierPro": "Chuyên nghiệp (Pro)",
+    "boothLimit": "Giới hạn gian hàng",
+    "campaignLimit": "Giới hạn chiến dịch",
+    "memberLimit": "Giới hạn thành viên",
+    "billingHistory": "Lịch sử thanh toán",
+    "qrPrompt": "Quét mã VietQR để kích hoạt ngay"
+  }
+}

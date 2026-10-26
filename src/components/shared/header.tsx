@@ -18,6 +18,7 @@ import {
   ArrowRight,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { LanguageSwitcher } from '@/components/shared/language-switcher';
 
 interface HeaderProps {
   user?: UserProfile;
@@ -123,6 +124,9 @@ export function Header({ user }: HeaderProps) {
 
       {/* Right Controls */}
       <div className="flex items-center gap-2.5 sm:gap-3">
+        {/* Language Switcher */}
+        <LanguageSwitcher />
+
         {/* Persona Switcher: If current user is a System Admin viewing Client Workspace */}
         {user?.isSystemAdmin && (
           <form action={() => switchPersonaViewAction('admin')}>

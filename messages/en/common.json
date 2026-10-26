@@ -1,0 +1,49 @@
+{
+  "nav": {
+    "dashboard": "Overview",
+    "managedCampaigns": "Managed Campaigns",
+    "supervisionCampaigns": "Supervised Campaigns",
+    "approvalCampaigns": "Approval Campaigns",
+    "systemAdmin": "System Administration",
+    "pricingPlans": "Pricing & Plans",
+    "settings": "Settings"
+  },
+  "brand": {
+    "title": "EventGo Proof",
+    "subtitle": "Booth Compliance & Proof"
+  },
+  "actions": {
+    "save": "Save Changes",
+    "cancel": "Cancel",
+    "confirm": "Confirm",
+    "delete": "Delete",
+    "edit": "Edit",
+    "create": "Create",
+    "back": "Back",
+    "continue": "Continue",
+    "loading": "Processing...",
+    "copyLink": "Copy Link",
+    "copied": "Copied",
+    "resend": "Resend",
+    "refresh": "Refresh",
+    "search": "Search...",
+    "filter": "Filter",
+    "close": "Close"
+  },
+  "status": {
+    "all": "All",
+    "active": "Active",
+    "success": "Success",
+    "error": "Error",
+    "warning": "Warning",
+    "info": "Info"
+  },
+  "user": {
+    "profile": "Profile",
+    "logout": "Log Out",
+    "viewMode": "View Mode",
+    "adminView": "Admin Mode",
+    "clientView": "Client Mode",
+    "language": "Language"
+  }
+}

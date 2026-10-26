@@ -1,0 +1,72 @@
+{
+  "tabs": {
+    "overview": "Tổng quan chiến dịch",
+    "locations": "Địa điểm & Gian hàng",
+    "team": "Đội ngũ nhân sự",
+    "approvals": "Hàng đợi nghiệm thu"
+  },
+  "workspace": {
+    "completionRate": "Tỷ lệ nghiệm thu",
+    "approvedCount": "{count} đạt",
+    "totalLocations": "Địa điểm",
+    "totalBooths": "Gian hàng",
+    "totalStaff": "Nhân sự",
+    "urgentAttention": "Cần chú ý & Hành động khẩn cấp",
+    "realtimeUpdate": "Cập nhật thời gian thực",
+    "pendingReviewsPrompt": "Có {count} bằng chứng nghiệm thu đang chờ phê duyệt.",
+    "openApprovalQueue": "Mở hàng đợi duyệt →",
+    "pendingInvitesPrompt": "Có {count} nhân sự chưa kích hoạt tài khoản Google để nhận nhiệm vụ.",
+    "viewAndResend": "Xem & Gửi lại mail →",
+    "missingStaffPrompt": "Có {count} gian hàng chưa được phân công đủ người phụ trách.",
+    "assignNow": "Phân công ngay →",
+    "allOnTrack": "Mọi hoạt động của chiến dịch đang diễn ra đúng tiến độ, không có điểm nghẽn!",
+    "quickHierarchy": "Quản lý Địa điểm & Gian hàng",
+    "quickHierarchyDesc": "Xem cấu trúc cây, thêm booth phát sinh hoặc sửa checklist.",
+    "quickTeam": "Đội ngũ & Phân quyền",
+    "quickTeamDesc": "Mời thêm nhân sự, phân công người phụ trách, xem nhật ký phân quyền.",
+    "quickApprovals": "Hàng đợi Nghiệm thu",
+    "quickApprovalsDesc": "Xem ảnh thực tế chụp tại booth và phê duyệt kết quả trưng bày."
+  },
+  "team": {
+    "title": "Thành viên & Quyền hạn chiến dịch",
+    "description": "Quản lý chiến dịch có quyền phân công, mời thêm hoặc thu hồi quyền truy cập của nhân sự.",
+    "inviteButton": "Mời nhân sự mới",
+    "tableMember": "Nhân sự",
+    "tableRole": "Vai trò",
+    "tableStatus": "Trạng thái",
+    "tableActions": "Thao tác",
+    "revokeAccess": "Thu hồi",
+    "restoreAccess": "Khôi phục",
+    "pendingInvitesTitle": "Lời mời đang chờ đăng nhập Google ({count})",
+    "copyLink": "Sao chép link",
+    "copied": "Đã sao chép",
+    "resendEmail": "Gửi lại email",
+    "resending": "Đang gửi...",
+    "auditTrailTitle": "Nhật ký phân quyền & Thay đổi nhân sự (Audit Trail)",
+    "auditEmpty": "Chưa có thay đổi phân quyền nào được ghi nhận.",
+    "auditEntry": "Thay đổi trạng thái: {oldRole} ({oldStatus}) ➔ {newRole} ({newStatus})"
+  },
+  "assignment": {
+    "title": "Phân Công Nhân Sự Phụ Trách",
+    "supervisorField": "Giám sát hiện trường (Site Supervisor)",
+    "approverField": "Người kiểm duyệt (Approver)",
+    "unassigned": "-- Chưa phân công --",
+    "deadlineField": "Hạn chót nghiệm thu",
+    "save": "Lưu phân công",
+    "saving": "Đang lưu...",
+    "success": "Đã cập nhật phân công nhân sự thành công!",
+    "error": "Lỗi cập nhật phân công"
+  },
+  "wizard": {
+    "title": "Tạo Chiến Dịch Mới",
+    "stepBasic": "Thông tin chung",
+    "stepLocations": "Địa điểm & Gian hàng",
+    "stepPersonnel": "Đội ngũ nhân sự",
+    "stepChecklist": "Tiêu chí nghiệm thu",
+    "allRoles": "Tất cả vai trò",
+    "addPersonnel": "Thêm nhân sự",
+    "personnelEmail": "Email tài khoản Google",
+    "selectRole": "Chọn vai trò",
+    "noPersonnel": "Chưa có nhân sự nào được thêm."
+  }
+}
