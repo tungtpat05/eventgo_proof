@@ -1,14 +1,15 @@
 import React from 'react';
 import Link from 'next/link';
 import { getSupervisionCampaignsUseCase } from '@/application/use-cases/campaigns/get-supervision-campaigns';
-import { StatusBadge } from '@/components/shared/status-badge';
-import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
+import { getCurrentUserSession } from '@/application/use-cases/auth/get-current-user';
+import { createServerSupabaseClient } from '@/infrastructure/supabase/server';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { ScanEye, Calendar, ArrowRight, Tag, MapPin, LayoutDashboard } from 'lucide-react';
-import { formatDate } from '@/lib/utils';
+import { ScanEye, LayoutDashboard } from 'lucide-react';
 import { Metadata } from 'next';
-import { getTranslations, getLocale } from 'next-intl/server';
+import { getTranslations } from 'next-intl/server';
+import { SupervisionCampaignList } from '@/features/campaigns/components/supervision-campaign-list';
+import { CampaignRole, CampaignMemberStatus } from '@/domain/enums';
 
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getTranslations('operations.supervision');
@@ -19,9 +20,42 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 export default async function SupervisionCampaignsPage() {
+  const session = await getCurrentUserSession();
   const campaigns = await getSupervisionCampaignsUseCase();
   const t = await getTranslations('operations.supervision');
-  const locale = await getLocale();
+
+  const assignedBoothsCountByCampaign: Record<string, number> = {};
+  if (session?.user && campaigns.length > 0) {
+    const supabase = await createServerSupabaseClient();
+    const { data: memberships } = await supabase
+      .from('campaign_members')
+      .select('id, campaign_id')
+      .eq('user_id', session.user.id)
+      .eq('role', CampaignRole.SUPERVISOR)
+      .eq('status', CampaignMemberStatus.ACTIVE);
+
+    const memberIds = (memberships || []).map((m) => m.id);
+    const memberToCampaign = new Map((memberships || []).map((m) => [m.id, m.campaign_id]));
+
+    if (memberIds.length > 0) {
+      const { data: assignments } = await supabase
+        .from('booth_supervisor_assignments')
+        .select('supervisor_member_id, booth_id')
+        .in('supervisor_member_id', memberIds);
+
+      (assignments || []).forEach((a) => {
+        const campId = memberToCampaign.get(a.supervisor_member_id);
+        if (campId) {
+          assignedBoothsCountByCampaign[campId] = (assignedBoothsCountByCampaign[campId] || 0) + 1;
+        }
+      });
+    }
+  }
+
+  const items = campaigns.map((c) => ({
+    ...c,
+    assignedBoothsCount: assignedBoothsCountByCampaign[c.id] || 0,
+  }));
 
   return (
     <div className="space-y-6">
@@ -52,71 +86,17 @@ export default async function SupervisionCampaignsPage() {
             {t('emptyDesc')}
           </p>
 
-          <div className="mt-6 flex flex-wrap items-center justify-center gap-3">
+          <div className="mt-6 flex items-center justify-center">
             <Link href="/dashboard">
-              <Button size="sm" variant="outline" className="text-xs gap-1.5 cursor-pointer">
-                <LayoutDashboard className="h-3.5 w-3.5" />
+              <Button size="sm" className="text-xs bg-blue-600 hover:bg-blue-700 text-white gap-1.5 cursor-pointer font-medium px-4 h-9 shadow-xs">
+                <LayoutDashboard className="h-4 w-4" />
                 {t('btnBackDashboard')}
-              </Button>
-            </Link>
-            <Link href="/campaigns">
-              <Button size="sm" className="text-xs bg-blue-600 hover:bg-blue-700 text-white gap-1.5 cursor-pointer">
-                {t('btnViewAllCampaigns')}
-                <ArrowRight className="h-3.5 w-3.5" />
               </Button>
             </Link>
           </div>
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-          {campaigns.map((campaign) => (
-            <Link
-              key={campaign.id}
-              href={`/campaigns/supervision/${campaign.id}`}
-              className="block group cursor-pointer"
-            >
-              <Card className="h-full border-slate-200 transition-all duration-200 hover:shadow-md hover:border-blue-300 rounded-2xl flex flex-col justify-between">
-                <CardHeader className="pb-3">
-                  <div className="flex items-center justify-between gap-2 mb-2">
-                    <span className="flex items-center gap-1 text-[11px] font-semibold text-blue-700 bg-blue-50 px-2.5 py-0.5 rounded-full border border-blue-200">
-                      <Tag className="h-3 w-3" />
-                      {campaign.brandName}
-                    </span>
-                    <StatusBadge status={campaign.status} />
-                  </div>
-                  <CardTitle className="text-base font-bold text-slate-900 group-hover:text-blue-600 transition-colors line-clamp-1">
-                    {campaign.title}
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  {campaign.description && (
-                    <p className="text-xs text-slate-500 line-clamp-2 leading-relaxed">
-                      {campaign.description}
-                    </p>
-                  )}
-
-                  {/* Operation metrics chip */}
-                  <div className="flex items-center gap-2 text-[11px] text-slate-600 bg-slate-50 p-2 rounded-xl border border-slate-100">
-                    <MapPin className="h-3.5 w-3.5 text-blue-600 shrink-0" />
-                    <span className="font-medium">{t('cardGpsTag')}</span>
-                  </div>
-
-                  <div className="flex items-center justify-between text-xs text-slate-400 pt-3 border-t border-slate-100">
-                    <div className="flex items-center gap-1.5">
-                      <Calendar className="h-3.5 w-3.5" />
-                      <span>
-                        {formatDate(campaign.startDate, locale)} – {formatDate(campaign.endDate, locale)}
-                      </span>
-                    </div>
-                    <span className="flex items-center gap-1 text-blue-600 font-semibold group-hover:translate-x-0.5 transition-transform text-xs">
-                      {t('btnStartWork')} <ArrowRight className="h-3.5 w-3.5" />
-                    </span>
-                  </div>
-                </CardContent>
-              </Card>
-            </Link>
-          ))}
-        </div>
+        <SupervisionCampaignList campaigns={items} />
       )}
     </div>
   );

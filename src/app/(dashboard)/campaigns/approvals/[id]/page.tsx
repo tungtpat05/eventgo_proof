@@ -9,8 +9,8 @@ import { SupabaseChecklistRepository } from '@/infrastructure/repositories/supab
 import { SupabaseBoothRepository } from '@/infrastructure/repositories/supabase-booth-repository';
 import { Button } from '@/components/ui/button';
 import { StatusBadge } from '@/components/shared/status-badge';
-import { ArrowLeft, Tag, CheckCheck, Clock, CheckCircle2, AlertTriangle } from 'lucide-react';
-import { ReviewPanel } from '@/features/approvals/components/review-panel';
+import { ArrowLeft, Tag, CheckCheck, Clock } from 'lucide-react';
+import { ApprovalDetailQueue } from '@/features/approvals/components/approval-detail-queue';
 import { Metadata } from 'next';
 import { getTranslations } from 'next-intl/server';
 
@@ -103,8 +103,6 @@ export default async function ApprovalDetailPage({ params }: ApprovalDetailPageP
   );
 
   const pendingList = enrichedSubmissions.filter((s) => s.submission.status === 'SUBMITTED');
-  const revisionList = enrichedSubmissions.filter((s) => s.submission.status === 'NEEDS_REVISION');
-  const approvedList = enrichedSubmissions.filter((s) => s.submission.status === 'APPROVED');
 
   return (
     <div className="space-y-6">
@@ -146,89 +144,11 @@ export default async function ApprovalDetailPage({ params }: ApprovalDetailPageP
         </div>
       </div>
 
-      {/* Tabs / Submissions Sections */}
-      <div className="space-y-6">
-        {/* 1. Nhóm bài nộp cần duyệt gấp (Pending Reviews) */}
-        <div className="space-y-4">
-          <div className="flex items-center justify-between">
-            <h2 className="text-base font-bold text-slate-900 flex items-center gap-2">
-              <Clock className="h-4 w-4 text-amber-600" />
-              {t('headingPending', { count: pendingList.length })}
-            </h2>
-          </div>
-
-          {pendingList.length === 0 ? (
-            <div className="rounded-xl border border-dashed border-slate-200 p-8 text-center bg-white">
-              <CheckCircle2 className="h-8 w-8 text-emerald-500 mx-auto mb-2" />
-              <p className="text-xs font-semibold text-slate-800">
-                {t('emptyPendingTitle')}
-              </p>
-              <p className="text-[11px] text-slate-400 mt-0.5">
-                {t('emptyPendingDesc')}
-              </p>
-            </div>
-          ) : (
-            <div className="space-y-6">
-              {pendingList.map(({ submission, location, checklistItem, boothName }) => (
-                <ReviewPanel
-                  key={submission.id}
-                  submission={submission}
-                  location={location}
-                  checklistItem={checklistItem}
-                  boothName={boothName}
-                  campaignId={campaign.id}
-                />
-              ))}
-            </div>
-          )}
-        </div>
-
-        {/* 2. Nhóm bài nộp đã yêu cầu chỉnh sửa (Needs Revision) */}
-        {revisionList.length > 0 && (
-          <div className="space-y-4 pt-4 border-t border-slate-200">
-            <h2 className="text-base font-bold text-slate-900 flex items-center gap-2">
-              <AlertTriangle className="h-4 w-4 text-red-500" />
-              {t('headingNeedsRevision', { count: revisionList.length })}
-            </h2>
-
-            <div className="space-y-6">
-              {revisionList.map(({ submission, location, checklistItem, boothName }) => (
-                <ReviewPanel
-                  key={submission.id}
-                  submission={submission}
-                  location={location}
-                  checklistItem={checklistItem}
-                  boothName={boothName}
-                  campaignId={campaign.id}
-                />
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* 3. Nhóm bài nộp đã duyệt đạt (Approved) */}
-        {approvedList.length > 0 && (
-          <div className="space-y-4 pt-4 border-t border-slate-200">
-            <h2 className="text-base font-bold text-slate-900 flex items-center gap-2">
-              <CheckCircle2 className="h-4 w-4 text-emerald-600" />
-              {t('headingApproved', { count: approvedList.length })}
-            </h2>
-
-            <div className="space-y-6">
-              {approvedList.map(({ submission, location, checklistItem, boothName }) => (
-                <ReviewPanel
-                  key={submission.id}
-                  submission={submission}
-                  location={location}
-                  checklistItem={checklistItem}
-                  boothName={boothName}
-                  campaignId={campaign.id}
-                />
-              ))}
-            </div>
-          </div>
-        )}
-      </div>
+      {/* Filterable, Searchable, Paginated Approval Detail Queue */}
+      <ApprovalDetailQueue
+        campaignId={campaign.id}
+        submissions={enrichedSubmissions}
+      />
     </div>
   );
 }

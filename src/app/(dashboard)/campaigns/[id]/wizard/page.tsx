@@ -42,6 +42,6 @@ export default async function CampaignWizardPage({
 
     console.error('Wizard error for campaign', id, ':', err);
     const isAuthError = err?.name === 'AuthorizationError' || err?.message?.toLowerCase().includes('quyền') || err?.message?.toLowerCase().includes('forbidden');
-    redirect(`/campaigns?error=${encodeURIComponent(isAuthError ? 'Bạn không có quyền quản lý chiến dịch này.' : 'Không thể tải dữ liệu thiết lập chiến dịch.')}`);
+    redirect(`/campaigns/managed?error=${encodeURIComponent(isAuthError ? 'Bạn không có quyền quản lý chiến dịch này.' : 'Không thể tải dữ liệu thiết lập chiến dịch.')}`);
   }
 }

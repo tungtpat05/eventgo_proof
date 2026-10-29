@@ -399,7 +399,7 @@ export function Step5Review({
           <Button
             type="button"
             variant="ghost"
-            onClick={() => router.push('/campaigns')}
+            onClick={() => router.push('/campaigns/managed')}
             disabled={isActivating}
             className="text-xs text-slate-500 hover:text-slate-800 cursor-pointer"
           >

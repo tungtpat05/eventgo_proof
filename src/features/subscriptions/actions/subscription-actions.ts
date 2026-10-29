@@ -289,6 +289,7 @@ export async function checkSubscriptionPaymentStatusAction(
 
     revalidatePath('/settings/billing');
     revalidatePath('/campaigns');
+    revalidatePath('/campaigns/managed');
     revalidatePath('/admin/dashboard');
 
     return {

@@ -336,7 +336,7 @@ export function Step1Info({ campaign, onNext, onAutoSaveNotify }: Step1InfoProps
         currentStep={1}
         onNext={handleNextClick}
         isNextLoading={isSaving}
-        onCancel={() => router.push('/campaigns')}
+        onCancel={() => router.push('/campaigns/managed')}
       />
     </div>
   );

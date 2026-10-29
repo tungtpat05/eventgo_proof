@@ -105,7 +105,7 @@ export function NewCampaignStep1() {
     if (formData.title.trim() || formData.brandName.trim()) {
       setIsCancelDialogOpen(true);
     } else {
-      router.push('/campaigns');
+      router.push('/campaigns/managed');
     }
   };
 
@@ -404,7 +404,7 @@ export function NewCampaignStep1() {
             <Button
               type="button"
               size="sm"
-              onClick={() => router.push('/campaigns')}
+              onClick={() => router.push('/campaigns/managed')}
               className="text-xs bg-rose-600 hover:bg-rose-700 text-white cursor-pointer font-semibold"
             >
               {t('cancelExit')}

@@ -4,6 +4,7 @@
     "managedCampaigns": "Managed Campaigns",
     "supervisionCampaigns": "Supervised Campaigns",
     "approvalCampaigns": "Approval Campaigns",
+    "reports": "Audit Reports",
     "systemAdmin": "System Administration",
     "pricingPlans": "Pricing & Plans",
     "settings": "Settings"
@@ -55,6 +56,8 @@
       "newCampaign": "Create New Campaign",
       "campaignDetail": "Campaign Details",
       "managedCampaigns": "Managed Campaigns",
+      "reports": "Audit Reports",
+      "locations": "Locations & Booths",
       "billing": "Billing & Plans",
       "account": "Account Profile"
     },

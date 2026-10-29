@@ -50,19 +50,28 @@ function getClientBreadcrumb(pathname: string, t: (key: string) => string): { gr
     return { title: t('breadcrumbs.overview') };
   }
   if (pathname.startsWith('/campaigns/supervision')) {
-    return { group: t('breadcrumbs.campaigns'), groupHref: '/campaigns', title: t('breadcrumbs.supervision') };
+    return { group: t('breadcrumbs.campaigns'), groupHref: '/campaigns/managed', title: t('breadcrumbs.supervision') };
   }
   if (pathname.startsWith('/campaigns/approvals')) {
-    return { group: t('breadcrumbs.campaigns'), groupHref: '/campaigns', title: t('breadcrumbs.approvals') };
+    return { group: t('breadcrumbs.campaigns'), groupHref: '/campaigns/managed', title: t('breadcrumbs.approvals') };
   }
   if (pathname.startsWith('/campaigns/new')) {
-    return { group: t('breadcrumbs.campaigns'), groupHref: '/campaigns', title: t('breadcrumbs.newCampaign') };
+    return { group: t('breadcrumbs.campaigns'), groupHref: '/campaigns/managed', title: t('breadcrumbs.newCampaign') };
+  }
+  if (pathname.startsWith('/campaigns/managed')) {
+    return { title: t('breadcrumbs.managedCampaigns') };
   }
   if (pathname.startsWith('/campaigns/')) {
-    return { group: t('breadcrumbs.campaigns'), groupHref: '/campaigns', title: t('breadcrumbs.campaignDetail') };
+    return { group: t('breadcrumbs.campaigns'), groupHref: '/campaigns/managed', title: t('breadcrumbs.campaignDetail') };
   }
   if (pathname === '/campaigns') {
     return { title: t('breadcrumbs.managedCampaigns') };
+  }
+  if (pathname.startsWith('/reports')) {
+    return { title: t('breadcrumbs.reports') };
+  }
+  if (pathname.startsWith('/locations')) {
+    return { title: t('breadcrumbs.locations') };
   }
   if (pathname.startsWith('/settings/billing')) {
     return { group: t('breadcrumbs.billing'), title: t('breadcrumbs.billing') };

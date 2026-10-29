@@ -4,6 +4,7 @@
     "managedCampaigns": "Chiến dịch quản lý",
     "supervisionCampaigns": "Chiến dịch giám sát",
     "approvalCampaigns": "Chiến dịch phê duyệt",
+    "reports": "Báo cáo nghiệm thu",
     "systemAdmin": "Quản trị hệ thống",
     "pricingPlans": "Gói cước & Đăng ký",
     "settings": "Cài đặt"
@@ -55,6 +56,8 @@
       "newCampaign": "Tạo chiến dịch mới",
       "campaignDetail": "Chi tiết chiến dịch",
       "managedCampaigns": "Chiến dịch quản lý",
+      "reports": "Báo cáo nghiệm thu",
+      "locations": "Địa điểm & Gian hàng",
       "billing": "Gói dịch vụ & Thanh toán",
       "account": "Thông tin tài khoản"
     },

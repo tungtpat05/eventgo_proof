@@ -105,7 +105,7 @@ export default async function CampaignDetailPage({ params }: CampaignDetailPageP
     <div className="space-y-6 max-w-7xl mx-auto pb-12">
       {/* Back button */}
       <div className="flex items-center gap-2">
-        <Link href="/campaigns">
+        <Link href="/campaigns/managed">
           <Button variant="ghost" size="sm" className="gap-1 text-slate-600 text-xs cursor-pointer">
             <ArrowLeft className="h-3.5 w-3.5" />
             {t('backToList')}

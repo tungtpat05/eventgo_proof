@@ -64,7 +64,7 @@ export async function updateSession(request: NextRequest) {
 
     if (!profile?.is_system_admin) {
       return NextResponse.redirect(
-        new URL('/campaigns?error=Truy cập bị từ chối: Yêu cầu quyền Quản trị viên hệ thống.', request.url)
+        new URL('/campaigns/managed?error=Truy cập bị từ chối: Yêu cầu quyền Quản trị viên hệ thống.', request.url)
       );
     }
   }

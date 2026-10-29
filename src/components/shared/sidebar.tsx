@@ -10,6 +10,7 @@ import {
   ScanEye,
   CheckCheck,
   CheckCircle,
+  BarChart3,
 } from 'lucide-react';
 
 export function Sidebar() {
@@ -25,7 +26,7 @@ export function Sidebar() {
     },
     {
       name: t('nav.managedCampaigns'),
-      href: '/campaigns',
+      href: '/campaigns/managed',
       icon: FolderKanban,
       active:
         pathname === '/campaigns' ||
@@ -45,6 +46,12 @@ export function Sidebar() {
       href: '/campaigns/approvals',
       icon: CheckCheck,
       active: pathname.startsWith('/campaigns/approvals'),
+    },
+    {
+      name: t('nav.reports'),
+      href: '/reports',
+      icon: BarChart3,
+      active: pathname.startsWith('/reports'),
     },
   ];
 

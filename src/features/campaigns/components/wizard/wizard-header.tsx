@@ -21,7 +21,7 @@ export function WizardHeader({
       <div>
         {/* Breadcrumb */}
         <div className="flex items-center gap-1.5 text-xs text-blue-600 font-medium mb-1">
-          <Link href="/campaigns" className="hover:underline">
+          <Link href="/campaigns/managed" className="hover:underline">
             {t('managedCampaigns')}
           </Link>
           <ChevronRight className="h-3 w-3 text-slate-400" />
