@@ -20,6 +20,7 @@ export default getRequestConfig(async () => {
       reports: (await import(`../../messages/${locale}/reports.json`)).default,
       admin: (await import(`../../messages/${locale}/admin.json`)).default,
       errors: (await import(`../../messages/${locale}/errors.json`)).default,
+      marketing: (await import(`../../messages/${locale}/marketing.json`)).default,
     },
   };
 });

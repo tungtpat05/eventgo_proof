@@ -1,6 +1,7 @@
 import React from 'react';
 import { Sidebar } from '@/components/shared/sidebar';
 import { Header } from '@/components/shared/header';
+import { PwaInstallBanner } from '@/components/shared/pwa-install-banner';
 import { getCurrentUserSession } from '@/application/use-cases/auth/get-current-user';
 import { redirect } from 'next/navigation';
 import { cookies } from 'next/headers';
@@ -24,6 +25,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
       <Sidebar />
 
       <div className="md:pl-64 flex flex-col flex-1 pb-16 md:pb-0">
+        <PwaInstallBanner />
         <Header user={session.user} />
         <main className="flex-1 p-4 sm:p-6 md:p-8 max-w-7xl w-full mx-auto">
           {children}

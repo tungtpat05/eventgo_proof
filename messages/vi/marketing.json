@@ -1,0 +1,79 @@
+{
+  "hero": {
+    "badge": "Nền tảng B2B SaaS Nghiệm thu Hiện trường",
+    "title": "Kiểm soát tuân thủ & nghiệm thu gian hàng sự kiện",
+    "titleHighlight": "nhanh chóng, minh bạch",
+    "description": "Giải pháp toàn diện giúp nhãn hàng và agency giám sát hàng trăm booth sự kiện, chụp ảnh đối soát qua camera thời gian thực, phê duyệt tức thì và xuất báo cáo tự động.",
+    "startFreeButton": "Bắt đầu miễn phí",
+    "loginButton": "Đăng nhập",
+    "viewDemoButton": "Xem mô phỏng",
+    "trustTag": "Được tin cậy bởi các đơn vị tổ chức kích hoạt thương hiệu hàng đầu"
+  },
+  "stats": {
+    "campaignsTracked": "500+ Chiến dịch",
+    "boothsInspected": "15,000+ Gian hàng",
+    "approvalSpeed": "Nhanh hơn gấp 5 lần",
+    "fraudReduction": "100% Ảnh thực tế"
+  },
+  "features": {
+    "title": "Giải quyết triệt để nỗi đau nghiệm thu hiện trường",
+    "subtitle": "Tạm biệt quy trình gửi ảnh rời rạc qua Zalo/Drive khó kiểm soát, thiếu đối soát và dễ thất lạc.",
+    "f1Title": "Chụp ảnh camera chống gian lận",
+    "f1Desc": "Tự động kích hoạt camera thiết bị, nén ảnh trực tiếp trên trình duyệt giúp tải lên siêu nhanh ngay cả khi sóng 4G chập chờn.",
+    "f2Title": "Quy trình duyệt 2 cấp chặt chẽ",
+    "f2Desc": "Phân quyền minh bạch giữa Giám sát hiện trường (Supervisor) và Người duyệt (Approver). Từng bức ảnh đều gắn liền lịch sử phê duyệt.",
+    "f3Title": "Quản lý chiến dịch đa điểm linh hoạt",
+    "f3Desc": "Tạo chiến dịch 5 bước chuẩn hóa, nhập khẩu danh sách hàng trăm booth từ file Excel và phân bổ nhân sự tự động.",
+    "f4Title": "Trích xuất báo cáo Excel tức thì",
+    "f4Desc": "Tự động thống kê tỷ lệ hoàn thành checklist, tỷ lệ duyệt đạt/từ chối và xuất báo cáo nghiệm thu chuyên nghiệp gửi khách hàng."
+  },
+  "evidenceDemo": {
+    "tag": "Trải nghiệm thực tế",
+    "title": "Quy trình nghiệm thu gian hàng chỉ trong 30 giây",
+    "desc": "Nhân viên mở app trên điện thoại -> Chọn booth -> Bấm chụp checklist -> Gửi duyệt ngay tại chỗ.",
+    "boothName": "Booth Vincom Mega Mall Thảo Điền",
+    "supervisorName": "Giám sát: Nguyễn Văn A",
+    "checklistItem": "Hạng mục: Standee & POSM đúng nhận diện",
+    "statusVerified": "Đã phê duyệt đạt",
+    "timestamp": "Chụp lúc: 09:45:22"
+  },
+  "pricing": {
+    "title": "Bảng giá minh bạch, linh hoạt theo quy mô",
+    "subtitle": "Bắt đầu hoàn toàn miễn phí, nâng cấp khi mở rộng số lượng chiến dịch và gian hàng.",
+    "freePlan": "Gói Miễn Phí",
+    "freePrice": "0đ",
+    "freeDesc": "Dành cho cá nhân hoặc thử nghiệm dự án đầu tiên",
+    "starterPlan": "Gói Khởi Nghiệp",
+    "starterPrice": "499.000đ",
+    "starterDesc": "Dành cho agency vừa và nhỏ vận hành các chiến dịch định kỳ",
+    "proPlan": "Gói Chuyên Nghiệp",
+    "proPrice": "1.499.000đ",
+    "proDesc": "Dành cho doanh nghiệp tổ chức quy mô lớn toàn quốc",
+    "perMonth": "/tháng",
+    "getStarted": "Bắt đầu ngay",
+    "featureCampaigns": "{count} chiến dịch hoạt động",
+    "featureBooths": "Tối đa {count} gian hàng",
+    "featurePhotos": "Lưu trữ ảnh Cloudinary an toàn",
+    "featureReports": "Xuất báo cáo Excel chuyên nghiệp",
+    "featureSupport": "Hỗ trợ kỹ thuật 24/7"
+  },
+  "faq": {
+    "title": "Câu hỏi thường gặp",
+    "subtitle": "Mọi điều bạn cần biết trước khi triển khai EventGo Proof cho đội ngũ của mình.",
+    "q1": "Tôi có cần cài đặt phần mềm từ App Store hay CH Play không?",
+    "a1": "Không cần. EventGo Proof hoạt động dưới dạng PWA (Progressive Web App). Bạn chỉ cần truy cập đường dẫn trên trình duyệt điện thoại và nhấn 'Thêm vào màn hình chính' là có thể sử dụng như app thông thường.",
+    "q2": "Khi ở hiện trường sóng 4G yếu, app có hoạt động được không?",
+    "a2": "EventGo Proof tự động nén ảnh trực tiếp trên thiết bị xuống chuẩn dung lượng nhẹ trước khi gửi, giúp tải ảnh thành công ngay cả ở điều kiện mạng chập chờn.",
+    "q3": "Có thể xuất báo cáo nghiệm thu gửi cho khách hàng nhãn hàng không?",
+    "a3": "Hoàn toàn được. Hệ thống hỗ trợ xuất file Excel đầy đủ thống kê tiến độ, danh sách nhân sự phụ trách và liên kết ảnh bằng chứng nghiệm thu."
+  },
+  "footer": {
+    "desc": "Nền tảng B2B SaaS quản lý chiến dịch kích hoạt thương hiệu, giám sát gian hàng và kiểm soát tuân thủ bằng chứng hiện trường chuyên nghiệp.",
+    "product": "Sản phẩm",
+    "resources": "Tài nguyên",
+    "company": "Công ty",
+    "copyright": "Bản quyền thuộc về EventGo Proof.",
+    "rightsReserved": "Bảo lưu mọi quyền."
+  }
+}
+

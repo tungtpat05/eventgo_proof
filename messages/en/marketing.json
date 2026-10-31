@@ -1,0 +1,79 @@
+{
+  "hero": {
+    "badge": "Field Evidence B2B SaaS Platform",
+    "title": "Control compliance & verify event booths",
+    "titleHighlight": "fast and transparent",
+    "description": "Comprehensive solution for brands and agencies to oversee hundreds of event booths, capture camera evidence in real time, approve instantly, and export automated reports.",
+    "startFreeButton": "Start for free",
+    "loginButton": "Log in",
+    "viewDemoButton": "View demo",
+    "trustTag": "Trusted by leading brand activation and event management teams"
+  },
+  "stats": {
+    "campaignsTracked": "500+ Campaigns",
+    "boothsInspected": "15,000+ Booths",
+    "approvalSpeed": "5x Faster Approval",
+    "fraudReduction": "100% Real Evidence"
+  },
+  "features": {
+    "title": "Solve on-site inspection bottlenecks completely",
+    "subtitle": "Say goodbye to scattered photos in messaging apps or cloud drives that lack verification and get easily lost.",
+    "f1Title": "Anti-fraud camera capture",
+    "f1Desc": "Directly triggers device camera and compresses images client-side for rapid uploads even on unstable mobile network connections.",
+    "f2Title": "Strict 2-tier approval workflow",
+    "f2Desc": "Clear permission boundary between on-site Supervisors and Approvers. Every photo is immutably linked to approval audit logs.",
+    "f3Title": "Flexible multi-location campaigns",
+    "f3Desc": "Standardized 5-step campaign setup wizard, Excel bulk import for hundreds of booths, and automated personnel assignment.",
+    "f4Title": "Instant Excel report export",
+    "f4Desc": "Automatically compute checklist completion rates, pass/rejection metrics, and export client-ready acceptance spreadsheets."
+  },
+  "evidenceDemo": {
+    "tag": "Real-world experience",
+    "title": "Verify an event booth in just 30 seconds",
+    "desc": "Staff opens app on phone -> Selects booth -> Captures checklist photo -> Submits for review instantly.",
+    "boothName": "Vincom Mega Mall Booth",
+    "supervisorName": "Supervisor: John Doe",
+    "checklistItem": "Item: Standee & Brand POSM Compliance",
+    "statusVerified": "Approved & Verified",
+    "timestamp": "Captured at: 09:45:22"
+  },
+  "pricing": {
+    "title": "Transparent pricing that scales with you",
+    "subtitle": "Start completely free, upgrade as your campaigns and booth volume expand.",
+    "freePlan": "Free Plan",
+    "freePrice": "0₫",
+    "freeDesc": "For individuals or first project validation",
+    "starterPlan": "Starter Plan",
+    "starterPrice": "499,000₫",
+    "starterDesc": "For small and medium agencies running recurring campaigns",
+    "proPlan": "Professional Plan",
+    "proPrice": "1,499,000₫",
+    "proDesc": "For enterprise brands operating nationwide activations",
+    "perMonth": "/month",
+    "getStarted": "Get Started",
+    "featureCampaigns": "{count} active campaigns",
+    "featureBooths": "Up to {count} booths",
+    "featurePhotos": "Secure Cloudinary photo storage",
+    "featureReports": "Professional Excel report export",
+    "featureSupport": "24/7 technical support"
+  },
+  "faq": {
+    "title": "Frequently Asked Questions",
+    "subtitle": "Everything you need to know before deploying EventGo Proof for your field teams.",
+    "q1": "Do I need to install software from the App Store or Google Play?",
+    "a1": "No. EventGo Proof operates as a PWA (Progressive Web App). Simply visit the web address on your mobile browser and tap 'Add to Home Screen' to use it like a native app.",
+    "q2": "Does the app work in venues with weak mobile signal?",
+    "a2": "EventGo Proof automatically compresses images on-device before uploading, ensuring reliable uploads even under weak 4G or event venue signals.",
+    "q3": "Can I export inspection reports for brand clients?",
+    "a3": "Yes. The platform exports full Excel spreadsheets containing progress metrics, assigned personnel, and verified evidence photo links."
+  },
+  "footer": {
+    "desc": "B2B SaaS platform for brand activation campaign management, booth supervision, and professional field evidence compliance.",
+    "product": "Product",
+    "resources": "Resources",
+    "company": "Company",
+    "copyright": "All rights reserved by EventGo Proof.",
+    "rightsReserved": "All rights reserved."
+  }
+}
+

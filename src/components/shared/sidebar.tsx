@@ -112,8 +112,11 @@ export function Sidebar() {
         </div>
       </aside>
 
-      {/* Mobile Bottom Navigation Bar (Optimized for Field Staff) */}
-      <div className="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-white border-t border-slate-200 shadow-lg px-2 py-1 flex justify-around">
+      {/* Mobile Bottom Navigation Bar (Optimized for Field Staff & PWA) */}
+      <div
+        className="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-white border-t border-slate-200 shadow-lg px-2 py-1 pb-safe flex justify-around"
+        style={{ paddingBottom: 'max(0.25rem, env(safe-area-inset-bottom))' }}
+      >
         {navigation.map((item) => {
           const Icon = item.icon;
           return (
